@@ -8,10 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
-@Table(name = "app_user")
+@Table(name = "app_users")
 @NoArgsConstructor
 public class AppUser {
 
@@ -42,5 +44,9 @@ public class AppUser {
     @Column(nullable = false)
     @BooleanFlag
     private boolean emailVerified;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
 
 }
