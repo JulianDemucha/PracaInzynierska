@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal" created-in="IU-251.25410.129">
+    <data-source name="soundspace@localhost" uuid="d32089c0-fbec-4494-888b-05efd0e034eb">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>postgre</user-name>
+      <schema-mapping />
+    </data-source>
+  </component>
+</project>
