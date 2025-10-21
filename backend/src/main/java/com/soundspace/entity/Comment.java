@@ -28,9 +28,9 @@ public class Comment {
     private Instant updatedAt;
 
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", unique = true)
-//    private Song song;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private Song song;
 
 
 }
