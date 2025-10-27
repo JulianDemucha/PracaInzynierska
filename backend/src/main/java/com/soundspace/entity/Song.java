@@ -1,5 +1,6 @@
 package com.soundspace.entity;
 
+import com.soundspace.enums.Genre;
 import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
 
@@ -20,18 +21,18 @@ public class Song {
 //    @JoinColumn(name="artist_id")
 //    private Artist artist;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name="genere_id")
-//    private Genere genere;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "genre", nullable = false)
+    private Genre genre;
 
     @Column
     private String file_path;
 
-    @Column
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Visibility visibility;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
 }
