@@ -1,25 +1,28 @@
 package com.soundspace.entity;
 
+
 import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.time.Instant;
 
 @Entity
-@Table(name = "playlists")
-public class Playlist {
+@Table(name = "albums")
+public class Album {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column
-    private String name;
+    private String title;
+
+    @Column
+    private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private AppUser creator;
+    @JoinColumn(name = "artist_id", nullable = false)
+    private Artist artist;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -27,10 +30,5 @@ public class Playlist {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
-
-    @Column(name = "updated_at")
-    private Instant updatedAt = Instant.now();
-
-
 
 }

@@ -17,9 +17,9 @@ public class Song {
     @Column
     private String title;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name="artist_id")
-//    private Artist artist;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="artist_id")
+    private Artist artist;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "genre", nullable = false)
@@ -33,6 +33,6 @@ public class Song {
     private Visibility visibility;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
 }

@@ -4,21 +4,22 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "comment_likes")
-public class CommentLike {
+@Table(name = "favorites")
+public class Favorites {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private AppUser creator;
+    private AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comment_id", nullable = false)
-    private Comment comment;
+    @JoinColumn(name = "song_id", nullable = false)
+    private Song song;
 
-    @Column(name = "liked_at", nullable = false)
-    private Instant likedAt = Instant.now();
+    @Column(name = "favorited_at", nullable = false)
+    private Instant favoritedAt = Instant.now();
 
 }

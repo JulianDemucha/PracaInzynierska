@@ -1,6 +1,7 @@
 package com.soundspace.entity;
 
 import com.soundspace.enums.Role;
+import com.soundspace.enums.Sex;
 import com.soundspace.enums.UserAuthProvider;
 import jakarta.persistence.*;
 import jdk.jfr.BooleanFlag;
@@ -24,6 +25,10 @@ public class AppUser {
     @Column(unique=true, nullable=false)
     private String username;
 
+    @Column(name = "sex", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Sex sex;
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -35,7 +40,7 @@ public class AppUser {
     private Role role;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
