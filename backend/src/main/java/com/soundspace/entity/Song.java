@@ -26,7 +26,7 @@ public class Song {
     private Genre genre;
 
     @Column
-    private String file_path;
+    private String filePath;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
