@@ -2,6 +2,9 @@ package com.soundspace.entity;
 
 import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.time.Instant;
@@ -25,12 +28,20 @@ public class Playlist {
     @Enumerated(EnumType.STRING)
     private Visibility visibility;
 
+    @Setter
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
+    @Setter
     @Column(name = "updated_at")
     private Instant updatedAt = Instant.now();
 
-
-
+    @Getter
+    @OneToMany(
+            mappedBy = "playlist",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @OrderBy("position ASC")
+    private List<PlaylistSong> playlistSongs = new ArrayList<>();
 }
