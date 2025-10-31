@@ -6,7 +6,6 @@ import lombok.Data;
 import java.time.Instant;
 
 @Entity
-@Data
 @Table(name = "comments")
 public class Comment {
 
