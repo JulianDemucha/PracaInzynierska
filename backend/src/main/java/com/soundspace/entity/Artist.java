@@ -1,7 +1,6 @@
 package com.soundspace.entity;
 
 import jakarta.persistence.*;
-import jdk.jfr.BooleanFlag;
 
 import java.time.Instant;
 
@@ -24,7 +23,6 @@ public class Artist {
     private Instant createdAt = Instant.now();
 
     @Column(name = "verified", nullable = false)
-    @BooleanFlag
     private boolean artistVerified = false;
 
 }

@@ -4,8 +4,6 @@ import com.soundspace.enums.Role;
 import com.soundspace.enums.Sex;
 import com.soundspace.enums.UserAuthProvider;
 import jakarta.persistence.*;
-import jdk.jfr.BooleanFlag;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
@@ -46,7 +44,6 @@ public class AppUser {
     private UserAuthProvider authProvider;
 
     @Column(nullable = false)
-    @BooleanFlag
     private boolean emailVerified;
 
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
