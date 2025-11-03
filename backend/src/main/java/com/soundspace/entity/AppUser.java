@@ -46,6 +46,12 @@ public class AppUser {
     @Column(nullable = false)
     private boolean emailVerified;
 
+    @Column(length = 1000)
+    private String bio;
+
+    @Column(name = "verified", nullable = false)
+    private boolean userVerified = false;
+
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 

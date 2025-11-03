@@ -18,8 +18,8 @@ public class Song {
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="artist_id")
-    private Artist artist;
+    @JoinColumn(name="user_id")
+    private AppUser creator;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "genre", nullable = false)

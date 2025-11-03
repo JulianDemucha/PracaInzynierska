@@ -21,8 +21,8 @@ public class Album {
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "artist_id", nullable = false)
-    private Artist artist;
+    @JoinColumn(name = "user_id", nullable = false)
+    private AppUser creator;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
