@@ -1,0 +1,35 @@
+src/
+├── App.jsx
+├── main.jsx
+│
+├── api/
+│   ├── apiClient.js
+│   ├── authService.js
+│   └── songService.js
+│
+├── components/
+│   ├── common/
+│   │   ├── PlaylistCard.jsx
+│   │   └── SongRow.jsx
+│   ├── layout/
+│   │   ├── MainContent.jsx
+│   │   ├── PlayerBar.jsx
+│   │   ├── SideBar.jsx
+│   │   └── TopBar.jsx
+│   └── player/
+│       └── PlayerControls.jsx
+│
+├── context/
+│   ├── AuthContext.jsx
+│   └── PlayerContext.jsx
+│
+├── pages/
+│   ├── HomePage.jsx
+│   ├── LibraryPage.jsx
+│   ├── LoginPage.jsx
+│   ├── SearchPage.jsx
+│   └── SettingsPage.jsx
+│
+└── style/
+    ├── App.css
+    └── index.css
