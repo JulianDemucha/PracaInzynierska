@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {Outlet} from "react-router-dom";
-
+import './MainContent.css'
 
 function MainContent() {
     return(

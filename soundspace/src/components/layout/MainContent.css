@@ -1,0 +1,7 @@
+.main-content {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    background-color: #76ff00;
+    padding: 1rem;
+    overflow-y: auto; /*jeśli treść w środku będzie wyższa niż dostępne miejsce 1fr -> dodaje pasek przewijania*/
+}

@@ -1,0 +1,6 @@
+.player-bar {
+    grid-column: 1 / 3;
+    grid-row: 3 / 4;
+    background-color: black;
+    padding: 1rem;
+}
