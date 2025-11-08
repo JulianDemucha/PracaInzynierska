@@ -1,6 +1,192 @@
+/* Plik: src/components/layout/PlayerBar.css */
+
+/* ----- 1. Główny kontener ----- */
 .player-bar {
+    /* Style siatki (grid) z App.css */
     grid-column: 1 / 3;
     grid-row: 3 / 4;
-    background-color: black;
-    padding: 1rem;
+
+    /* Style tła (Twój gradient) */
+    background-color: #000000; /* Zastępczy kolor (Twój) */
+    /* background: linear-gradient(...); */ /* Możesz tu wkleić swój gradient */
+
+    /*border-top: 1px solid #ff0000; !* Twój kolor *!*/
+    padding: 0 1rem; /* Mniejszy padding góra/dół */
+
+    /* Układ Flexbox dla 3 sekcji */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+/* ----- 2. Trzy główne sekcje ----- */
+.player-section-left,
+.player-section-middle,
+.player-section-right {
+    display: flex;
+    align-items: center;
+}
+
+.player-section-left {
+    flex: 1 1 30%; /* Zajmuje 30% szerokości, może się kurczyć/rozrastać */
+    justify-content: flex-start; /* Dopycha do lewej */
+    gap: 1rem;
+}
+
+.player-section-middle {
+    flex: 1 1 40%; /* Zajmuje 40% szerokości */
+    flex-direction: column; /* Układa przyciski nad paskiem postępu */
+    justify-content: center;
+    max-width: 600px;
+}
+
+.player-section-right {
+    flex: 1 1 30%; /* Zajmuje 30% szerokości */
+    justify-content: flex-end; /* Dopycha do prawej */
+    gap: 10px;
+}
+
+/* ----- 3. Style Sekcji Lewej (Info) ----- */
+.player-album-art {
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+}
+
+.player-song-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-song-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.player-artist-name {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+    text-decoration: none;
+}
+.player-artist-name:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.like-button {
+    font-size: 1.2rem;
+}
+
+
+/* ----- 4. Style Sekcji Środkowej (Kontrolki) ----- */
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Mniejszy odstęp */
+    margin-bottom: 4px;
+}
+
+.control-button {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.control-button:hover {
+    color: white;
+}
+
+.control-button img {
+    height: 16px; /* Domyślny rozmiar ikon */
+    width: 16px;
+}
+
+.control-button.play {
+    /*background-color: white;*/
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+}
+
+.control-button.play img {
+    height: 16px;
+    width: 16px;
+    /* Ikona Play/Pause jest czarna na białym tle */
+    /* Musisz pobrać czarne ikony lub ostylować je (jeśli to SVG) */
+    /* Na razie zostawiam białe */
+}
+.control-button.play:hover {
+    transform: scale(1.05);
+}
+
+
+/* ----- 5. Style Paska Postępu i Głośności ----- */
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+}
+
+.time-current, .time-duration {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+    min-width: 30px;
+}
+.time-current { text-align: right; }
+
+.volume-icon {
+    /* Ustawia ikonę pionowo na środku (dobra praktyka) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Zmienia kursor na "rączkę", aby pokazać, że jest klikalny */
+    cursor: pointer;
+
+    /* Możesz dodać padding, jeśli ikona jest za blisko suwaka */
+    padding: 0 8px;
+}
+
+/* Nowy styl dla OBRAZKA (każdej z 3 ikon) */
+.volume-icon img {
+    /* Ustawia stały rozmiar dla wszystkich 3 ikon */
+    height: 18px; /* Możesz dostosować, aby pasowało do reszty */
+    width: 18px;
+    display: block; /* Usuwa domyślny mały margines pod obrazkiem */
+}
+/* Style dla suwaków (input[type="range"]) */
+.progress-bar,
+.volume-slider {
+    flex-grow: 1; /* Pasek wypełnia przestrzeń */
+    -webkit-appearance: none; /* Usuwa domyślny styl */
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #4d4d4d;
+    border-radius: 5px;
+    outline: none;
+
+
+}
+
+.volume-slider {
+    max-width: 100px; /* Ogranicza suwak głośności */
+}
+
+/* Kciuk (uchwyt) suwaka */
+.progress-bar::-webkit-slider-thumb,
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
 }
