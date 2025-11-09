@@ -2,3 +2,21 @@ body {
     margin: 0;
     padding: 0;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #8A2BE2;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.5s ease 1s;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+    transition-delay: 0s;
+}

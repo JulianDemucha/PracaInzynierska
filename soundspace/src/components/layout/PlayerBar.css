@@ -1,26 +1,19 @@
-/* Plik: src/components/layout/PlayerBar.css */
-
-/* ----- 1. Główny kontener ----- */
 .player-bar {
-    /* Style siatki (grid) z App.css */
     grid-column: 1 / 3;
     grid-row: 3 / 4;
 
-    /* Style tła (Twój gradient) */
-    background-color: #000000; /* Zastępczy kolor (Twój) */
-    /* background: linear-gradient(...); */ /* Możesz tu wkleić swój gradient */
-
-    /*border-top: 1px solid #ff0000; !* Twój kolor *!*/
-    padding: 0 1rem; /* Mniejszy padding góra/dół */
+    background-color: #000000;
+    padding: 0 1rem;
 
     /* Układ Flexbox dla 3 sekcji */
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: white;
+    position: relative;
 }
 
-/* ----- 2. Trzy główne sekcje ----- */
+/* ----- Trzy główne sekcje ----- */
 .player-section-left,
 .player-section-middle,
 .player-section-right {
@@ -29,28 +22,26 @@
 }
 
 .player-section-left {
-    flex: 1 1 30%; /* Zajmuje 30% szerokości, może się kurczyć/rozrastać */
-    justify-content: flex-start; /* Dopycha do lewej */
-    gap: 1rem;
-}
-
-.player-section-middle {
-    flex: 1 1 40%; /* Zajmuje 40% szerokości */
-    flex-direction: column; /* Układa przyciski nad paskiem postępu */
-    justify-content: center;
-    max-width: 600px;
-}
-
-.player-section-right {
-    flex: 1 1 30%; /* Zajmuje 30% szerokości */
-    justify-content: flex-end; /* Dopycha do prawej */
+    flex: 1 1 30%;
+    justify-content: flex-start;
     gap: 10px;
 }
 
-/* ----- 3. Style Sekcji Lewej (Info) ----- */
+.player-section-middle {
+    flex: 1 1 40%;
+    justify-content: center;
+}
+
+.player-section-right {
+    flex: 1 1 30%;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* -----  Style Sekcji Lewej (Info) ----- */
 .player-album-art {
-    width: 56px;
-    height: 56px;
+    width: 40px;
+    height: 40px;
     border-radius: 4px;
 }
 
@@ -79,18 +70,18 @@
 }
 
 
-/* ----- 4. Style Sekcji Środkowej (Kontrolki) ----- */
+/* -----  Style Sekcji Środkowej (Kontrolki) ----- */
 .player-controls {
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* Mniejszy odstęp */
+    gap: 1rem;
     margin-bottom: 4px;
+    width: 100%;
 }
 
 .control-button {
     background: none;
     border: none;
-    color: #b3b3b3;
     cursor: pointer;
     padding: 4px;
     display: flex;
@@ -102,35 +93,116 @@
 }
 
 .control-button img {
-    height: 16px; /* Domyślny rozmiar ikon */
+    height: 16px;
     width: 16px;
 }
 
 .control-button.play {
-    /*background-color: white;*/
     border-radius: 50%;
     width: 32px;
     height: 32px;
 }
 
+.control-button.active {
+    color: #8A2BE2;
+    filter: drop-shadow(0 0 2px #8A2BE2);
+}
+
 .control-button.play img {
     height: 16px;
     width: 16px;
-    /* Ikona Play/Pause jest czarna na białym tle */
-    /* Musisz pobrać czarne ikony lub ostylować je (jeśli to SVG) */
-    /* Na razie zostawiam białe */
 }
 .control-button.play:hover {
     transform: scale(1.05);
 }
 
+.favorite-button img{
+    height: 14px;
+    width: 14px;
+}
 
-/* ----- 5. Style Paska Postępu i Głośności ----- */
+/* ----- Style Sekcji Prawej (Paska Postępu i Głośności) ----- */
+
+/* ----- STYLE OKIENKA KOLEJKI ----- */
+.queue-popup {
+    position: absolute;
+    bottom: 100%;
+    right: 1rem;
+
+    /* Wygląd */
+    width: 350px;
+    max-height: 40vh;
+    background-color: #282828;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+
+    /* Scroll */
+    overflow-y: auto;
+}
+
+.queue-title {
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.queue-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.queue-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #404040;
+}
+.queue-item:last-child {
+    border-bottom: none;
+}
+
+.queue-song-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.queue-song-title {
+    font-size: 0.9rem;
+    color: white;
+}
+
+.queue-artist-name {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+}
+
+.queue-remove-button {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px;
+}
+.queue-remove-button img {
+    height: 16px;
+    width: 16px;
+}
+
 .progress-bar-container {
     display: flex;
     align-items: center;
-    width: 100%;
-    gap: 10px;
+    gap: 5px;
+    flex-grow: 1;
+    margin: 0 1rem;
 }
 
 .time-current, .time-duration {
@@ -138,45 +210,37 @@
     color: #b3b3b3;
     min-width: 30px;
 }
-.time-current { text-align: right; }
+.time-current {
+    text-align: right;
+}
 
 .volume-icon {
-    /* Ustawia ikonę pionowo na środku (dobra praktyka) */
     display: flex;
     align-items: center;
     justify-content: center;
-
-    /* Zmienia kursor na "rączkę", aby pokazać, że jest klikalny */
     cursor: pointer;
 
-    /* Możesz dodać padding, jeśli ikona jest za blisko suwaka */
-    padding: 0 8px;
 }
 
-/* Nowy styl dla OBRAZKA (każdej z 3 ikon) */
 .volume-icon img {
-    /* Ustawia stały rozmiar dla wszystkich 3 ikon */
-    height: 18px; /* Możesz dostosować, aby pasowało do reszty */
+    height: 18px;
     width: 18px;
-    display: block; /* Usuwa domyślny mały margines pod obrazkiem */
+    display: block;
 }
-/* Style dla suwaków (input[type="range"]) */
+/* Style dla suwaków  */
 .progress-bar,
 .volume-slider {
-    flex-grow: 1; /* Pasek wypełnia przestrzeń */
-    -webkit-appearance: none; /* Usuwa domyślny styl */
+    flex-grow: 1;
     appearance: none;
     width: 100%;
     height: 4px;
     background: #4d4d4d;
     border-radius: 5px;
     outline: none;
-
-
 }
 
 .volume-slider {
-    max-width: 100px; /* Ogranicza suwak głośności */
+    max-width: 100px;
 }
 
 /* Kciuk (uchwyt) suwaka */
@@ -190,3 +254,4 @@
     border-radius: 50%;
     cursor: pointer;
 }
+

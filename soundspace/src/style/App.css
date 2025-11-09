@@ -1,7 +1,7 @@
 .app-container {
     display: grid;
     grid-template-columns: 240px 1fr;
-    grid-template-rows: 60px 1fr 90px;
+    grid-template-rows: 60px 1fr 60px;
 
     width: 100vw;
     height: 100vh;
