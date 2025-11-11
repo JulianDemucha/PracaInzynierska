@@ -4,16 +4,22 @@ import com.soundspace.enums.Role;
 import com.soundspace.enums.Sex;
 import com.soundspace.enums.UserAuthProvider;
 import jakarta.persistence.*;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+@Builder
 @Entity
 @Table(name = "app_users")
+@Getter
 @NoArgsConstructor
-public class AppUser {
+@AllArgsConstructor
+public class AppUser implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,11 +55,23 @@ public class AppUser {
     @Column(length = 1000)
     private String bio;
 
-    @Column(name = "verified", nullable = false)
-    private boolean userVerified = false;
-
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return "";
+    }
+
+    // spring security ma identyfikowac usera po emailu, nie nazwie uzytkownika
+    @Override
+    public String getUsername() {
+        return email;
+    }
 }
