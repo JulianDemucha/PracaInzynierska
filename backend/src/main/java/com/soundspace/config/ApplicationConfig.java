@@ -15,7 +15,7 @@ public class ApplicationConfig {
 
     // domyslnie spring security uwaza username jako subject do identufikowania uzytkownikow
     // tu zmieniam zeby loadByUsername szukalo uzytkownika po emailu
-    // (AppUser : 72)
+    // (AppUser : 74)
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> repo.findByEmail(email)
