@@ -4,15 +4,19 @@ import com.soundspace.enums.Role;
 import com.soundspace.enums.Sex;
 import com.soundspace.enums.UserAuthProvider;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Builder
 @Entity
 @Table(name = "app_users")
 @NoArgsConstructor
+@AllArgsConstructor
 public class AppUser {
 
     @Id
@@ -48,9 +52,6 @@ public class AppUser {
 
     @Column(length = 1000)
     private String bio;
-
-    @Column(name = "verified", nullable = false)
-    private boolean userVerified = false;
 
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
