@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './ContextMenu.css';
 import moreIcon from '../../assets/images/3dots.png';
 import moreIconOn from '../../assets/images/3dotsOn.png';
-/**
- * Komponent generycznego menu kontekstowego.
- * @param {Object[]} options - Tablica obiektów opcji, np. [{ label: 'Nazwa opcji', onClick: () => {} }]
- */
+
 function ContextMenu({ options }) {
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState({});

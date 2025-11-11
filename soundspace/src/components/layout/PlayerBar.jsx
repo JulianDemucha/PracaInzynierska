@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import './PlayerBar.css';
-import '../../style/index.css';
+import '../../index.css';
 import '../common/ContextMenu.css';
 import ContextMenu from '../common/ContextMenu.jsx';
 

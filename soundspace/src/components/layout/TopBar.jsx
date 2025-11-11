@@ -3,8 +3,9 @@ import {Link} from 'react-router-dom'
 import homepage from '../../assets/images/homepage.png'
 import searchIcon from "../../assets/images/searchicon.png"
 import './TopBar.css'
-import ContextMenu from '../common/ContextMenu.jsx';
+import {useAuth} from "../../context/AuthContext.jsx";
 function TopBar() {
+    const {openModal} = useAuth();
     return (
         <header className="topbar">
             <div className="topbar-homepage-icon">
@@ -17,9 +18,12 @@ function TopBar() {
                 <input type="text" placeholder="Wyszukaj..."/>
             </div>
 
-            <Link to="/login" className="login-button">
+            <button className="login-button" onClick={() => openModal('login')}>
                 Zaloguj
-            </Link>
+            </button>
+            {/*<Link to="/login" className="login-button">*/}
+            {/*    Zaloguj*/}
+            {/*</Link>*/}
         </header>
     )
 }
