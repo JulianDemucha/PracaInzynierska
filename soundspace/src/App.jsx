@@ -4,8 +4,8 @@ import TopBar from './components/layout/TopBar.jsx'
 import SideBar from './components/layout/SideBar.jsx'
 import PlayerBar from './components/layout/PlayerBar.jsx'
 import MainContent from './components/layout/MainContent.jsx'
-
-import './style/App.css'
+import AuthModal from './components/auth/AuthModal.jsx'
+import './App.css'
 
 function App() {
     return (
@@ -14,6 +14,7 @@ function App() {
             <TopBar />
             <MainContent />
             <PlayerBar />
+            <AuthModal />
         </div>
     )
 }
