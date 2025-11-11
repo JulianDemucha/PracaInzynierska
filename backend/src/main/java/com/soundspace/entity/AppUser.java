@@ -66,7 +66,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public String getPassword() {
-        return "";
+        return passwordHash;
     }
 
     // spring security ma identyfikowac usera po emailu, nie nazwie uzytkownika
