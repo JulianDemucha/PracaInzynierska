@@ -43,7 +43,7 @@ public class AppUser implements UserDetails {
     private Role role;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
