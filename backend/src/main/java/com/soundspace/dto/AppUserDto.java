@@ -2,6 +2,8 @@ package com.soundspace.dto;
 
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder
 public record AppUserDto (
         Long id,
@@ -11,6 +13,6 @@ public record AppUserDto (
         String createdAt,
         String authProvider,
         boolean emailVerified,
-        String bio,
-        List<CommentDto> comments
+        String bio
+//        List<Long> commentsIds
 ){}
