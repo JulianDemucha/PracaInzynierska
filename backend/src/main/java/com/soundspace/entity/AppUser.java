@@ -4,9 +4,7 @@ import com.soundspace.enums.Role;
 import com.soundspace.enums.Sex;
 import com.soundspace.enums.UserAuthProvider;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,6 +13,7 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name = "app_users")
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class AppUser {
