@@ -1,9 +1,11 @@
 import React from "react";
 import {useAuth} from "../../context/AuthContext.jsx";
 import './AuthModal.css';
-import googleIcon from '../../assets/images/googleIcon.png'
+import googleIcon from '../../assets/images/googleIcon.png';
+import defaultAvatar from '../../assets/images/default-avatar.png';
+
 function AuthModal() {
-    const {isModalOpen, closeModal, modalView, switchToLogin, switchToRegister} = useAuth();
+    const {isModalOpen, closeModal, modalView, switchToLogin, switchToRegister, login} = useAuth();
     if(!isModalOpen) {
         return null;
     }
@@ -18,7 +20,9 @@ function AuthModal() {
                         <h2>Zaloguj się</h2>
                         <input type="email" placeholder="Email" />
                         <input type="password" placeholder="Hasło" />
-                        <button className="auth-submit-button">Zaloguj</button>
+                        <button className="auth-submit-button" onClick={() => login({ avatar: defaultAvatar, name: 'Użytkownik' })}>
+                            Zaloguj
+                        </button>
                         <div className="auth-divider">
                             <span>LUB</span>
                         </div>

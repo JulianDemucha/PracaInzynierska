@@ -4,8 +4,8 @@ import './MainContent.css'
 
 function MainContent() {
     return(
-        <main className="main-content">
-            <Outlet/>
+        <main className="main-content custom-scrollbar">
+            <Outlet />
         </main>
     )
 }

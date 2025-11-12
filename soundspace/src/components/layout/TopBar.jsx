@@ -5,7 +5,7 @@ import searchIcon from "../../assets/images/searchicon.png"
 import './TopBar.css'
 import {useAuth} from "../../context/AuthContext.jsx";
 function TopBar() {
-    const {openModal} = useAuth();
+    const { currentUser, openModal } = useAuth();
     return (
         <header className="topbar">
             <div className="topbar-homepage-icon">
@@ -18,12 +18,21 @@ function TopBar() {
                 <input type="text" placeholder="Wyszukaj..."/>
             </div>
 
-            <button className="login-button" onClick={() => openModal('login')}>
-                Zaloguj
-            </button>
-            {/*<Link to="/login" className="login-button">*/}
-            {/*    Zaloguj*/}
-            {/*</Link>*/}
+            <div className="topbar-profile">
+                {currentUser ? (
+                    <Link to="/profile">
+                        <img
+                            src={currentUser.avatar}
+                            alt="Mój profil"
+                            className="topbar-avatar"
+                        />
+                    </Link>
+                ) : (
+                    <button className="login-button" onClick={() => openModal('login')}>
+                        Zaloguj
+                    </button>
+                )}
+            </div>
         </header>
     )
 }

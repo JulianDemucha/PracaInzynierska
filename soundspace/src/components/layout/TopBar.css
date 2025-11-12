@@ -4,7 +4,7 @@
 
     background: linear-gradient(45deg, #8A2BE2, #000000, #8A2BE2, #000000);
     background-size: 400% 400%;
-    animation: gradient 40s ease infinite;
+    animation: gradient 60s ease infinite;
 
     display: flex;
     align-items: center;
@@ -99,4 +99,12 @@
     background-position: right center;
     box-shadow: 0 0 15px white;
     text-decoration: none;
+}
+
+.topbar-avatar {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: #8A2BE2;
 }

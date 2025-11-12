@@ -2,6 +2,7 @@ import {createContext, useState, useContext} from "react";
 
 const AuthContext = createContext()
 export default function AuthProvider({ children }) {
+    const[currentUser, setCurrentUser] = useState(null)
     const[isModalOpen, setIsModalOpen] = useState(false);
     const[modalView, setModalView] = useState('login');
     const openModal = (view = 'login') => {
@@ -9,11 +10,17 @@ export default function AuthProvider({ children }) {
         setIsModalOpen(true);
     };
     const closeModal = () => {
-        isModalOpen(false);
+        setIsModalOpen(false);
     };
     const switchToRegister = () => setModalView('register');
     const switchToLogin = () => setModalView('login');
-
+    const login = (userData) => {
+        setCurrentUser(userData);
+        closeModal();
+    }
+    const logout = () => {
+        setCurrentUser(null);
+    }
     const value = {
         isModalOpen,
         modalView,
@@ -21,13 +28,18 @@ export default function AuthProvider({ children }) {
         closeModal,
         switchToRegister,
         switchToLogin,
+        currentUser,
+        login,
+        logout
     }
+
     return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )
 }
+
 // Komentarz wyłączający regułę ESLint dla tej linii
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {

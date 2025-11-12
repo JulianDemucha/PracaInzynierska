@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import App from './App'
 import './index.css'
 import AuthProvider from './context/AuthContext'
+import ProfilePage from './pages/ProfilePage'
 
 const router = createBrowserRouter([
     {
@@ -13,7 +14,15 @@ const router = createBrowserRouter([
             {
                 index: true,
                 element: <HomePage/>,
-            }
+            },
+            {
+                path: "/profile",
+                element: <ProfilePage />,
+            },
+            // {
+            //     path: "/profile/edit",
+            //     element: <EditProfilePage />
+            // }
         ]
     }
 ]);

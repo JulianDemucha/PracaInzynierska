@@ -10,6 +10,11 @@ function SideBar() {
                         Strona Główna
                     </Link>
                 </li>
+                <li className="nav-item">
+                    <Link className="nav-link" to="/profile">
+                        Profil Użytkownika
+                    </Link>
+                </li>
             </ul>
         </nav>
     )
