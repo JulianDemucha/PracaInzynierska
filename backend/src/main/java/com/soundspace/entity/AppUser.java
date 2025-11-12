@@ -43,7 +43,7 @@ public class AppUser implements UserDetails {
     private Role role;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
@@ -66,7 +66,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public String getPassword() {
-        return "";
+        return passwordHash;
     }
 
     // spring security ma identyfikowac usera po emailu, nie nazwie uzytkownika
