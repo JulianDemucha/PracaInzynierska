@@ -1,18 +1,15 @@
-/* Plik: src/components/auth/AuthModal.css */
-
-/* Rozmazane tło (Backdrop) */
 .auth-modal-backdrop {
-    position: fixed; /* Zawsze na wierzchu, na całym ekranie */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 100; /* Nad Sidebar, TopBar, itp. */
+    z-index: 100;
 
     /* Efekt rozmycia */
-    background-color: rgba(0, 0, 0, 0.5); /* Lekko czarne tło */
-    backdrop-filter: blur(5px); /* To jest magia! */
-    -webkit-backdrop-filter: blur(5px); /* Wsparcie dla Safari */
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 
     /* Centrowanie zawartości */
     display: flex;
@@ -22,7 +19,7 @@
 
 /* Sam formularz (okienko) */
 .auth-modal-content {
-    background: #181818; /* Ciemne tło, pasujące do reszty */
+    background: #181818;
     padding: 2rem 3rem;
     border-radius: 8px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
@@ -72,15 +69,15 @@
 }
 .auth-form input:focus {
     outline: none;
-    border-color: #8A2BE2; /* Fioletowa obwódka po kliknięciu */
+    border-color: #8A2BE2;
 }
 
 .auth-submit-button {
-    background-color: #8A2BE2; /* Fioletowy przycisk */
+    background-color: #8A2BE2;
     color: white;
     border: none;
     padding: 12px;
-    border-radius: 50px; /* Okrągłe rogi */
+    border-radius: 50px;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
@@ -91,7 +88,7 @@
     transform: scale(1.05);
 }
 
-/* Przełącznik (Zarejestruj się / Zaloguj się) */
+
 .auth-switch {
     text-align: center;
     font-size: 0.9rem;
@@ -100,41 +97,34 @@
 }
 
 .auth-switch span {
-    color: #8A2BE2; /* Fioletowy */
+    color: #8A2BE2;
     font-weight: bold;
     cursor: pointer;
 }
 .auth-switch span:hover {
     text-decoration: underline;
 }
-/* Plik: src/components/auth/AuthModal.css */
-/* ... (style .auth-modal-backdrop, .auth-form, .auth-submit-button itd.) ... */
 
-/* Styl dla separatora "LUB" */
 .auth-divider {
     display: flex;
     align-items: center;
     text-align: center;
-    color: #b3b3b3; /* Szary tekst */
-    margin: 1rem 0; /* Odstęp góra/dół */
+    color: #b3b3b3;
+    margin: 1rem 0;
 }
 
 /* Linie po bokach "LUB" */
 .auth-divider::before,
 .auth-divider::after {
     content: '';
-    flex: 1; /* Rozciąga linie, aby wypełniły przestrzeń */
-    border-bottom: 1px solid #535353; /* Cienka szara linia */
+    flex: 1;
+    border-bottom: 1px solid #535353;
 }
 
 .auth-divider span {
-    padding: 0 1rem; /* Odstęp tekstu "LUB" od linii */
+    padding: 0 1rem;
 }
 
-/* Styl dla przycisku Google */
-/* ... (wszystkie twoje style .auth-divider, .auth-form itd. zostają) ... */
-
-/* Styl dla przycisku Google (ten jest w większości taki sam) */
 .google-login-button {
     background-color: #333;
     color: white;
@@ -146,44 +136,35 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
 
-    /* Układa ikonę i tekst obok siebie */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px; /* Odstęp między ikoną a tekstem */
+    gap: 10px;
 }
 
 .google-login-button:hover {
     background-color: #404040;
 }
 
-/* 👇 ZASTĄP STARY STYL .google-icon TYM KODEM 👇 */
-/* Styl dla obrazka logo Google */
 .google-logo {
-    width: 20px;  /* Ustawia szerokość obrazka */
-    height: 20px; /* Ustawia wysokość obrazka */
+    width: 20px;
+    height: 20px;
 }
 
-/* Plik: src/components/auth/AuthModal.css */
-/* ... (wszystkie twoje istniejące style) ... */
-
-/* Nowy styl dla kontenera checkboxa */
 .auth-terms {
     display: flex;
     align-items: center;
-    gap: 10px; /* Odstęp między checkboxem a tekstem */
+    gap: 10px;
     font-size: 0.8rem;
     color: #b3b3b3;
 }
 
-/* Styl samego checkboxa */
 .auth-terms input[type="checkbox"] {
     width: 16px;
     height: 16px;
     cursor: pointer;
 }
 
-/* Styl dla etykiety (tekstu) obok */
 .auth-terms label {
     cursor: pointer;
 }

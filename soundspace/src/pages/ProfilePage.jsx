@@ -3,11 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
+import EditProfileModal from '../components/profile/EditProfileModal.jsx';
 
 function ProfilePage() {
     const { currentUser, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('wszystko');
-
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     return (
         <div className="profile-page">
 
@@ -36,9 +37,9 @@ function ProfilePage() {
                     <li onClick={() => setActiveTab('komentarze')} className={activeTab === 'komentarze' ? 'active' : ''}>Komentarze</li>
                 </ul>
                 <div className="profile-nav-actions">
-                    <Link to="/profile/edit" className="edit-profile-button">
+                    <button className="edit-profile-button" onClick={() => setIsEditModalOpen(true)}>
                         Edytuj profil
-                    </Link>
+                    </button>
                     <Link to="/" className="logout-button" onClick={logout}>
                         Wyloguj
                     </Link>
@@ -90,6 +91,10 @@ function ProfilePage() {
                     </div>
                 )}
             </section>
+            <EditProfileModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+            />
         </div>
     );
 }

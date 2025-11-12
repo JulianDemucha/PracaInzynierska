@@ -1,0 +1,147 @@
+.edit-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.edit-modal-content {
+    background: #181818;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    color: white;
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 2rem 0;
+}
+
+/* Przycisk 'X' */
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover { color: white; }
+
+/* Główny formularz */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.edit-form label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #ffffff;
+}
+.edit-form input, .edit-form textarea {
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #ffffff;
+    background: #333;
+    color: white;
+    font-size: 1rem;
+}
+.edit-form textarea {
+    resize: vertical;
+}
+
+/* === NOWE STYLE: Sekcja Awatara === */
+.avatar-edit-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #ffffff;
+}
+.current-avatar-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.avatar-edit-actions {
+    display: flex;
+    flex-direction: column;
+}
+/* Usunięcie inputu pliku*/
+.file-upload-input {
+    display: none;
+}
+
+.file-upload-button {
+    background-color: #333;
+    border: 1px solid #535353;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: center;
+}
+.file-upload-button:hover {
+    background-color: #404040;
+}
+.file-hint {
+    font-size: 0.8rem;
+    color: #ffffff;
+    margin: 8px 0 0 0;
+}
+
+/* === NOWE STYLE: Sekcja Płci === */
+.gender-selection {
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    padding: 1rem;
+    display: flex;
+    gap: 1.5rem;
+}
+.gender-selection legend {
+    padding: 0 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #ffffff;
+}
+.gender-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.gender-option label {
+    margin-bottom: 0;
+    color: white;
+    cursor: pointer;
+}
+.gender-option input[type="radio"] {
+    cursor: pointer;
+}
+
+
+.save-button {
+    background-color: #8A2BE2;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 1rem;
+}
