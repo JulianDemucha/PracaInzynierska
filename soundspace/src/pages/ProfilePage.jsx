@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext'; // Użyjemy go do pobrania danych usera
-
-// Importujemy style (stworzymy je w Kroku 2)
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import './ProfilePage.css';
-
-// Importujemy placeholder awatara (ten sam co w TopBar)
 import defaultAvatar from '../assets/images/default-avatar.png';
 
 function ProfilePage() {
-    // Pobieramy zalogowanego użytkownika (na razie naszego "na niby")
     const { currentUser, logout } = useAuth();
-
-    // Stan do zarządzania aktywną zakładką
     const [activeTab, setActiveTab] = useState('wszystko');
 
     return (
@@ -25,10 +19,9 @@ function ProfilePage() {
                     className="profile-avatar"
                 />
                 <div className="profile-info">
-                    <span className="profile-type">Użytkownik</span>
                     <h1 className="profile-username">{currentUser.name || 'Nazwa Użytkownika'}</h1>
                     <p className="profile-bio">
-                        Tu będzie jakieś info o użytkowniku / bio.
+                        Nowy album 21.11.25 20:30
                     </p>
                 </div>
             </header>
@@ -42,9 +35,14 @@ function ProfilePage() {
                     <li onClick={() => setActiveTab('playlisty')} className={activeTab === 'playlisty' ? 'active' : ''}>Playlisty</li>
                     <li onClick={() => setActiveTab('komentarze')} className={activeTab === 'komentarze' ? 'active' : ''}>Komentarze</li>
                 </ul>
-                <button className="edit-profile-button" onClick={logout}>
-                    Wyloguj (test)
-                </button>
+                <div className="profile-nav-actions">
+                    <Link to="/profile/edit" className="edit-profile-button">
+                        Edytuj profil
+                    </Link>
+                    <Link to="/" className="logout-button" onClick={logout}>
+                        Wyloguj
+                    </Link>
+                </div>
             </nav>
 
             {/* ===== 3. ZAWARTOŚĆ (Listy) ===== */}
@@ -55,7 +53,7 @@ function ProfilePage() {
                     <div className="content-section">
                         <h2>Własne utwory</h2>
                         {/* Tu w przyszłości będzie .map() po utworach */}
-                        <div className="song-row-placeholder">Mój utwór nr 1</div>
+                        <div className="song-row-placeholder">Utwór Kowala</div>
                         <div className="song-row-placeholder">Mój utwór nr 2</div>
                     </div>
                 )}

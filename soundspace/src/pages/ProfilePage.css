@@ -60,6 +60,11 @@
     top: 0;
     z-index: 5;
 }
+.profile-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* Odstęp między przyciskami "Edytuj" i "Wyloguj" */
+}
 
 .profile-tabs {
     display: flex;
@@ -96,10 +101,26 @@
     border-radius: 50px;
     cursor: pointer;
     font-weight: bold;
+    text-decoration: none;
 }
 .edit-profile-button:hover {
     background-color: #282828;
     border-color: white;
+}
+.logout-button {
+    background: none;
+    border: 1px solid #535353;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: none;
+}
+.logout-button:hover {
+    background-color: #282828;
+    border-color: #ff4d4d; /* Lekko czerwony */
+    color: #ff4d4d;
 }
 
 
