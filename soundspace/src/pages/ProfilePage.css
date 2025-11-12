@@ -16,9 +16,9 @@
 .profile-avatar {
     width: 100px;
     height: 100px;
-    border-radius: 50%; /* Okrągły awatar */
+    border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Cień pod awatarem */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .profile-info {
@@ -33,7 +33,7 @@
 }
 
 .profile-username {
-    font-size: 3rem; /* Duża nazwa użytkownika */
+    font-size: 3rem;
     margin: 0.5rem 0;
 }
 
@@ -45,17 +45,15 @@
 
 /* ===== 2. NAWIGACJA (ZAKŁADKI) ===== */
 .profile-nav {
-    /* Układa zakładki (lewo) i przycisk (prawo) */
+
     display: flex;
     justify-content: space-between;
     align-items: center;
 
-    /* Gruba czarna linia z mockupu */
     border-bottom: 2px solid black;
-    padding: 0 2rem; /* Dopasowanie do paddingu nagłówka */
-    background-color: #121212; /* Utrzymuje tło */
+    padding: 0 2rem;
+    background-color: #121212;
 
-    /* Przykleja nawigację do góry okna MainContent podczas scrollowania */
     position: sticky;
     top: 0;
     z-index: 5;
@@ -63,7 +61,7 @@
 .profile-nav-actions {
     display: flex;
     align-items: center;
-    gap: 1rem; /* Odstęp między przyciskami "Edytuj" i "Wyloguj" */
+    gap: 1rem;
 }
 
 .profile-tabs {
@@ -80,7 +78,7 @@
     color: #b3b3b3;
     padding: 1.5rem 0;
     cursor: pointer;
-    border-bottom: 3px solid transparent; /* Przezroczysta ramka na start */
+    border-bottom: 3px solid transparent;
 }
 
 .profile-tabs li:hover {
@@ -90,9 +88,11 @@
 /* Styl dla aktywnej zakładki */
 .profile-tabs li.active {
     color: white;
-    border-bottom-color: #8A2BE2; /* Fioletowa linia pod aktywną zakładką */
+    border-bottom-color: #8A2BE2;
 }
 
+
+.add-song-button,
 .edit-profile-button {
     background: none;
     border: 1px solid #535353;
@@ -103,6 +103,7 @@
     font-weight: bold;
     text-decoration: none;
 }
+.add-song-button:hover,
 .edit-profile-button:hover {
     background-color: #282828;
     border-color: white;
@@ -119,14 +120,14 @@
 }
 .logout-button:hover {
     background-color: #282828;
-    border-color: #ff4d4d; /* Lekko czerwony */
+    border-color: #ff4d4d;
     color: #ff4d4d;
 }
 
 
 /* ===== 3. ZAWARTOŚĆ (LISTY) ===== */
 .profile-content {
-    padding: 1rem 2rem; /* Dopasowanie do reszty */
+    padding: 1rem 2rem;
 }
 
 .content-section {

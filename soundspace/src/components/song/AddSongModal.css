@@ -59,7 +59,9 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    align-self: flex-start;
 }
+
 
 /* Etykiety (Label) */
 .edit-form label {
@@ -68,11 +70,8 @@
     color: #b3b3b3;
 }
 
-/* Inputy, Textarea */
-.edit-form input[type="text"],
-.edit-form input[type="email"],
-.edit-form input[type="password"],
-.edit-form textarea {
+/* Inputy */
+.edit-form input[type="text"] {
     padding: 14px;
     border-radius: 4px;
     border: 1px solid #404040;
@@ -80,22 +79,28 @@
     color: white;
     font-size: 1rem;
 }
-.edit-form input:focus,
-.edit-form textarea:focus {
+.edit-form input:focus {
     outline: none;
     border-color: #8A2BE2;
 }
 
-.edit-form textarea {
-    resize: none;
-    min-height: 100px;
+/* === Sekcja Okładki === */
+.cropper-container {
+    width: 200px;
+    height: 200px;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #404040;
+    margin: 0 auto;
 }
-
-/* === SEKCJA AWATARA (Skopiowana z AddSongModal) === */
 .cover-art-buttons {
     display: flex;
     gap: 10px;
     align-items: center;
+}
+.cropper-container .ReactCrop__image {
+    width: 100%;
 }
 .remove-image-button {
     background-color: #333;
@@ -126,26 +131,44 @@
     font-size: 1rem;
     text-align: center;
     transition: border-color 0.2s ease;
-    flex-grow: 1;
+
 }
 .file-upload-button:hover {
     border-color: #8A2BE2;
 }
-.cropper-container {
-    height: 200px;
-    width: 200px;
-    background-color: #000;
-    border-radius: 8px;
-    overflow: hidden;
+
+/* === Sekcja Gatunków === */
+.genre-picker-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #1A1A1A;
+    padding: 10px;
+    border-radius: 4px;
     border: 1px solid #404040;
-    margin: 0 auto;
 }
-.cropper-container .ReactCrop__image {
-    width: 100%;
+.genre-pill {
+    padding: 6px 12px;
+    border: 1px solid #535353;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+.genre-pill:hover {
+    background-color: #282828;
+}
+.genre-pill.selected {
+    background-color: #8A2BE2;
+    border-color: #8A2BE2;
+    color: white;
+    font-weight: bold;
 }
 
-
-/* === SEKCJA PŁCI (bez zmian) === */
+/* === Sekcja Widoczności === */
 .gender-selection {
     border: none;
     border-top: 1px solid #404040;
@@ -177,7 +200,7 @@
     cursor: pointer;
 }
 
-/* === PRZYCISK ZAPISU (bez zmian) === */
+/* === Przycisk Zapisu === */
 .save-button {
     background: linear-gradient(to right, #8A2BE2, #6a1b9a);
     color: white;

@@ -4,11 +4,13 @@ import { Link } from 'react-router-dom';
 import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
 import EditProfileModal from '../components/profile/EditProfileModal.jsx';
+import AddSongModal from '../components/song/AddSongModal.jsx';
 
 function ProfilePage() {
     const { currentUser, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     return (
         <div className="profile-page">
 
@@ -37,6 +39,9 @@ function ProfilePage() {
                     <li onClick={() => setActiveTab('komentarze')} className={activeTab === 'komentarze' ? 'active' : ''}>Komentarze</li>
                 </ul>
                 <div className="profile-nav-actions">
+                    <button className="add-song-button" onClick={() => setIsAddSongModalOpen(true)}>
+                        Dodaj utwór
+                    </button>
                     <button className="edit-profile-button" onClick={() => setIsEditModalOpen(true)}>
                         Edytuj profil
                     </button>
@@ -94,6 +99,10 @@ function ProfilePage() {
             <EditProfileModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
+            />
+            <AddSongModal
+                isOpen={isAddSongModalOpen}
+                onClose={() => setIsAddSongModalOpen(false)}
             />
         </div>
     );
