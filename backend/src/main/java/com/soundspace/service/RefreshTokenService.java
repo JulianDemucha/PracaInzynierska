@@ -49,15 +49,11 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public RefreshTokenCookieDto createRefreshTokenAndRevokeOld(String currentToken) {
+    public RefreshTokenCookieDto createNewRefreshToken(String currentToken) {
         String newToken = UUID.randomUUID().toString();
         String hashedNewToken = DigestUtils.sha256Hex(newToken);
         Instant expiresAt = Instant.now().plusSeconds(60 * 60); //1h
-
-        RefreshToken currentRefreshToken = getRefreshTokenByToken(currentToken);
-        currentRefreshToken.setRevoked(true);
-        currentRefreshToken.setRevokedAt(Instant.now());
-        AppUser appUser = currentRefreshToken.getAppUser();
+        AppUser appUser = getRefreshTokenByToken(currentToken).getAppUser();
 
         RefreshToken newRefreshToken = RefreshToken.builder()
                 .appUser(appUser)
@@ -67,7 +63,6 @@ public class RefreshTokenService {
                 .revokedAt(null)
                 .build();
 
-        refreshTokenRepository.save(currentRefreshToken);
         refreshTokenRepository.save(newRefreshToken);
 
         return RefreshTokenCookieDto.builder()
@@ -75,6 +70,13 @@ public class RefreshTokenService {
                 .expiresAt(expiresAt.toString())
                 .jwt(jwtService.generateJwtToken(appUser))
                 .build();
+    }
+
+    public void revokeRefreshToken(String refreshToken) {
+        RefreshToken RefreshToken = getRefreshTokenByToken(refreshToken);
+        RefreshToken.setRevoked(true);
+        RefreshToken.setRevokedAt(Instant.now());
+        refreshTokenRepository.save(RefreshToken);
     }
 
     public RefreshToken getRefreshTokenByToken(String token){

@@ -7,10 +7,19 @@ import EditProfileModal from '../components/profile/EditProfileModal.jsx';
 import AddSongModal from '../components/song/AddSongModal.jsx';
 
 function ProfilePage() {
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, loading } = useAuth();
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
+
+    if (loading && !currentUser) {
+        return (
+            <div className="profile-page">
+                <p>Ładowanie profilu…</p>
+            </div>
+        );
+    }
+
     return (
         <div className="profile-page">
 
@@ -22,7 +31,7 @@ function ProfilePage() {
                     className="profile-avatar"
                 />
                 <div className="profile-info">
-                    <h1 className="profile-username">{currentUser.name || 'Nazwa Użytkownika'}</h1>
+                    <h1 className="profile-username">{currentUser.username || 'Nazwa Użytkownika'}</h1>
                     <p className="profile-bio">
                         Nowy album 21.11.25 20:30
                     </p>

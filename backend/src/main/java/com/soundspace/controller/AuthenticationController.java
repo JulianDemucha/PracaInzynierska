@@ -6,10 +6,16 @@ import com.soundspace.security.dto.RegisterRequest;
 import com.soundspace.service.AuthenticationService;
 import com.soundspace.service.CookieService;
 import com.soundspace.service.RefreshTokenService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,7 +34,8 @@ public class AuthenticationController {
         String email = registerRequest.getEmail();
 
         cookieService.setJwtAndRefreshCookie(jwt,
-                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
+                refreshTokenService.createRefreshToken(email).getRefreshToken(), response,
+                60 * 60 * 24 /* 24h */, 60 * 60 * 24 * 30/* 30D */);
 
         return ResponseEntity.ok().build();
     }
@@ -42,7 +49,8 @@ public class AuthenticationController {
         String email = authenticationRequest.getEmail();
 
         cookieService.setJwtAndRefreshCookie(jwt,
-                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
+                refreshTokenService.createRefreshToken(email).getRefreshToken(), response,
+                60 * 60 * 24 /* 24h */, 60 * 60 * 24 * 30/* 30D */);
 
         return ResponseEntity.ok().build();
     }
@@ -57,10 +65,34 @@ public class AuthenticationController {
         }
 
         RefreshTokenCookieDto refreshTokenCookieDto =
-                refreshTokenService.createRefreshTokenAndRevokeOld(refreshToken);
+                refreshTokenService.createNewRefreshToken(refreshToken);
+        refreshTokenService.revokeRefreshToken(refreshToken);
 
 
         cookieService.setJwtAndRefreshCookie(refreshTokenCookieDto, response);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        Optional<Cookie> refreshCookie = Optional.empty();
+        if (request.getCookies() != null) {
+            refreshCookie = Arrays.stream(request.getCookies())
+                    .filter(c -> "refreshToken".equals(c.getName()))
+                    .findFirst();
+        }
+
+        refreshCookie.ifPresent(cookie -> {
+            String token = cookie.getValue();
+            refreshTokenService.revokeRefreshToken(token);
+        });
+
+        cookieService.setJwtAndRefreshCookie("","",response,0, 0);
+
+
+        SecurityContextHolder.clearContext();
+
+
+        return ResponseEntity.noContent().build();
     }
 }

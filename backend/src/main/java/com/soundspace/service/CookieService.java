@@ -33,20 +33,21 @@ public class CookieService {
                 .build();
     }
 
-    public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response) {
-
+    public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response, int jwtMaxAgeSeconds, int refreshTokenMaxAgeSeconds) {
 
         response.addHeader(HttpHeaders.SET_COOKIE,
-                createRefreshCookie(refreshToken, 60 * 60 * 24 * 30)
+                createJwtCookie(jwt, jwtMaxAgeSeconds)
                         .toString());
 
         response.addHeader(HttpHeaders.SET_COOKIE,
-                createJwtCookie(jwt, 60 * 60 * 24 /* 24h */)
+                createRefreshCookie(refreshToken, refreshTokenMaxAgeSeconds)
                         .toString());
+
+
 
     }
 
-    // UZYWAC TYLKO W RAZIE REFRESHU REFRESHCOOKIE, NIE TWORZENIU NOWEGO
+    // UZYWAC TYLKO W RAZIE REFRESHU REFRESHCOOKIE, NIE TWORZENIU NOWEGO, INACZEJ JWT == NULL
     public void setJwtAndRefreshCookie(RefreshTokenCookieDto refreshTokenCookieDto, HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE,
                createJwtCookie(refreshTokenCookieDto.getJwt(),

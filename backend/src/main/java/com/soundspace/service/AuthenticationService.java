@@ -10,7 +10,6 @@ import com.soundspace.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -31,7 +30,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public String register(RegisterRequest request) {
-        if (repo.existsByEmail(request.getEmail()) || repo.existsByUsername(request.getUsername())) {
+        if (repo.existsByEmail(request.getEmail()) || repo.existsByLogin(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Email or username already exists");
         }
@@ -52,7 +51,7 @@ public class AuthenticationService {
         }
 
         var user = AppUser.builder()
-                .username(request.getUsername())
+                .login(request.getUsername())
                 .sex(Sex.valueOf(request.getSex()))
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -97,7 +96,7 @@ public class AuthenticationService {
     }
 
     public Boolean existsByUsername(String username) {
-        return repo.existsByUsername(username);
+        return repo.existsByLogin(username);
     }
 
 
