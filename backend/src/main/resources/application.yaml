@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: ${SERVER_PORT}
+
+  servlet:
+    session:
+      cookie:
+        same-site: None
+        secure: true
+
+logging:
+  level:
+    com.soundspace: INFO
+#    org.springframework.security: TRACE
+#    org.springframework.security.web.FilterChainProxy: TRACE
+#    org.springframework.web: DEBUG
+#    org.springframework.security: DEBUG
+#    org.springframework.security.web: DEBUG
+#    org.springframework.security.config: DEBUG
+#    org.springframework.security.web.csrf: DEBUG
+#    org.flywaydb: DEBUG
