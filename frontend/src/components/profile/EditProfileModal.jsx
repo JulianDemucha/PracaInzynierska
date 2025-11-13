@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import './EditProfileModal.css';
-import { useAuth } from '../../context/AuthContext';
+import {useAuth} from "../../context/useAuth.js";
 import defaultAvatar from '../../assets/images/default-avatar.png';
 
 function EditProfileModal({ isOpen, onClose }) {

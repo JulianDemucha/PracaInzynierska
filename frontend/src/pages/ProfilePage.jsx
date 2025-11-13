@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import {useAuth} from "../context/useAuth.js";
 import { Link } from 'react-router-dom';
 import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';

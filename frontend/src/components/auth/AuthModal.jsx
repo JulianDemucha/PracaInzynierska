@@ -1,5 +1,5 @@
 import React from "react";
-import {useAuth} from "../../context/AuthContext.jsx";
+import {useAuth} from "../../context/useAuth.js";
 import './AuthModal.css';
 import googleIcon from '../../assets/images/googleIcon.png';
 import defaultAvatar from '../../assets/images/default-avatar.png';
