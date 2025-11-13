@@ -13,7 +13,8 @@ public class AppUserMapper {
     public AppUserDto toDto(AppUser appUser){
         return AppUserDto.builder()
                 .id(appUser.getId())
-                .username(appUser.getUsername())
+                .username(appUser.getLogin())
+                .email(appUser.getEmail())
                 .sex(appUser.getSex().toString())
                 .role(appUser.getRole().toString())
                 .createdAt(appUser.getCreatedAt().toString())

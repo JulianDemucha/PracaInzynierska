@@ -26,7 +26,7 @@ public class AppUser implements UserDetails {
     private Long id;
 
     @Column(unique=true, nullable=false)
-    private String username;
+    private String login;
 
     @Column(name = "sex", nullable = false)
     @Enumerated(EnumType.STRING)

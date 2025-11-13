@@ -8,6 +8,7 @@ import java.util.List;
 public record AppUserDto (
         Long id,
         String username,
+        String email,
         String sex,
         String role,
         String createdAt,
