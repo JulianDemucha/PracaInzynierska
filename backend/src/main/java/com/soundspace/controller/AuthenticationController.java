@@ -1,23 +1,23 @@
 package com.soundspace.controller;
 
 import com.soundspace.security.dto.AuthenticationRequest;
+import com.soundspace.security.dto.RefreshTokenCookieDto;
 import com.soundspace.security.dto.RegisterRequest;
 import com.soundspace.service.AuthenticationService;
+import com.soundspace.service.CookieService;
+import com.soundspace.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
+    private final RefreshTokenService refreshTokenService;
+    private final CookieService cookieService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(
@@ -25,15 +25,12 @@ public class AuthenticationController {
             HttpServletResponse response
     ) {
         String jwt = authenticationService.register(registerRequest);
-        ResponseCookie cookie = ResponseCookie.from("jwt", jwt)
-                .httpOnly(true)
-                .secure(false) //http
-                .path("/")
-                .maxAge(60 * 60 * 24) // 24h
-                .sameSite("Lax") //todo proxy on front (vite config)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok(cookie);
+        String email = registerRequest.getEmail();
+
+        cookieService.setJwtAndRefreshCookie(jwt,
+                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/authenticate")
@@ -42,14 +39,28 @@ public class AuthenticationController {
             HttpServletResponse response
     ) {
         String jwt = authenticationService.authenticate(authenticationRequest);
-        ResponseCookie cookie = ResponseCookie.from("jwt", jwt)
-                .httpOnly(true)
-                .secure(false) //http
-                .path("/")
-                .maxAge(60 * 60 * 24) // 24h
-                .sameSite("Lax") //todo proxy on front (vite config)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok(cookie);
+        String email = authenticationRequest.getEmail();
+
+        cookieService.setJwtAndRefreshCookie(jwt,
+                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/refreshToken")
+    public ResponseEntity<?> refreshToken(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        if (refreshToken == null) {
+            return ResponseEntity.badRequest().body("No refresh token found");
+        }
+
+        RefreshTokenCookieDto refreshTokenCookieDto =
+                refreshTokenService.createRefreshTokenAndRevokeOld(refreshToken);
+
+
+        cookieService.setJwtAndRefreshCookie(refreshTokenCookieDto, response);
+        return ResponseEntity.ok().build();
     }
 }

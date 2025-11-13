@@ -56,7 +56,7 @@ public class JwtService {
                 .getBody();
     }
 
-    public String generateToken(
+    private String generateToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails
     ) {
