@@ -131,13 +131,13 @@ function AddSongModal({ isOpen, onClose }) {
                                 ))}
                             </div>
 
-                            <fieldset className="gender-selection">
+                            <fieldset className="visibility-selection">
                                 <legend>Widoczność</legend>
-                                <div className="gender-option">
+                                <div className="visibility-option">
                                     <input type="radio" id="public" name="visibility" value="PUBLIC" defaultChecked />
                                     <label htmlFor="public">Publiczny</label>
                                 </div>
-                                <div className="gender-option">
+                                <div className="visibility-option">
                                     <input type="radio" id="private" name="visibility" value="PRIVATE" />
                                     <label htmlFor="private">Prywatny</label>
                                 </div>
