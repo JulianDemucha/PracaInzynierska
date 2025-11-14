@@ -25,16 +25,20 @@ public class AppUser implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     @Column(unique=true, nullable=false)
     private String login;
 
+    @Setter
     @Column(name = "sex", nullable = false)
     @Enumerated(EnumType.STRING)
     private Sex sex;
 
+    @Setter
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Setter
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -52,6 +56,7 @@ public class AppUser implements UserDetails {
     @Column(nullable = false)
     private boolean emailVerified;
 
+    @Setter
     @Column(length = 1000)
     private String bio;
 
