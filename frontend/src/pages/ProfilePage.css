@@ -93,6 +93,7 @@
 
 
 .add-song-button,
+.add-album-button,
 .edit-profile-button {
     background: none;
     border: 1px solid #535353;
@@ -104,6 +105,7 @@
     text-decoration: none;
 }
 .add-song-button:hover,
+.add-album-button:hover,
 .edit-profile-button:hover {
     background-color: #282828;
     border-color: white;

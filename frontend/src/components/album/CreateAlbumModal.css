@@ -1,0 +1,149 @@
+.edit-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.edit-modal-content {
+    background: #0D0D0D;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    color: white;
+    position: relative;
+    width: 100%;
+    max-width: 550px;
+    margin: 2rem 0;
+    border: 1px solid #282828;
+}
+
+/* Przycisk 'X' */
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover { color: white; }
+
+/* Główny formularz */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Etykiety (Label) */
+.edit-form label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #b3b3b3;
+}
+
+/* Inputy */
+.edit-form input[type="text"] {
+    padding: 14px;
+    border-radius: 4px;
+    border: 1px solid #404040;
+    background: #1A1A1A;
+    color: white;
+    font-size: 1rem;
+}
+.edit-form input:focus {
+    outline: none;
+    border-color: #8A2BE2;
+}
+
+/* === Sekcja Awatara  === */
+.cover-art-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.file-upload-input {
+    display: none;
+}
+.file-upload-button {
+    background-color: #1A1A1A;
+    border: 1px solid #404040;
+    color: #b3b3b3;
+    padding: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 1rem;
+    text-align: center;
+    transition: border-color 0.2s ease;
+    flex-grow: 1;
+}
+.file-upload-button:hover {
+    border-color: #8A2BE2;
+}
+.remove-image-button {
+    background-color: #333;
+    border: 1px solid #c9302c;
+    color: #c9302c;
+    padding: 14px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+.remove-image-button:hover {
+    background-color: #c9302c;
+    color: white;
+}
+.cropper-container {
+    width: 200px;
+    height: 200px;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #404040;
+    margin: 0 auto;
+}
+.cropper-container .ReactCrop__image {
+    width: 100%;
+}
+
+/* Przycisk Zapisu */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    align-items: center;
+}
+
+.save-button {
+    background: linear-gradient(to right, #8A2BE2, #6a1b9a);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    text-align: center;
+}
+.save-button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+}

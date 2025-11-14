@@ -5,12 +5,15 @@ import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
 import EditProfileModal from '../components/profile/EditProfileModal.jsx';
 import AddSongModal from '../components/song/AddSongModal.jsx';
+import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 
 function ProfilePage() {
     const { currentUser, logout, loading } = useAuth();
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
+    const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
+
 
     if (loading && !currentUser) {
         return (
@@ -50,6 +53,9 @@ function ProfilePage() {
                 <div className="profile-nav-actions">
                     <button className="add-song-button" onClick={() => setIsAddSongModalOpen(true)}>
                         Dodaj utwór
+                    </button>
+                    <button className="add-album-button" onClick={() => setIsCreateAlbumModalOpen(true)}>
+                        Dodaj album
                     </button>
                     <button className="edit-profile-button" onClick={() => setIsEditModalOpen(true)}>
                         Edytuj profil
@@ -112,6 +118,10 @@ function ProfilePage() {
             <AddSongModal
                 isOpen={isAddSongModalOpen}
                 onClose={() => setIsAddSongModalOpen(false)}
+            />
+            <CreateAlbumModal
+                isOpen={isCreateAlbumModalOpen}
+                onClose={() => setIsCreateAlbumModalOpen(false)}
             />
         </div>
     );
