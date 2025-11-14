@@ -85,4 +85,9 @@ public class RefreshTokenService {
         ).orElseThrow();
     }
 
+    @Transactional
+    public int deleteRevokedRefreshTokens(int secondsBeforeCutoff) {
+        return refreshTokenRepository.deleteRevokedBeforeCutoff(Instant.now().minusSeconds(secondsBeforeCutoff));
+    }
+
 }

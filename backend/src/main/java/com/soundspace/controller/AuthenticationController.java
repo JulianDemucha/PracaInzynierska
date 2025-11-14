@@ -50,7 +50,7 @@ public class AuthenticationController {
 
         cookieService.setJwtAndRefreshCookie(jwt,
                 refreshTokenService.createRefreshToken(email).getRefreshToken(), response,
-                60 * 60 * 24 /* 24h */, 60 * 60 * 24 * 30/* 30D */);
+                60 * 15 /* 15 min */, 60 * 60 * 24 * 30/* 30 D */);
 
         return ResponseEntity.ok().build();
     }
