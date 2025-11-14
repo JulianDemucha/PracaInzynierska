@@ -251,10 +251,6 @@ function EditProfileModal({isOpen, onClose}) {
                                     <input type="radio" id="female" name="gender" value="FEMALE" checked={sex === "FEMALE"} onChange={(e) => setSex(e.target.value)} />
                                     <label htmlFor="female">Kobieta</label>
                                 </div>
-                                <div className="gender-option">
-                                    <input type="radio" id="other" name="gender" value="OTHER" checked={sex === "OTHER"} onChange={(e) => setSex(e.target.value)} />
-                                    <label htmlFor="other">Inna/nie chcę podawać</label>
-                                </div>
                             </fieldset>
                         </div>
                     </div>
