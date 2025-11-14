@@ -78,6 +78,17 @@ function CreateAlbumModal({isOpen, onClose}) {
                             <img src={imgSrc} alt="Podgląd okładki"/>
                         </ReactCrop>
                     </div>
+                    <fieldset className="visibility-selection">
+                        <legend>Widoczność</legend>
+                        <div className="visibility-option">
+                            <input type="radio" id="public" name="visibility" value="PUBLIC" defaultChecked />
+                            <label htmlFor="public">Publiczny</label>
+                        </div>
+                        <div className="visibility-option">
+                            <input type="radio" id="private" name="visibility" value="PRIVATE" />
+                            <label htmlFor="private">Prywatny</label>
+                        </div>
+                    </fieldset>
 
                     {/*  SEKCJA PRZYCISKÓW "Stwórz" */}
                     <div className="form-actions">

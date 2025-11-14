@@ -120,6 +120,37 @@
 .cropper-container .ReactCrop__image {
     width: 100%;
 }
+/* === Sekcja Widoczności === */
+.visibility-selection {
+    border: none;
+    border-top: 1px solid #404040;
+    padding: 1rem 0 0 0;
+    margin: 0;
+    display: flex;
+    gap: 1.5rem;
+}
+.visibility-selection legend {
+    padding: 0;
+    margin-left: 0;
+    width: 100%;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #b3b3b3;
+    margin-bottom: 1rem;
+}
+.visibility-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.visibility-option label {
+    margin-bottom: 0;
+    color: white;
+    cursor: pointer;
+}
+.visibility-option input[type="radio"] {
+    cursor: pointer;
+}
 
 /* Przycisk Zapisu */
 .form-actions {
