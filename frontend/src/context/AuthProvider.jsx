@@ -55,6 +55,22 @@ export default function AuthProvider({children}) {
         }
     };
 
+    const register = async (registerData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await api.post("/auth/register", registerData);
+            await fetchCurrentUser();
+            closeModal();
+            return { ok: true };
+        } catch (err) {
+            const msg = err.response?.data?.message || "Registration failed";
+            setError(msg);
+            setLoading(false);
+            return { ok: false, error: msg };
+        }
+    };
+
     const logout = async () => {
             await api.post("/auth/logout");
             setCurrentUser(null);
@@ -69,6 +85,7 @@ export default function AuthProvider({children}) {
         switchToLogin,
         currentUser,
         login,
+        register,
         logout,
         fetchCurrentUser,
         loading,

@@ -4,8 +4,11 @@ import './AuthModal.css';
 import googleIcon from '../../assets/images/googleIcon.png';
 
 function AuthModal() {
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [sex, setSex] = useState("MALE");
     const [errors, setErrors] = useState({
         email: "",
         password: "",
@@ -18,6 +21,7 @@ function AuthModal() {
         switchToLogin,
         switchToRegister,
         login,
+        register,
         loading: authLoading,
         error: authError
     } = useAuth();
@@ -26,7 +30,10 @@ function AuthModal() {
         if (isModalOpen) {
             setEmail("");
             setPassword("");
-            setErrors({email: "", password: "", general: ""});
+            setConfirmPassword("");
+            setUsername("");
+            setSex("MALE");
+            setErrors({username: "", email: "", password: "", confirmPassword: "", general: ""});
         }
     }, [isModalOpen, modalView]);
 
@@ -64,8 +71,31 @@ function AuthModal() {
             return;
         }
 
-        // window.location.href = "/";
     };
+
+    const handleSubmitRegister = async (e) => {
+        e.preventDefault();
+
+        const newErrors = {username: "", email: "", password: "", confirmPassword: "", general: ""};
+        if (!username) newErrors.username = "Wprowadź nazwę użytkownika.";
+        if (!email || !validateEmail(email)) newErrors.email = "Podaj poprawny email.";
+        if (!password || password.length < 6) newErrors.password = "Hasło musi mieć co najmniej 6 znaków.";
+        if (password !== confirmPassword) newErrors.confirmPassword = "Hasła nie są zgodne.";
+
+        setErrors(newErrors);
+
+        if (newErrors.username || newErrors.email || newErrors.password || newErrors.confirmPassword) {
+            return;
+        }
+
+        const result = await register({ username, email, password, sex });
+
+        if (!result.ok) {
+            setErrors(prev => ({ ...prev, general: result.error || "Błąd rejestracji." }));
+            return;
+        }
+    };
+
     return (
         <div className="auth-modal-backdrop" onClick={() => closeModal()}>
             <div className="auth-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -121,23 +151,73 @@ function AuthModal() {
                         </p>
                     </form>
                 ) : (
-                    <div className="auth-form">
+                    <form className="auth-form" onSubmit={handleSubmitRegister} noValidate>
                         <h2>Stwórz konto</h2>
-                        <input type="text" placeholder="Nazwa użytkownika" />
-                        <input type="email" placeholder="Email" />
-                        <input type="password" placeholder="Hasło" />
-                        <input type="password" placeholder="Powtórz hasło" />
 
-                        <div className="auth-terms">
-                            <input type="checkbox" id="terms" name="terms" />
-                            <label htmlFor="terms">Zaakceptuj regulamin</label>
-                        </div>
+                        <input
+                            type="text"
+                            placeholder="Nazwa użytkownika"
+                            value={username}
+                            onChange={(e) => {
+                                setUsername(e.target.value);
+                                setErrors(prev => ({ ...prev, username: "" }));
+                            }}
+                            required
+                        />
+                        {errors.username && <div className="field-error">{errors.username}</div>}
 
-                        <button className="auth-submit-button">Zarejestruj</button>
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                setErrors(prev => ({ ...prev, email: "" }));
+                            }}
+                            required
+                        />
+                        {errors.email && <div className="field-error">{errors.email}</div>}
+
+                        <input
+                            type="password"
+                            placeholder="Hasło"
+                            value={password}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                setErrors(prev => ({ ...prev, password: "" }));
+                            }}
+                            required
+                        />
+                        {errors.password && <div className="field-error">{errors.password}</div>}
+
+                        <input
+                            type="password"
+                            placeholder="Powtórz hasło"
+                            value={confirmPassword}
+                            onChange={(e) => {
+                                setConfirmPassword(e.target.value);
+                                setErrors(prev => ({ ...prev, confirmPassword: "" }));
+                            }}
+                            required
+                        />
+                        {errors.confirmPassword && <div className="field-error">{errors.confirmPassword}</div>}
+
+                        <label htmlFor="sex">Płeć</label>
+                        <select id="sex" value={sex} onChange={(e) => setSex(e.target.value)}>
+                            <option value="MALE">Mężczyzna</option>
+                            <option value="FEMALE">Kobieta</option>
+                            {/*<option value="OTHER">Inna/nie chcę podawać</option>*/} {/* dodac jeszcze 74 opcje w backendzie a pozniej zintegrowac */}
+                        </select>
+
+                        {errors.general && <div className="field-error">{errors.general}</div>}
+
+                        <button className="auth-submit-button" type="submit" disabled={authLoading}>
+                            {authLoading ? "Rejestracja..." : "Zarejestruj"}
+                        </button>
 
                         <div className="auth-divider"><span>LUB</span></div>
 
-                        <button className="google-login-button">
+                        <button type="button" className="google-login-button" disabled>
                             <img className="google-logo" src={googleIcon} alt="Rejestracja przez Google" />
                             Zarejestruj się przez Google
                         </button>
@@ -146,7 +226,7 @@ function AuthModal() {
                             Masz już konto?
                             <span onClick={switchToLogin}> Zaloguj się</span>
                         </p>
-                    </div>
+                    </form>
                 )}
             </div>
         </div>
