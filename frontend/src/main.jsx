@@ -6,6 +6,7 @@ import App from './App'
 import './index.css'
 import AuthProvider from './context/AuthProvider.jsx'
 import ProfilePage from './pages/ProfilePage'
+import ArtistPage from './pages/ArtistPage'
 
 const router = createBrowserRouter([
     {
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
             {
                 path: "/profile",
                 element: <ProfilePage />,
+            },
+            {
+                path: "/artist/:id",
+                element: <ArtistPage />
             }
         ]
     }

@@ -43,13 +43,9 @@ function PlayerBar() {
     const [previousVolume, setPreviousVolume] = useState(80);
     const toggleMute = () => {
         if (Number(volume) > 0) {
-            // Jesteśmy na głośności, więc wyciszamy
-            setPreviousVolume(volume); // Zapamiętaj aktualną głośność
-            setVolume(0);              // Ustaw głośność na 0
+            setPreviousVolume(volume);
+            setVolume(0);
         } else {
-            // Jesteśmy wyciszeni, więc przywracamy
-            // Jeśli ktoś wyciszył, a potem ręcznie ustawił suwak na 0,
-            // przywróćmy domyślną głośność (np. 50), a nie 0.
             setVolume(previousVolume > 0 ? previousVolume : 50);
         }
     };
@@ -115,7 +111,7 @@ function PlayerBar() {
                 <img src={albumArtPlaceholder} alt="Okładka albumu" className="player-album-art" />
                 <div className="player-song-details">
                     <span className="player-song-title">Nazwa Utworu</span>
-                    <Link to="/artist/1" className="player-artist-name">Nazwa Artysty</Link>
+                    <Link to="/artist" className="player-artist-name">Nazwa Artysty</Link>
                 </div>
                 <button
                     className={`control-button favorite-button ${isFavoriteOn ? 'active' : ''}`}
