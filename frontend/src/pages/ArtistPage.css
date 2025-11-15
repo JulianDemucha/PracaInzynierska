@@ -31,7 +31,6 @@
     text-transform: uppercase;
 }
 
-/* --- STYLE DLA ODZNAKI WERYFIKACJI --- */
 .profile-username-wrapper {
     display: flex;
     align-items: center;
@@ -44,7 +43,7 @@
     margin: 0;
 }
 
-.verified-artist {
+.verified-badge {
     width: 24px;
     height: 24px;
 }
@@ -66,6 +65,10 @@
     position: sticky;
     top: 0;
     z-index: 5;
+}
+
+.profile-nav-actions-placeholder {
+    width: 1px;
 }
 
 .profile-tabs {
@@ -94,7 +97,6 @@
     border-bottom-color: #8A2BE2;
 }
 
-
 /* ===== 3. ZAWARTOŚĆ (LISTY) ===== */
 .profile-content {
     padding: 1rem 2rem;
@@ -110,12 +112,11 @@
     padding-bottom: 8px;
 }
 
-.song-row-placeholder {
-    padding: 12px 8px;
-    border-radius: 4px;
-}
-.song-row-placeholder:hover {
-    background-color: #282828;
+/* STYL DLA SIATKI KART */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
 }
 
 /* Wiadomość, gdy artysta nic nie ma */
