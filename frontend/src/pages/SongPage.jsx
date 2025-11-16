@@ -14,45 +14,44 @@ import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
 
-// --- Przykładowe Dane  ---
-const mockSongData = {
-    id: 123,
-    title: "Kolejny hit (publiczny)",
-    artist: { id: 456, name: "Artysta Testowy" },
-    coverArtUrl: defaultCover,
-    duration: "3:45",
-    genres: ["HIP_HOP", "TRAP"],
-    comments: [
-        { id: 1, user: "FanMuzyki", avatarUrl: "https://placehold.co/40x40/8A2BE2/white?text=F", text: "Niesamowity kawałek!", likes: 15, timestamp: "2025-10-28T10:30:00Z" },
-        { id: 2, user: "Krytyk", avatarUrl: "https://placehold.co/40x40/E73C7E/white?text=K", text: "Całkiem niezłe, ale widziałem lepsze.", likes: 2, timestamp: "2025-10-29T11:00:00Z" },
-        { id: 3, user: "User3", avatarUrl: null, text: "Test 3", likes: 1, timestamp: "2025-10-20T10:30:00Z" },
-        { id: 4, user: "User4", avatarUrl: null, text: "Test 4", likes: 2, timestamp: "2025-10-21T10:30:00Z" },
-        { id: 5, user: "User5", avatarUrl: null, text: "Test 5", likes: 3, timestamp: "2025-10-22T10:30:00Z" },
-        { id: 6, user: "User6", avatarUrl: null, text: "Test 6", likes: 4, timestamp: "2025-10-23T10:30:00Z" },
-        { id: 7, user: "User7", avatarUrl: null, text: "Test 7", likes: 5, timestamp: "2025-10-24T10:30:00Z" },
-        { id: 8, user: "User8", avatarUrl: null, text: "Test 8", likes: 6, timestamp: "2025-10-25T10:30:00Z" },
-        { id: 9, user: "User9", avatarUrl: null, text: "Test 9", likes: 7, timestamp: "2025-10-26T10:30:00Z" },
-        { id: 10, user: "User10", avatarUrl: null, text: "Test 10", likes: 8, timestamp: "2025-10-27T10:30:00Z" },
-        { id: 11, user: "User11", avatarUrl: null, text: "Test 11 - Strona 2!", likes: 9, timestamp: "2025-10-28T10:30:00Z" },
-    ]
+const mockSongDatabase = {
+    "123": {
+        id: "123",
+        title: "Kolejny hit (publiczny)",
+        artist: { id: "456", name: "Artysta Testowy" },
+        coverArtUrl: "https://placehold.co/300x300/53346D/white?text=Hit",
+        duration: "3:45",
+        genres: ["HIP_HOP", "TRAP"],
+        comments: [
+            { id: 1, user: "FanMuzyki", avatarUrl: "https://placehold.co/40x40/8A2BE2/white?text=F", text: "Niesamowity kawałek!", likes: 15, timestamp: "2025-10-28T10:30:00Z" },
+            { id: 2, user: "Krytyk", avatarUrl: "https://placehold.co/40x40/E73C7E/white?text=K", text: "Całkiem niezłe.", likes: 2, timestamp: "2025-10-29T11:00:00Z" },
+            { id: 3, user: "User11", avatarUrl: null, text: "Test 11 - Strona 2!", likes: 9, timestamp: "2025-10-28T10:30:00Z" },
+        ]
+    },
+    "456": { // Inna piosenka
+        id: "456",
+        title: "Inny Utwór",
+        artist: { id: "789", name: "Inny Artysta" },
+        coverArtUrl: "https://placehold.co/300x300/1DB954/white?text=Inny",
+        duration: "2:15",
+        genres: ["POP"],
+        comments: [] // Brak komentarzy
+    }
 };
-
 function SongPage() {
     const { id } = useParams();
-
-    // Stany dla strony
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isFavorite, setIsFavorite] = useState(false); // Serduszko
+    const [isFavorite, setIsFavorite] = useState(false);
     const [isQueued, setIsQueued] = useState(false);
-    const [rating, setRating] = useState(null); // Kciuki
+    const [rating, setRating] = useState(null);
     const [commentSort, setCommentSort] = useState('popular');
     const [visibleComments, setVisibleComments] = useState(10);
     const [commentLikes, setCommentLikes] = useState({});
 
-    const song = mockSongData;
+    const song = mockSongDatabase[id];
 
-    // Logika sortowania
     const sortedComments = useMemo(() => {
+        if (!song) return [];
         const sorted = [...song.comments];
         if (commentSort === 'popular') {
             sorted.sort((a, b) => b.likes - a.likes);
@@ -60,9 +59,9 @@ function SongPage() {
             sorted.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
         return sorted;
-    }, [song.comments, commentSort]);
+    }, [song, commentSort]);
 
-    // Logika ocen
+    // Funkcja do przełączania oceny (Like/Unlike)
     const handleRating = (newRating) => {
         if (rating === newRating) setRating(null);
         else setRating(newRating);
@@ -74,6 +73,26 @@ function SongPage() {
         newLikes[commentId] = !newLikes[commentId];
         setCommentLikes(newLikes);
     };
+
+    // Logika dodawania do kolejki
+    const handleAddToQueue = () => {
+        if (isQueued) return;
+        console.log("Dodano do kolejki:", song.title);
+        setIsQueued(true);
+        setTimeout(() => {
+            setIsQueued(false);
+        }, 1500);
+    };
+
+    // --- Zabezpieczenie, jeśli ID jest złe ---
+    if (!song) {
+        return (
+            <div className="song-page">
+                <h2>404 - Nie znaleziono piosenki</h2>
+                <p>Piosenka o ID: {id} nie istnieje.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="song-page">
@@ -104,7 +123,7 @@ function SongPage() {
                 <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => setIsFavorite(!isFavorite)}>
                     <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
-                <button className={`song-control-button ${isQueued ? 'active' : ''}`} onClick={() => setIsQueued(!isQueued)}>
+                <button className={`song-control-button ${isQueued ? 'active' : ''}`} onClick={handleAddToQueue}>
                     <img src={isQueued ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
                 </button>
                 <div className="song-rating">
@@ -123,11 +142,10 @@ function SongPage() {
                 </div>
             </section>
 
-            {/* ===== 3. SEKCJA KOMENTARZY  ===== */}
+            {/* ===== 3. SEKCJA KOMENTARZY ===== */}
             <section className="comments-section">
                 <h2>Komentarze</h2>
 
-                {/* Sortowanie  */}
                 <div className="comment-sort-controls">
                     <button
                         className={commentSort === 'popular' ? 'active' : ''}
@@ -143,7 +161,6 @@ function SongPage() {
                     </button>
                 </div>
 
-                {/* Lista komentarzy */}
                 <ul className="comment-list">
                     {song.comments.length === 0 ? (
                         <p className="empty-message">Brak komentarzy. Bądź pierwszy!</p>
@@ -153,18 +170,15 @@ function SongPage() {
 
                             return (
                                 <li key={comment.id} className="comment-item">
-                                    {/* 1. Awatar */}
                                     <img
                                         src={comment.avatarUrl || defaultAvatar}
                                         alt={`${comment.user} avatar`}
                                         className="comment-avatar"
                                     />
-                                    {/* 2. Treść */}
                                     <div className="comment-body">
                                         <span className="comment-user">{comment.user}</span>
                                         <p className="comment-text">{comment.text}</p>
                                     </div>
-                                    {/* 3. Akcje */}
                                     <div className="comment-actions">
                                         <button
                                             className={`comment-like-button ${isCommentLiked ? 'active' : ''}`}
@@ -180,7 +194,6 @@ function SongPage() {
                     )}
                 </ul>
 
-                {/* Paginacja */}
                 <div className="comment-pagination">
                     {song.comments.length > visibleComments && (
                         <button className="pagination-button" onClick={() => setVisibleComments(prev => prev + 10)}>
