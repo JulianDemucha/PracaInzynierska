@@ -1,0 +1,260 @@
+.song-page {
+    padding: 2rem;
+    color: white;
+    padding-bottom: 5rem;
+}
+
+/* ===== 1. NAGŁÓWEK ===== */
+.song-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+.song-cover-art {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+.song-details {
+    display: flex;
+    flex-direction: column;
+}
+.song-type {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #b3b3b3;
+}
+.song-details h1 {
+    font-size: 3rem;
+    margin: 0.5rem 0;
+}
+.song-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+.song-artist {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+.song-artist:hover {
+    text-decoration: underline;
+}
+.genre-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1rem;
+}
+.genre-pill {
+    background-color: #282828;
+    color: #b3b3b3;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* ===== 2. KONTROLKI ===== */
+.song-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.song-play-button {
+    background-color: #8A2BE2;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.song-play-button:hover {
+    transform: scale(1.05);
+}
+.song-play-button img {
+    width: 24px;
+    height: 24px;
+}
+.song-control-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.song-control-button img {
+    width: 28px;
+    height: 28px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.song-control-button:hover img {
+    opacity: 1;
+}
+.song-control-button.active img {
+    opacity: 1;
+}
+.song-rating {
+    display: flex;
+    gap: 1rem;
+    border-left: 1px solid #404040;
+    padding-left: 1.5rem;
+}
+.song-rating-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.song-rating-button img {
+    width: 24px;
+    height: 24px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.song-rating-button:hover img {
+    opacity: 1;
+}
+.song-rating-button.active img {
+    opacity: 1;
+}
+
+
+/* ===== 3. SEKCJA KOMENTARZY ===== */
+.comments-section {
+    border-top: 1px solid #404040;
+    padding-top: 2rem;
+}
+.comments-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+.comment-sort-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.comment-sort-controls button {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+}
+.comment-sort-controls button:hover {
+    color: white;
+}
+.comment-sort-controls button.active {
+    color: white;
+    border-bottom-color: #8A2BE2;
+}
+
+.comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    list-style: none;
+    padding: 0;
+}
+
+.comment-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+.pagination-button {
+    background-color: #282828;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.pagination-button:hover {
+    background-color: #404040;
+}
+.empty-message {
+    color: #b3b3b3;
+    font-style: italic;
+}
+
+.comment-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #282828;
+}
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+/* 1. Awatar użytkownika */
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* 2. Treść komentarza */
+.comment-body {
+    flex-grow: 1;
+}
+.comment-user {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+}
+.comment-text {
+    margin: 0.25rem 0 0 0;
+    font-size: 1rem;
+    color: #b3b3b3;
+    line-height: 1.4;
+}
+
+/* 3. Akcje (Polubienie) */
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.comment-like-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+}
+.comment-like-button img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+.comment-like-button:hover img {
+    opacity: 1;
+}
+.comment-like-button.active img {
+    opacity: 1;
+}
+.comment-likes-count {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+    min-width: 20px;
+}

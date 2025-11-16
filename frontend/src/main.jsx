@@ -7,6 +7,7 @@ import './index.css'
 import AuthProvider from './context/AuthProvider.jsx'
 import ProfilePage from './pages/ProfilePage'
 import ArtistPage from './pages/ArtistPage'
+import SongPage from './pages/SongPage.jsx'
 
 const router = createBrowserRouter([
     {
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
             {
                 path: "/artist/:id",
                 element: <ArtistPage />
+            },
+            {
+                path: "/song/:id",
+                element: <SongPage />
             }
         ]
     }
