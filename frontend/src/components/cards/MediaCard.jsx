@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './MediaCard.css';
-import defaultAvatar from '../assets/images/default-avatar.png';
+import defaultAvatar from '../../assets/images/default-avatar.png';
 
 function MediaCard({ linkTo, imageUrl, title, subtitle }) {
     return (

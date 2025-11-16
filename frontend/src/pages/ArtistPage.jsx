@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import './ArtistPage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
 import verifiedBadge from '../assets/images/verified.png';
-import MediaCard from '../cards/MediaCard.jsx';
+import MediaCard from '../components/cards/MediaCard.jsx';
 
 // --- 2.  DANE TESTOWE ---
 const mockArtistDatabase = {
