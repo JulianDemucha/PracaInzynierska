@@ -5,6 +5,8 @@ import './PlayerBar.css';
 import '../../index.css';
 import '../common/ContextMenu.css';
 import ContextMenu from '../common/ContextMenu.jsx';
+import { usePlayer } from '../../context/PlayerContext';
+
 
 import playIcon from '../../assets/images/play.png';
 import pauseIcon from '../../assets/images/pause.png';
@@ -26,10 +28,18 @@ import deleteIcon from '../../assets/images/bin.png';
 
 
 function PlayerBar() {
+    const { currentSong, isPlaying, playSong, pause } = usePlayer();
+
     const [isShuffleOn, setIsShuffleOn] = useState(false);
     const [isRepeatOn, setIsRepeatOn] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [isFavoriteOn, setIsFavoriteOn] = useState(false);
+    const [isQueueVisible, setIsQueueVisible] = useState(false);
+    const queuePopupRef = useRef(null);
+    const [previousVolume, setPreviousVolume] = useState(80);
     const [volume, setVolume] = useState(50);
+
+    // const [isPlaying, setIsPlaying] = useState(false);
+
     const getVolumeIcon = () => {
         const currentVolume = Number(volume);
         if (currentVolume === 0) {
@@ -40,7 +50,6 @@ function PlayerBar() {
         }
         return <img src={soundIcon} alt="Mute" />;
     };
-    const [previousVolume, setPreviousVolume] = useState(80);
     const toggleMute = () => {
         if (Number(volume) > 0) {
             setPreviousVolume(volume);
@@ -49,9 +58,7 @@ function PlayerBar() {
             setVolume(previousVolume > 0 ? previousVolume : 50);
         }
     };
-    const [isFavoriteOn, setIsFavoriteOn] = useState(false);
-    const [isQueueVisible, setIsQueueVisible] = useState(false);
-    const queuePopupRef = useRef(null);
+
     const mockQueue = [
         { id: 1, title: "Nazwa Utworu 1", artist: "Artysta 1" },
         { id: 2, title: "Kolejna piosenka", artist: "Inny Artysta" },
@@ -73,9 +80,11 @@ function PlayerBar() {
         { id: 18, title: "Trzeci utwór w kolejce", artist: "Zespół" },
         { id: 19, title: "Trzeci utwór w kolejce", artist: "Zespół" },
     ];
+
     const handleRemoveFromQueue = (songId) => {
         console.log("Usunięto piosenkę o ID:", songId);
     };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (queuePopupRef.current && !queuePopupRef.current.contains(event.target)) {
@@ -89,6 +98,7 @@ function PlayerBar() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [isQueueVisible]);
+
     const playerMenuOptions = [
         {
             label: "Dodaj do polubionych",
@@ -103,15 +113,32 @@ function PlayerBar() {
             onClick: () => console.log("Przechodzę do artysty")
         }
     ];
+
+    // --- 4. ZAKTUALIZOWANA FUNKCJA PLAY/PAUSE ---
+    const handlePlayPauseClick = () => {
+        if (!currentSong) return;
+
+        if (isPlaying) {
+            pause();
+        } else {
+            playSong(currentSong);
+        }
+    };
+
+    const songTitle = currentSong?.title || "Wybierz utwór";
+    const artistName = currentSong?.artist?.name || "SoundSpace";
+    const artistLink = `/artist/${currentSong?.artist?.id || ''}`;
+    const coverArt = currentSong?.coverArtUrl || albumArtPlaceholder;
+
     return (
         <footer className="player-bar">
 
             {/* ========= SEKCJA LEWA (Informacje) ========== */}
             <div className="player-section-left">
-                <img src={albumArtPlaceholder} alt="Okładka albumu" className="player-album-art" />
+                <img src={coverArt} alt="Okładka albumu" className="player-album-art" />
                 <div className="player-song-details">
-                    <span className="player-song-title">Nazwa Utworu</span>
-                    <Link to="/artist" className="player-artist-name">Nazwa Artysty</Link>
+                    <span className="player-song-title">{songTitle}</span>
+                    <Link to={artistLink} className="player-artist-name">{artistName}</Link>
                 </div>
                 <button
                     className={`control-button favorite-button ${isFavoriteOn ? 'active' : ''}`}
@@ -133,10 +160,10 @@ function PlayerBar() {
                         <img src={prevIcon} alt="Poprzedni" />
                     </button>
 
-                    {/* Przycisk Play/Pause ze zmianą ikony */}
                     <button
                         className="control-button play"
-                        onClick={() => setIsPlaying(!isPlaying)}
+                        onClick={handlePlayPauseClick}
+                        disabled={!currentSong}
                     >
                         {isPlaying ? (
                             <img src={pauseIcon} alt="Pauza" />
@@ -149,7 +176,7 @@ function PlayerBar() {
                         <img src={nextIcon} alt="Następny" />
                     </button>
 
-                    {/* 2. Pasek postępu */}
+                    {/* Pasek postępu (na razie statyczny) */}
                     <div className="progress-bar-container">
                         <span className="time-current">1:30</span>
                         <input type="range" className="progress-bar" min="0" max="100" defaultValue="50" />
