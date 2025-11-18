@@ -1,0 +1,107 @@
+.genre-page {
+    padding: 2rem;
+    padding-bottom: 6rem;
+    color: white;
+    min-height: 80vh;
+}
+
+/* --- NAGŁÓWEK --- */
+.genre-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.genre-banner {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.genre-banner h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-align: center;
+    padding: 10px;
+}
+
+.genre-info h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+.genre-info p {
+    color: #b3b3b3;
+    font-size: 1rem;
+}
+
+/* --- SIATKA (Ta sama co w HomePage) --- */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 24px;
+}
+
+
+/* --- MODAL (Powiadomienie o braku wyników) --- */
+.genre-page.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 70vh;
+}
+
+.empty-modal {
+    background-color: #1e1e1e;
+    padding: 40px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    border: 1px solid #333;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-modal h2 {
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.empty-modal p {
+    color: #b3b3b3;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.modal-button {
+    margin-top: 2rem;
+    background-color: white;
+    color: black;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.modal-button:hover {
+    transform: scale(1.05);
+    background-color: #f0f0f0;
+}
