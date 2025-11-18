@@ -1,6 +1,6 @@
 .home-page {
     padding: 2rem;
-    padding-bottom: 6rem; /* Zapas na player */
+    padding-bottom: 6rem;
     color: white;
 }
 
@@ -16,20 +16,29 @@
 }
 
 .section-header h2 {
-    font-size: 1.8rem; /* Nieco większy nagłówek */
+    font-size: 1.8rem;
     font-weight: 700;
     margin: 0;
+}
+
+.see-all {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #b3b3b3;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+}
+.see-all:hover {
+    color: white;
+    text-decoration: underline;
 }
 
 /* --- SIATKA GATUNKÓW (Zawsze Grid) --- */
 .genre-grid {
     display: grid;
-    /* Responsywna siatka:
-       - Karty mają minimum 180px szerokości.
-       - Jeśli jest miejsce, rozciągają się (1fr), żeby wypełnić rząd.
-    */
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 24px; /* Odstępy między kartami */
-
+    gap: 24px;
     width: 100%;
 }
