@@ -1,0 +1,35 @@
+.home-page {
+    padding: 2rem;
+    padding-bottom: 6rem; /* Zapas na player */
+    color: white;
+}
+
+.home-section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 1.8rem; /* Nieco większy nagłówek */
+    font-weight: 700;
+    margin: 0;
+}
+
+/* --- SIATKA GATUNKÓW (Zawsze Grid) --- */
+.genre-grid {
+    display: grid;
+    /* Responsywna siatka:
+       - Karty mają minimum 180px szerokości.
+       - Jeśli jest miejsce, rozciągają się (1fr), żeby wypełnić rząd.
+    */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 24px; /* Odstępy między kartami */
+
+    width: 100%;
+}

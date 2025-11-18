@@ -1,8 +1,55 @@
-import React from "react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import './HomePage.css';
+import MediaCard from '../components/cards/MediaCard.jsx';
+
+// Lista wszystkich gatunków
+const genres = [
+    "POP", "ROCK", "JAZZ", "BLUES", "HIP_HOP", "RNB", "ELECTRONIC",
+    "DANCE", "METAL", "CLASSICAL", "REGGAE", "COUNTRY", "FOLK",
+    "PUNK", "FUNK", "TRAP", "SOUL", "LATIN", "K_POP", "INDIE", "ALTERNATIVE"
+];
 
 function HomePage() {
+
     return (
-        <h1>Witaj na Stronie Główniej</h1>
-    )
+        <div className="home-page">
+
+            <section className="home-section">
+                <div className="section-header">
+                    <h2>Przeglądaj Gatunki</h2>
+                </div>
+
+                {/* Zawsze wyświetlamy siatkę wszystkich gatunków */}
+                <div className="genre-grid">
+                    {genres.map((genre) => (
+                        <MediaCard
+                            key={genre}
+                            title={genre}
+                            subtitle="Gatunek"
+                            // Generowanie koloru na podstawie nazwy
+                            imageUrl={`https://placehold.co/400x400/${stringToColor(genre)}/white?text=${genre}`}
+                            linkTo={`/genre/${genre.toLowerCase()}`}
+                        />
+                    ))}
+                </div>
+            </section>
+        </div>
+    );
 }
+
+// Funkcja pomocnicza do kolorów
+function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    let color = '';
+    for (let i = 0; i < 3; i++) {
+        let value = (hash >> (i * 8)) & 0xFF;
+        color += ('00' + value.toString(16)).substr(-2);
+    }
+    return color;
+}
+
 export default HomePage;
