@@ -1,0 +1,226 @@
+/* Główny kontener strony kolekcji */
+.collection-page {
+    padding: 2rem;
+    color: white;
+    padding-bottom: 5rem;
+}
+
+/* ===== 1. NAGŁÓWEK (Styl skopiowany z SongPage.css) ===== */
+.song-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+.song-cover-art {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+.song-details {
+    display: flex;
+    flex-direction: column;
+}
+.song-type {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #b3b3b3;
+}
+.song-details h1 {
+    font-size: 3rem;
+    margin: 0.5rem 0;
+}
+.song-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+.song-artist {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+.song-artist:hover {
+    text-decoration: underline;
+}
+
+/* ===== 2. KONTROLKI (Styl skopiowany z SongPage.css) ===== */
+.song-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.song-play-button {
+    background-color: #8A2BE2;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.song-play-button:hover {
+    transform: scale(1.05);
+}
+.song-play-button img {
+    width: 24px;
+    height: 24px;
+}
+/* Używamy '.song-control-button' dla serduszka (tak jak w SongPage) */
+.song-control-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.song-control-button img {
+    width: 28px;
+    height: 28px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.song-control-button:hover img {
+    opacity: 1;
+}
+.song-control-button.active img {
+    opacity: 1;
+}
+
+
+/* ===== 3. NOWE STYLE: Lista Utworów ===== */
+.song-list-container {
+    border-top: 1px solid #404040;
+    padding-top: 1.5rem;
+}
+
+/* Definicja siatki (grid) dla nagłówka i wierszy */
+.song-list-header,
+.song-list-item {
+    display: grid;
+    /* Definicja kolumn: 1. Numer | 2. Tytuł (zajmuje resztę) | 3. Czas | 4. Polubienie */
+    grid-template-columns: 40px 1fr 60px 60px;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 1rem; /* Padding wiersza */
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+
+/* Nagłówek listy (Tytuł, Czas) */
+.song-list-header {
+    border-bottom: 1px solid #282828;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+.song-header-title {
+    justify-self: start;
+}
+.song-header-duration,
+.song-header-like {
+    justify-self: center;
+}
+
+/* Lista 'ul' */
+.song-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Pojedynczy wiersz piosenki */
+.song-list-item {
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+.song-list-item:hover {
+    background-color: #282828; /* Podświetlenie wiersza */
+}
+
+/* Numer utworu (z logiką Play/Pause na hover) */
+.song-track-number {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.song-track-number .track-number {
+    display: block; /* Domyślnie pokazuj numer */
+}
+.song-track-number img {
+    display: none; /* Domyślnie ukryj ikonę play */
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+/* Pokazuje ikonę Play/Pause, gdy najeżdżamy na wiersz */
+.song-list-item:hover .track-number {
+    display: none; /* Ukryj numer */
+}
+.song-list-item:hover .song-track-number img {
+    display: block; /* Pokaż ikonę Play */
+}
+/* Jeśli piosenka jest AKTYWNA, zawsze pokazuj ikonę */
+.song-list-item.active .track-number {
+    display: none;
+}
+.song-list-item.active .song-track-number img {
+    display: block;
+}
+.song-list-item.active .song-item-title {
+    color: #8A2BE2; /* Podświetl tytuł aktywnej piosenki */
+}
+
+
+/* Tytuł i artysta w wierszu */
+.song-item-details {
+    display: flex;
+    flex-direction: column;
+    /* Zapobiega "wylewaniu" się tekstu */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.song-item-title {
+    color: white;
+    font-weight: 500;
+}
+.song-item-artist {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+.song-item-artist:hover {
+    text-decoration: underline;
+}
+
+/* Czas trwania i przycisk Polubienia (centrowane) */
+.song-item-duration,
+.song-item-like-button {
+    justify-self: center;
+}
+
+.song-item-like-button {
+    background: none;
+    border: none;
+}
+.song-item-like-button img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+}
+.song-item-like-button:hover img {
+    opacity: 1;
+}
+.song-item-like-button.active img {
+    opacity: 1;
+}

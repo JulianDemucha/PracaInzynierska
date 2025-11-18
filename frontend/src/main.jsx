@@ -4,10 +4,13 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import App from './App'
 import './index.css'
+
+import { PlayerProvider } from './context/PlayerContext.jsx';
 import AuthProvider from './context/AuthProvider.jsx'
 import ProfilePage from './pages/ProfilePage'
 import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage.jsx'
+import CollectionPage from './pages/CollectionPage'
 
 const router = createBrowserRouter([
     {
@@ -28,6 +31,14 @@ const router = createBrowserRouter([
             {
                 path: "/song/:id",
                 element: <SongPage />
+            },
+            {
+                path: "/album/:id",
+                element: <CollectionPage />
+            },
+            {
+                path: "/playlist/:id",
+                element: <CollectionPage />
             }
         ]
     }
@@ -35,8 +46,10 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <AuthProvider>
-            <RouterProvider router={router}/>
-        </AuthProvider>
+        <PlayerProvider>
+            <AuthProvider>
+                <RouterProvider router={router}/>
+            </AuthProvider>
+        </PlayerProvider>
     </React.StrictMode>,
 )
