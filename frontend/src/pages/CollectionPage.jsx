@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import './CollectionPage.css'; // Dedykowany plik CSS, który zaraz stworzymy
-import { usePlayer } from '../context/PlayerContext'; // Importujemy "Mózg" odtwarzacza
+import { useParams, Link} from 'react-router-dom';
+import './CollectionPage.css';
+import { usePlayer } from '../context/PlayerContext';
 
-// --- Importy ikon ---
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';
 import pauseIcon from '../assets/images/pause.png';
 import heartIconOff from '../assets/images/favorites.png';
 import heartIconOn from '../assets/images/favoritesOn.png';
-// import likeIcon from '../assets/images/like.png';
-// import likeIconOn from '../assets/images/likeOn.png';
-import ContextMenu from '../components/common/ContextMenu.jsx'; // Nasze 3 kropki
+import ContextMenu from '../components/common/ContextMenu.jsx';
 
-// --- Przykładowe Dane (Mock Data) ---
-// W przyszłości pobierzesz to z backendu używając `id` z useParams
 const mockDatabase = {
     album: {
         id: "a1",
@@ -33,7 +28,7 @@ const mockDatabase = {
         id: "p1",
         type: "Playlista",
         title: "Moja playlista nr 1",
-        artist: { id: "u1", name: "Hubert" }, // Właściciel playlisty
+        artist: { id: "u1", name: "Hubert" },
         year: 2024,
         coverArtUrl: "https://placehold.co/300x300/1DB954/white?text=Playlista",
         songs: [
@@ -43,60 +38,67 @@ const mockDatabase = {
         ]
     }
 };
-// ---------------------------------
 
 function CollectionPage() {
-    // Odczytuje ID z adresu URL (np. /album/a1)
     const { id } = useParams();
 
-    // Na razie pobieramy dane z 'mockDatabase'
-    // W przyszłości tu będzie 'fetch' do API
-    // (Ta logika jest uproszczona, zakłada, że wiemy, czy to album, czy playlista)
-    const collection = mockDatabase.album; // Możesz zmienić na 'playlist' do testów
-
-    // --- Stany Lokalne ---
-    const [isFavorite, setIsFavorite] = useState(false); // Serduszko dla całego albumu
-    // Stan dla polubień *poszczególnych* piosenek na liście
+    const [isFavorite, setIsFavorite] = useState(false);
     const [songLikes, setSongLikes] = useState({});
-
-    // --- Stany Globalne z "Mózgu" ---
     const { currentSong, isPlaying, playSong, pause } = usePlayer();
 
-    // Funkcja do odtwarzania całego albumu/playlisty (zaczyna od pierwszej piosenki)
-    const handlePlayCollection = () => {
-        // Sprawdź, czy obecna piosenka jest z tej kolekcji
-        const isThisCollectionPlaying = collection.songs.some(s => s.id === currentSong?.id) && isPlaying;
+    let collection = null;
+    if (mockDatabase.album.id === id) {
+        collection = mockDatabase.album;
+    } else if (mockDatabase.playlist.id === id) {
+        collection = mockDatabase.playlist;
+    }
+    if (!collection) {
+        return <div style={{padding: '20px', color: 'white'}}>Nie znaleziono takiej kolekcji.</div>;
+    }
 
-        if (isThisCollectionPlaying) {
-            pause(); // Jeśli to gra, zapauzuj
+    // Funkcja odtwarzania całego albumu
+    const handlePlayCollection = () => {
+        const firstSong = collection.songs[0];
+        // Sprawdzamy czy PIERWSZA piosenka albumu właśnie gra
+        if (currentSong?.id === firstSong.id) {
+            if (isPlaying) pause();
+            else playSong(firstSong);
         } else {
-            // Zacznij grać pierwszą piosenkę z listy
-            playSong(collection.songs[0]);
-            // W przyszłości: dodaj resztę do kolejki
+            // Przekazujemy też całą listę, aby ustawić kolejkę (drugi argument)
+            playSong(firstSong, collection.songs);
         }
     };
 
-    // Funkcja do polubienia piosenki na liście
+    // Funkcja odtwarzania pojedynczego utworu
+    const handlePlayTrack = (song) => {
+        if (currentSong?.id === song.id) {
+            if (isPlaying) pause();
+            else playSong(song);
+        } else {
+            // Odtwarzamy klikniętą piosenkę i ustawiamy resztę albumu jako kolejkę
+            playSong(song, collection.songs);
+        }
+    };
+
     const handleLikeSong = (songId) => {
         setSongLikes(prev => ({
             ...prev,
-            [songId]: !prev[songId] // Odwraca stan (true/false) dla tej jednej piosenki
+            [songId]: !prev[songId]
         }));
     };
 
-    // Opcje dla menu "3 kropki"
     const collectionMenuOptions = [
         { label: "Dodaj do kolejki", onClick: () => console.log("Dodaj do kolejki") },
         { label: "Zapisz w swojej bibliotece", onClick: () => console.log("Zapisano") },
         { label: "Udostępnij", onClick: () => console.log("Udostępniono") }
     ];
 
-    // Sprawdza, czy cały album/playlista jest aktywnie odtwarzana
-    const isThisCollectionPlaying = collection.songs.some(s => s.id === currentSong?.id) && isPlaying;
+    // Sprawdzamy, czy jakakolwiek piosenka z tego albumu gra
+    const isAnySongFromCollectionPlaying = collection.songs.some(s => s.id === currentSong?.id);
+    const showPauseOnHeader = isAnySongFromCollectionPlaying && isPlaying;
 
     return (
         <div className="collection-page">
-            {/* ===== 1. NAGŁÓWEK (Ten sam styl co SongPage) ===== */}
             <header className="song-header">
                 <img src={collection.coverArtUrl || defaultCover} alt={collection.title} className="song-cover-art" />
                 <div className="song-details">
@@ -112,10 +114,9 @@ function CollectionPage() {
                 </div>
             </header>
 
-            {/* ===== 2. KONTROLKI ===== */}
             <section className="song-controls">
                 <button className="song-play-button" onClick={handlePlayCollection}>
-                    <img src={isThisCollectionPlaying ? pauseIcon : playIcon} alt={isThisCollectionPlaying ? "Pauza" : "Odtwórz"} />
+                    <img src={showPauseOnHeader ? pauseIcon : playIcon} alt={showPauseOnHeader ? "Pauza" : "Odtwórz"} />
                 </button>
                 <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => setIsFavorite(!isFavorite)}>
                     <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
@@ -123,41 +124,37 @@ function CollectionPage() {
                 <ContextMenu options={collectionMenuOptions} />
             </section>
 
-            {/* ===== 3. LISTA UTWORÓW ===== */}
             <section className="song-list-container">
-                {/* Nagłówek listy (Tabela) */}
                 <div className="song-list-header">
                     <span className="song-header-track">#</span>
                     <span className="song-header-title">TYTUŁ</span>
                     <span className="song-header-duration">CZAS</span>
-                    <span className="song-header-like"></span> {/* Puste miejsce na serduszko */}
+                    <span className="song-header-like"></span>
                 </div>
 
-                {/* Lista (mapowanie po piosenkach) */}
                 <ul className="song-list">
                     {collection.songs.map((song, index) => {
-                        const isThisSongPlaying = currentSong?.id === song.id && isPlaying;
+                        // Logika wizualna bazująca na GLOBALNYM stanie
+                        const isThisSongActive = currentSong?.id === song.id;
+                        const isThisSongPlaying = isThisSongActive && isPlaying;
                         const isSongLiked = songLikes[song.id] || false;
 
                         return (
                             <li
                                 key={song.id}
-                                className={`song-list-item ${currentSong?.id === song.id ? 'active' : ''}`}
-                                // Podwójne kliknięcie odtwarza piosenkę
-                                onDoubleClick={() => playSong(song)}
+                                className={`song-list-item ${isThisSongActive ? 'active' : ''}`}
+                                onDoubleClick={() => handlePlayTrack(song)}
                             >
                                 <span className="song-track-number">
-                                    {/* Pokaż ikonę pauzy/play LUB numer */}
                                     {isThisSongPlaying ? (
                                         <img src={pauseIcon} alt="Pauza" onClick={() => pause()}/>
                                     ) : (
-                                        <img src={playIcon} alt="Odtwórz" onClick={() => playSong(song)}/>
+                                        <img src={playIcon} alt="Odtwórz" className="play-icon" onClick={() => handlePlayTrack(song)}/>
                                     )}
                                     <span className="track-number">{index + 1}</span>
                                 </span>
                                 <div className="song-item-details">
                                     <span className="song-item-title">{song.title}</span>
-                                    {/* Jeśli to playlista, pokaż artystę przy każdej piosence */}
                                     {collection.type === "Playlista" && (
                                         <Link to={`/artist/${song.artist.id}`} className="song-item-artist">{song.artist.name}</Link>
                                     )}

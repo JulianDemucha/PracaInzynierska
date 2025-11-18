@@ -12,21 +12,22 @@ export function PlayerProvider({ children }) {
     const [queue, setQueue] = useState([]);
 
     const playSong = (song, songList = null) => {
-        // Jeśli to ta sama piosenka, po prostu wznów
         if (currentSong?.id === song.id) {
             setIsPlaying(true);
+            if (songList) {
+                const songIndex = songList.findIndex(s => s.id === song.id);
+                if (songIndex !== -1) {
+                    setQueue(songList.slice(songIndex + 1));
+                }
+            }
         } else {
-            // Jeśli to nowa piosenka, ustaw ją i odtwórz
             setCurrentSong(song);
             setIsPlaying(true);
 
-            // Jeśli podano całą listę (np. album), ustaw ją jako kolejkę
             if (songList) {
-                // Znajdź indeks klikniętej piosenki i ustaw kolejkę od tego miejsca
                 const songIndex = songList.findIndex(s => s.id === song.id);
                 setQueue(songList.slice(songIndex + 1));
             } else {
-                // Jeśli to pojedyncza piosenka, wyczyść kolejkę
                 setQueue([]);
             }
         }

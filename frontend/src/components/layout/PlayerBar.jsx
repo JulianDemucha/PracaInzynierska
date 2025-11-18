@@ -28,8 +28,7 @@ import deleteIcon from '../../assets/images/bin.png';
 
 
 function PlayerBar() {
-    const { currentSong, isPlaying, playSong, pause } = usePlayer();
-
+    const { currentSong, isPlaying, playSong, pause, queue } = usePlayer();
     const [isShuffleOn, setIsShuffleOn] = useState(false);
     const [isRepeatOn, setIsRepeatOn] = useState(false);
     const [isFavoriteOn, setIsFavoriteOn] = useState(false);
@@ -37,8 +36,6 @@ function PlayerBar() {
     const queuePopupRef = useRef(null);
     const [previousVolume, setPreviousVolume] = useState(80);
     const [volume, setVolume] = useState(50);
-
-    // const [isPlaying, setIsPlaying] = useState(false);
 
     const getVolumeIcon = () => {
         const currentVolume = Number(volume);
@@ -50,6 +47,7 @@ function PlayerBar() {
         }
         return <img src={soundIcon} alt="Mute" />;
     };
+
     const toggleMute = () => {
         if (Number(volume) > 0) {
             setPreviousVolume(volume);
@@ -58,28 +56,6 @@ function PlayerBar() {
             setVolume(previousVolume > 0 ? previousVolume : 50);
         }
     };
-
-    const mockQueue = [
-        { id: 1, title: "Nazwa Utworu 1", artist: "Artysta 1" },
-        { id: 2, title: "Kolejna piosenka", artist: "Inny Artysta" },
-        { id: 3, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 4, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 5, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 6, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 7, title: "Kolejna piosenka", artist: "Inny Artysta" },
-        { id: 8, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 9, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 10, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 11, title: "Nazwa Utworu 1", artist: "Artysta 1" },
-        { id: 12, title: "Kolejna piosenka", artist: "Inny Artysta" },
-        { id: 13, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 14, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 15, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 16, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 17, title: "Kolejna piosenka", artist: "Inny Artysta" },
-        { id: 18, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-        { id: 19, title: "Trzeci utwór w kolejce", artist: "Zespół" },
-    ];
 
     const handleRemoveFromQueue = (songId) => {
         console.log("Usunięto piosenkę o ID:", songId);
@@ -241,20 +217,25 @@ function PlayerBar() {
                 <div className="queue-popup custom-scrollbar" ref={queuePopupRef}>
                     <h3 className="queue-title">Kolejka odtwarzania</h3>
                     <ul className="queue-list">
-                        {mockQueue.map((song) => (
-                            <li key={song.id} className="queue-item">
-                                <div className="queue-song-details">
-                                    <span className="queue-song-title">{song.title}</span>
-                                    <span className="queue-artist-name">{song.artist}</span>
-                                </div>
-                                <button
-                                    className="queue-remove-button"
-                                    onClick={() => handleRemoveFromQueue(song.id)}
-                                >
-                                    <img src={deleteIcon} alt="Delete" />
-                                </button>
-                            </li>
-                        ))}
+                        {/* Sprawdzamy czy kolejka ma elementy */}
+                        {queue.length > 0 ? (
+                            queue.map((song, index) => (
+                                <li key={`${song.id}-${index}`} className="queue-item">
+                                    <div className="queue-song-details">
+                                        <span className="queue-song-title">{song.title}</span>
+                                        <span className="queue-artist-name">{song.artist.name || song.artist}</span>
+                                    </div>
+                                    <button
+                                        className="queue-remove-button"
+                                        onClick={() => handleRemoveFromQueue(song.id)}
+                                    >
+                                        <img src={deleteIcon} alt="Delete" />
+                                    </button>
+                                </li>
+                            ))
+                        ) : (
+                            <li className="queue-item" style={{justifyContent: 'center'}}>Pusta kolejka</li>
+                        )}
                     </ul>
                 </div>
             )}
