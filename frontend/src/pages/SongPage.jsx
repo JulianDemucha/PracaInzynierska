@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import './SongPage.css';
+import { usePlayer } from '../context/PlayerContext'; // 1. Import Contextu
+
 import defaultAvatar from '../assets/images/default-avatar.png';
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';
@@ -38,12 +40,23 @@ const mockSongDatabase = {
         comments: [] // Brak komentarzy
     }
 };
+
 function SongPage() {
     const { id } = useParams();
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [isQueued, setIsQueued] = useState(false);
-    const [rating, setRating] = useState(null);
+
+    // 2. POBIERAMY DANE Z GLOBALNEGO ODTWARZACZA
+    const {
+        currentSong,
+        isPlaying,
+        playSong,
+        pause,
+        addToQueue,
+        favorites, toggleFavorite, // Serduszka
+        ratings, rateSong          // Łapki
+    } = usePlayer();
+
+    // Lokalne stany (tylko dla UI/Animacji i Komentarzy)
+    const [isQueuedAnim, setIsQueuedAnim] = useState(false); // Zmiana nazwy by nie mylić z logiką
     const [commentSort, setCommentSort] = useState('popular');
     const [visibleComments, setVisibleComments] = useState(10);
     const [commentLikes, setCommentLikes] = useState({});
@@ -61,27 +74,44 @@ function SongPage() {
         return sorted;
     }, [song, commentSort]);
 
-    // Funkcja do przełączania oceny (Like/Unlike)
-    const handleRating = (newRating) => {
-        if (rating === newRating) setRating(null);
-        else setRating(newRating);
+
+    // --- LOGIKA PODPIĘTA POD CONTEXT ---
+
+    // 1. Sprawdzamy czy ta piosenka gra w globalnym playerze
+    const isThisSongActive = currentSong?.id === song?.id;
+    const isThisSongPlaying = isThisSongActive && isPlaying;
+
+    const handlePlayPause = () => {
+        if (isThisSongPlaying) {
+            pause();
+        } else {
+            playSong(song);
+        }
     };
 
-    // Logika polubienia komentarza
+    // 2. Sprawdzamy status ulubionych i ocen z Contextu
+    const isFavorite = !!favorites[song?.id];
+    const currentRating = ratings[song?.id]; // 'like', 'dislike' lub undefined
+
+    // 3. Logika dodawania do kolejki (z zachowaniem animacji)
+    const handleAddToQueue = () => {
+        if (isQueuedAnim) return;
+
+        addToQueue(song); // Dodaje do globalnej kolejki
+        console.log("Dodano do kolejki:", song.title);
+
+        // Animacja ikonki
+        setIsQueuedAnim(true);
+        setTimeout(() => {
+            setIsQueuedAnim(false);
+        }, 1500);
+    };
+
+    // Logika polubienia komentarza (zostaje lokalna)
     const handleCommentLike = (commentId) => {
         const newLikes = {...commentLikes};
         newLikes[commentId] = !newLikes[commentId];
         setCommentLikes(newLikes);
-    };
-
-    // Logika dodawania do kolejki
-    const handleAddToQueue = () => {
-        if (isQueued) return;
-        console.log("Dodano do kolejki:", song.title);
-        setIsQueued(true);
-        setTimeout(() => {
-            setIsQueued(false);
-        }, 1500);
     };
 
     // --- Zabezpieczenie, jeśli ID jest złe ---
@@ -117,32 +147,38 @@ function SongPage() {
 
             {/* ===== 2. KONTROLKI ===== */}
             <section className="song-controls">
-                <button className="song-play-button" onClick={() => setIsPlaying(!isPlaying)}>
-                    <img src={isPlaying ? pauseIcon : playIcon} alt={isPlaying ? "Pauza" : "Odtwórz"} />
+                <button className="song-play-button" onClick={handlePlayPause}>
+                    <img src={isThisSongPlaying ? pauseIcon : playIcon} alt={isThisSongPlaying ? "Pauza" : "Odtwórz"} />
                 </button>
-                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => setIsFavorite(!isFavorite)}>
+
+                {/* Serduszko korzysta teraz z globalnego toggleFavorite */}
+                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}>
                     <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
-                <button className={`song-control-button ${isQueued ? 'active' : ''}`} onClick={handleAddToQueue}>
-                    <img src={isQueued ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
+
+                {/* Kolejka z animacją */}
+                <button className={`song-control-button ${isQueuedAnim ? 'active' : ''}`} onClick={handleAddToQueue}>
+                    <img src={isQueuedAnim ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
                 </button>
+
+                {/* Łapki korzystają z globalnego rateSong */}
                 <div className="song-rating">
                     <button
-                        className={`song-rating-button ${rating === 'like' ? 'active' : ''}`}
-                        onClick={() => handleRating('like')}
+                        className={`song-rating-button ${currentRating === 'like' ? 'active' : ''}`}
+                        onClick={() => rateSong(song.id, 'like')}
                     >
-                        <img src={rating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
+                        <img src={currentRating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
                     </button>
                     <button
-                        className={`song-rating-button ${rating === 'dislike' ? 'active' : ''}`}
-                        onClick={() => handleRating('dislike')}
+                        className={`song-rating-button ${currentRating === 'dislike' ? 'active' : ''}`}
+                        onClick={() => rateSong(song.id, 'dislike')}
                     >
-                        <img src={rating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
+                        <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
                     </button>
                 </div>
             </section>
 
-            {/* ===== 3. SEKCJA KOMENTARZY ===== */}
+            {/* ===== 3. SEKCJA KOMENTARZY (Bez zmian logicznych) ===== */}
             <section className="comments-section">
                 <h2>Komentarze</h2>
 
