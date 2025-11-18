@@ -1,11 +1,10 @@
-/* Główny kontener strony kolekcji */
 .collection-page {
     padding: 2rem;
     color: white;
     padding-bottom: 5rem;
 }
 
-/* ===== 1. NAGŁÓWEK (Styl skopiowany z SongPage.css) ===== */
+/* ===== 1. NAGŁÓWEK ===== */
 .song-header {
     display: flex;
     align-items: center;
@@ -49,7 +48,7 @@
     text-decoration: underline;
 }
 
-/* ===== 2. KONTROLKI (Styl skopiowany z SongPage.css) ===== */
+/* ===== 2. KONTROLKI GŁÓWNE (Play albumu, Ulubione albumu) ===== */
 .song-controls {
     display: flex;
     align-items: center;
@@ -75,15 +74,15 @@
     width: 24px;
     height: 24px;
 }
-/* Używamy '.song-control-button' dla serduszka (tak jak w SongPage) */
 .song-control-button {
     background: none;
     border: none;
     cursor: pointer;
+    display: flex; /* Wyśrodkowanie ikony */
 }
 .song-control-button img {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     opacity: 0.7;
     transition: opacity 0.2s ease;
 }
@@ -95,132 +94,201 @@
 }
 
 
-/* ===== 3. NOWE STYLE: Lista Utworów ===== */
+/* ===== 3. LISTA UTWORÓW (Zaktualizowana siatka) ===== */
 .song-list-container {
-    border-top: 1px solid #404040;
-    padding-top: 1.5rem;
+    border-top: 1px solid #282828;
+    padding-top: 1rem;
 }
 
 /* Definicja siatki (grid) dla nagłówka i wierszy */
 .song-list-header,
 .song-list-item {
     display: grid;
-    /* Definicja kolumn: 1. Numer | 2. Tytuł (zajmuje resztę) | 3. Czas | 4. Polubienie */
-    grid-template-columns: 40px 1fr 60px 60px;
-    gap: 1rem;
+    grid-template-columns: 50px 4fr 2fr 60px 40px;
+    gap: 10px;
     align-items: center;
-    padding: 0.75rem 1rem; /* Padding wiersza */
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
     color: #b3b3b3;
     font-size: 0.9rem;
 }
 
-/* Nagłówek listy (Tytuł, Czas) */
+/* --- Style Nagłówka tabeli --- */
 .song-list-header {
     border-bottom: 1px solid #282828;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
 }
 .song-header-title {
     justify-self: start;
 }
-.song-header-duration,
-.song-header-like {
-    justify-self: center;
+.song-header-duration {
+    justify-self: end; /* Wyrównanie czasu do prawej */
+    margin-right: 10px;
 }
 
-/* Lista 'ul' */
+/* --- Style Wiersza (Item) --- */
+/* Tego fragmentu brakowało w Twoim kodzie! */
 .song-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    list-style: none; /* Usuwa kropki listy */
+    padding: 0;       /* Usuwa domyślne wcięcie przeglądarki */
+    margin: 0;        /* Usuwa marginesy */
 }
-
-/* Pojedynczy wiersz piosenki */
 .song-list-item {
-    border-radius: 4px;
     transition: background-color 0.2s ease;
 }
 .song-list-item:hover {
-    background-color: #282828; /* Podświetlenie wiersza */
+    background-color: rgba(255, 255, 255, 0.1); /* Delikatne podświetlenie */
+}
+.song-list-item.active {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Numer utworu (z logiką Play/Pause na hover) */
+/* 1. Kolumna: Numer / Play Icon */
+.song-header-track {
+    justify-self: center;
+    text-align: center;
+}
+
+/* 2. Teraz wyśrodkujmy numery na liście */
 .song-track-number {
+    justify-self: center; /* Gridowe centrowanie w poziomie */
+    display: flex;        /* Flexbox, żeby wyśrodkować ikonę wewnątrz kontenera */
+    align-items: center;
+    justify-content: center;
+    width: 100%;          /* Zajmuje całą szerokość kolumny (50px) */
+    height: 100%;
+}
+.number-container {
     position: relative;
+    width: 20px;  /* Stała szerokość kontenera z cyfrą/ikoną */
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.song-track-number .track-number {
-    display: block; /* Domyślnie pokazuj numer */
+.play-icon-hover {
+    display: none;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
-.song-track-number img {
-    display: none; /* Domyślnie ukryj ikonę play */
+.track-number {
+    font-variant-numeric: tabular-nums; /* Żeby cyfry 1 i 10 nie przesuwały tekstu */
+}
+/* Logika pokazywania Play na hover */
+.song-list-item:hover .track-number {
+    visibility: hidden; /* Ukrywamy numer, ale zachowujemy miejsce */
+}
+.song-list-item:hover .play-icon-hover {
+    display: block; /* Pokazujemy ikonę */
+}
+/* Jeśli piosenka gra (pauza icon) */
+.song-track-number img[alt="Pauza"] {
     width: 16px;
     height: 16px;
     cursor: pointer;
 }
-/* Pokazuje ikonę Play/Pause, gdy najeżdżamy na wiersz */
-.song-list-item:hover .track-number {
-    display: none; /* Ukryj numer */
-}
-.song-list-item:hover .song-track-number img {
-    display: block; /* Pokaż ikonę Play */
-}
-/* Jeśli piosenka jest AKTYWNA, zawsze pokazuj ikonę */
-.song-list-item.active .track-number {
-    display: none;
-}
-.song-list-item.active .song-track-number img {
-    display: block;
-}
+/* Kolor aktywnego tytułu */
 .song-list-item.active .song-item-title {
-    color: #8A2BE2; /* Podświetl tytuł aktywnej piosenki */
+    color: #8A2BE2;
+}
+.song-list-item.active .track-number {
+    color: #8A2BE2;
 }
 
 
-/* Tytuł i artysta w wierszu */
+/* 2. Kolumna: Tytuł i Artysta */
 .song-item-details {
     display: flex;
     flex-direction: column;
-    /* Zapobiega "wylewaniu" się tekstu */
     overflow: hidden;
     white-space: nowrap;
-    text-overflow: ellipsis;
 }
 .song-item-title {
     color: white;
+    font-size: 1rem;
     font-weight: 500;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 .song-item-artist {
     color: #b3b3b3;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     text-decoration: none;
+    margin-top: 2px;
 }
 .song-item-artist:hover {
     text-decoration: underline;
+    color: white;
 }
 
-/* Czas trwania i przycisk Polubienia (centrowane) */
-.song-item-duration,
-.song-item-like-button {
-    justify-self: center;
+
+/* 3. Kolumna: Akcje (Serduszko, Łapki) */
+.song-item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Wyrównaj ikony do prawej strony kolumny */
+    gap: 12px;
+    padding-right: 20px;
+    opacity: 0; /* Domyślnie ukryte */
+    transition: opacity 0.2s ease;
 }
 
-.song-item-like-button {
+/* Pokazujemy akcje po najechaniu na wiersz */
+.song-list-item:hover .song-item-actions {
+    opacity: 1;
+}
+
+/* Przycisk akcji (pojedyncza ikona) */
+.action-btn {
     background: none;
     border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    transition: all 0.2s;
 }
-.song-item-like-button img {
+.action-btn img {
+    width: 18px;
+    height: 18px;
+}
+.action-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+.action-btn.active {
+    opacity: 1; /* Aktywny (np. polubiony) jest zawsze jasny */
+}
+
+
+/* 4. Kolumna: Czas */
+.song-item-duration {
+    text-align: right;
+    margin-right: 10px;
+    font-variant-numeric: tabular-nums; /* Stała szerokość cyfr */
+}
+
+/* 5. Kolumna: Menu kontekstowe (3 kropki) */
+.song-context-menu-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* Nadpisujemy style przycisku triggera wewnątrz tabeli, żeby był mniejszy */
+.song-context-menu-wrapper .context-menu-trigger img {
     width: 18px;
     height: 18px;
     opacity: 0.7;
-    transition: opacity 0.2s ease;
-    cursor: pointer;
 }
-.song-item-like-button:hover img {
-    opacity: 1;
-}
-.song-item-like-button.active img {
+.song-list-item:hover .song-context-menu-wrapper .context-menu-trigger img {
     opacity: 1;
 }
