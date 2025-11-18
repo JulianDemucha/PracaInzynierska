@@ -2,14 +2,13 @@ import React, { createContext, useState, useContext } from 'react';
 
 const PlayerContext = createContext();
 
-// 2. Provider (komponent, który "trzyma" stan)
 export function PlayerProvider({ children }) {
-    // Stan przechowuje CAŁY obiekt piosenki, która teraz gra
     const [currentSong, setCurrentSong] = useState(null);
-    // Stan przechowuje, czy odtwarzacz jest aktywny
     const [isPlaying, setIsPlaying] = useState(false);
-    // Stan przechowuje listę piosenek w kolejce
     const [queue, setQueue] = useState([]);
+
+    const [favorites, setFavorites] = useState({});
+    const [ratings, setRatings] = useState({});
 
     const playSong = (song, songList = null) => {
         if (currentSong?.id === song.id) {
@@ -33,18 +32,36 @@ export function PlayerProvider({ children }) {
         }
     };
 
-    // Funkcja do pauzowania
     const pause = () => {
         setIsPlaying(false);
     };
 
-    // Funkcja do dodawania do kolejki
     const addToQueue = (song) => {
-        // Dodaj piosenkę na koniec tablicy 'queue'
         setQueue(prevQueue => [...prevQueue, song]);
     };
 
-    // Wartości udostępniane całej aplikacji
+    const toggleFavorite = (songId) => {
+        setFavorites(prev => ({
+            ...prev,
+            [songId]: !prev[songId]
+        }));
+    };
+
+    const rateSong = (songId, voteType) => {
+        setRatings(prev => {
+            const currentRating = prev[songId];
+            if (currentRating === voteType) {
+                const newState = { ...prev };
+                delete newState[songId];
+                return newState;
+            }
+            return {
+                ...prev,
+                [songId]: voteType
+            };
+        });
+    };
+
     const value = {
         currentSong,
         isPlaying,
@@ -52,6 +69,10 @@ export function PlayerProvider({ children }) {
         playSong,
         pause,
         addToQueue,
+        favorites,
+        toggleFavorite,
+        ratings,
+        rateSong
     };
 
     return (
@@ -61,8 +82,6 @@ export function PlayerProvider({ children }) {
     );
 }
 
-// 3. Stwórz "hak" (skrót) do łatwego używania kontekstu
-// (Ten komentarz wyłącza błąd ESLint, o którym rozmawialiśmy)
 // eslint-disable-next-line react-refresh/only-export-components
 export function usePlayer() {
     return useContext(PlayerContext);

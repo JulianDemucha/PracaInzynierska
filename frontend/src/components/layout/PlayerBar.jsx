@@ -28,10 +28,17 @@ import deleteIcon from '../../assets/images/bin.png';
 
 
 function PlayerBar() {
-    const { currentSong, isPlaying, playSong, pause, queue } = usePlayer();
+    const {currentSong,
+        isPlaying,
+        playSong,
+        pause,
+        queue,
+        favorites,
+        toggleFavorite
+    } = usePlayer();
     const [isShuffleOn, setIsShuffleOn] = useState(false);
     const [isRepeatOn, setIsRepeatOn] = useState(false);
-    const [isFavoriteOn, setIsFavoriteOn] = useState(false);
+
     const [isQueueVisible, setIsQueueVisible] = useState(false);
     const queuePopupRef = useRef(null);
     const [previousVolume, setPreviousVolume] = useState(80);
@@ -93,11 +100,17 @@ function PlayerBar() {
     // --- 4. ZAKTUALIZOWANA FUNKCJA PLAY/PAUSE ---
     const handlePlayPauseClick = () => {
         if (!currentSong) return;
-
         if (isPlaying) {
             pause();
         } else {
             playSong(currentSong);
+        }
+    };
+    const isCurrentSongFavorite = currentSong && favorites ? !!favorites[currentSong.id] : false;
+
+    const handleFavoriteClick = () => {
+        if (currentSong) {
+            toggleFavorite(currentSong.id);
         }
     };
 
@@ -117,10 +130,11 @@ function PlayerBar() {
                     <Link to={artistLink} className="player-artist-name">{artistName}</Link>
                 </div>
                 <button
-                    className={`control-button favorite-button ${isFavoriteOn ? 'active' : ''}`}
-                    onClick={() => {setIsFavoriteOn(!isFavoriteOn)}}
+                    className={`control-button favorite-button ${isCurrentSongFavorite ? 'active' : ''}`}
+                    onClick={handleFavoriteClick}
+                    disabled={!currentSong}
                 >
-                    {isFavoriteOn ? (
+                    {isCurrentSongFavorite ? (
                         <img src={favoriteIconOn} alt="Polubione" />
                     ) : (
                         <img src={favoriteIcon} alt="Niepolubione" />
