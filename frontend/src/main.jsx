@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage'
 import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage.jsx'
 import CollectionPage from './pages/CollectionPage'
+import GenrePage from './pages/GenrePage.jsx'
 
 const router = createBrowserRouter([
     {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
             {
                 path: "/playlist/:id",
                 element: <CollectionPage />
+            },
+            {
+                path: "/genre/:genreName",
+                element: <GenrePage />
             }
         ]
     }
