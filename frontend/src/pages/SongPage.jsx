@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import './SongPage.css';
-import { usePlayer } from '../context/PlayerContext'; // 1. Import Contextu
+import { usePlayer } from '../context/PlayerContext.js'; // 1. Import Contextu
 
 import defaultAvatar from '../assets/images/default-avatar.png';
 import defaultCover from '../assets/images/default-avatar.png';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import './CollectionPage.css';
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayer } from '../context/PlayerContext.js';
 
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';

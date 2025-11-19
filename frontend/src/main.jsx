@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage'
 import App from './App'
 import './index.css'
 
-import { PlayerProvider } from './context/PlayerContext.jsx';
+import { PlayerProvider } from './context/PlayerProvider.jsx';
 import AuthProvider from './context/AuthProvider.jsx'
 import ProfilePage from './pages/ProfilePage'
 import ArtistPage from './pages/ArtistPage'

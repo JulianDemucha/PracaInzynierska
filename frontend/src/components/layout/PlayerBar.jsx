@@ -4,7 +4,7 @@ import './PlayerBar.css';
 import '../../index.css';
 import '../common/ContextMenu.css';
 import ContextMenu from '../common/ContextMenu.jsx';
-import { usePlayer } from '../../context/PlayerContext';
+import { usePlayer } from '../../context/PlayerContext.js';
 
 import playIcon from '../../assets/images/play.png';
 import pauseIcon from '../../assets/images/pause.png';

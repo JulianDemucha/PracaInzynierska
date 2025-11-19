@@ -1,20 +1,18 @@
-import React, {createContext, useState, useContext, useRef, useEffect} from 'react';
-const MOCK_SONG_ID = 1;
+import React, { useState, useRef, useEffect } from 'react';
+import { PlayerContext } from './PlayerContext.js'; // Importujemy kontekst
 
-const PlayerContext = createContext();
-
-export function PlayerProvider({children}) {
+export function PlayerProvider({ children }) {
     const audioRef = useRef(null);
 
     const [currentSong, setCurrentSong] = useState(null);
     /** zamien se na to jak dodasz songa jakiegos poki nie mamy zaimplementowanego wyswietlania songow */
     // const [currentSong, setCurrentSong] = useState({
-    //     id: MOCK_SONG_ID,
+    //     id: 1,
     //     title: "test",
     //     artist: { id: 1, name: "testartist" },
     //     coverArtUrl: "/assets/images/bin"
     // });
-    //
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [queue, setQueue] = useState([]);
     const [history, setHistory] = useState([]);
@@ -54,7 +52,6 @@ export function PlayerProvider({children}) {
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
         audio.addEventListener('ended', onEnded);
 
-        // cleanup
         return () => {
             audio.removeEventListener('timeupdate', onTimeUpdate);
             audio.removeEventListener('loadedmetadata', onLoadedMetadata);
@@ -80,12 +77,10 @@ export function PlayerProvider({children}) {
             return;
         }
         const src = `/api/songs/stream/${currentSong.id}`;
-        // set src and load
+
         if (audio.src && audio.src.endsWith(String(currentSong.id))) {
-            // already same source (maybe resumed) -> do nothing
         } else {
             audio.src = src;
-            // ensure credentials are sent (crossOrigin attr added in JSX)
             audio.load();
         }
 
@@ -94,12 +89,9 @@ export function PlayerProvider({children}) {
                 await audio.play();
                 setIsPlaying(true);
             } catch (err) {
-                // autoplay policies may prevent play — leave isPlaying false
                 setIsPlaying(false);
             }
         };
-
-        // if should play, play
         tryPlay();
     }, [currentSong]);
 
@@ -174,7 +166,6 @@ export function PlayerProvider({children}) {
 
     const playPrev = () => {
         if (history.length === 0) {
-            // no history — restart song
             const audio = audioRef.current;
             if (audio) {
                 audio.currentTime = 0;
@@ -198,24 +189,19 @@ export function PlayerProvider({children}) {
         setFavorites(prev => ({ ...prev, [songId]: !prev[songId] }));
     };
 
-
     const addToQueue = (song) => {
         setQueue(prevQueue => [...prevQueue, song]);
     };
-
 
     const rateSong = (songId, voteType) => {
         setRatings(prev => {
             const currentRating = prev[songId];
             if (currentRating === voteType) {
-                const newState = {...prev};
+                const newState = { ...prev };
                 delete newState[songId];
                 return newState;
             }
-            return {
-                ...prev,
-                [songId]: voteType
-            };
+            return { ...prev, [songId]: voteType };
         });
     };
 
@@ -258,20 +244,7 @@ export function PlayerProvider({children}) {
         favorites,
         toggleFavorite,
         ratings,
-        rateSong: (songId, voteType) => {
-            setRatings(prev => {
-                const currentRating = prev[songId];
-                if (currentRating === voteType) {
-                    const newState = { ...prev };
-                    delete newState[songId];
-                    return newState;
-                }
-                return {
-                    ...prev,
-                    [songId]: voteType
-                };
-            });
-        },
+        rateSong,
         playNext,
         playPrev,
         seekTo,
@@ -289,7 +262,6 @@ export function PlayerProvider({children}) {
 
     return (
         <PlayerContext.Provider value={value}>
-            {/* hidden/global audio element */}
             <audio
                 ref={audioRef}
                 crossOrigin="use-credentials"
@@ -298,9 +270,4 @@ export function PlayerProvider({children}) {
             {children}
         </PlayerContext.Provider>
     );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function usePlayer() {
-    return useContext(PlayerContext);
 }
