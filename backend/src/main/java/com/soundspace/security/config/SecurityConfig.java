@@ -31,7 +31,7 @@ public class SecurityConfig {
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/me", "/api/auth/register"
-                                , "/api/auth/authenticate").permitAll()
+                                , "/api/auth/authenticate", "/api/auth/refreshToken").permitAll()
                         .anyRequest().authenticated()
                 ).formLogin(AbstractHttpConfigurer::disable)
                 .authenticationProvider(authenticationProvider)
