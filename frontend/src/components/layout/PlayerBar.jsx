@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
 import './PlayerBar.css';
 import '../../index.css';
 import '../common/ContextMenu.css';
 import ContextMenu from '../common/ContextMenu.jsx';
 import { usePlayer } from '../../context/PlayerContext';
-
 
 import playIcon from '../../assets/images/play.png';
 import pauseIcon from '../../assets/images/pause.png';
@@ -26,48 +24,40 @@ import favoriteIconOn from '../../assets/images/favoritesOn.png';
 import albumArtPlaceholder from '../../assets/images/logo.png';
 import deleteIcon from '../../assets/images/bin.png';
 
+function formatTime(seconds) {
+    if (!seconds || !isFinite(seconds)) return '0:00';
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    const m = Math.floor(seconds / 60);
+    return `${m}:${s}`;
+}
 
 function PlayerBar() {
-    const {currentSong,
+    const {
+        currentSong,
         isPlaying,
+        playNext,
+        playPrev,
         playSong,
         pause,
         queue,
         favorites,
-        toggleFavorite
+        toggleFavorite,
+        currentTime,
+        duration,
+        seekTo,
+        setVolumePercent,
+        uiVolumePercent,
+        toggleShuffle,
+        isShuffleOn,
+        toggleRepeat,
+        isRepeatOn,
+        isRepeatOneOn,
+        toggleMute,
+        isPlaying: playingState
     } = usePlayer();
-    const [isShuffleOn, setIsShuffleOn] = useState(false);
-    const [isRepeatOn, setIsRepeatOn] = useState(false);
 
-    const [isQueueVisible, setIsQueueVisible] = useState(false);
+    const [isQueueVisible, setIsQueueVisible] = React.useState(false);
     const queuePopupRef = useRef(null);
-    const [previousVolume, setPreviousVolume] = useState(80);
-    const [volume, setVolume] = useState(50);
-
-    const getVolumeIcon = () => {
-        const currentVolume = Number(volume);
-        if (currentVolume === 0) {
-            return <img src={noSoundIcon} alt="Mute" />;
-        }
-        if (currentVolume === 100) {
-            return <img src={maxSoundIcon} alt="Max" />;
-        }
-        return <img src={soundIcon} alt="Mute" />;
-    };
-
-    const toggleMute = () => {
-        if (Number(volume) > 0) {
-            setPreviousVolume(volume);
-            setVolume(0);
-        } else {
-            setVolume(previousVolume > 0 ? previousVolume : 50);
-        }
-    };
-
-    const handleRemoveFromQueue = (songId) => {
-        console.log("Usunięto piosenkę o ID:", songId);
-    };
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (queuePopupRef.current && !queuePopupRef.current.contains(event.target)) {
@@ -81,6 +71,21 @@ function PlayerBar() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [isQueueVisible]);
+
+    const getVolumeIcon = () => {
+        const currentVolume = uiVolumePercent;
+        if (currentVolume === 0) {
+            return <img src={noSoundIcon} alt="Mute" />;
+        }
+        if (currentVolume === 100) {
+            return <img src={maxSoundIcon} alt="Max" />;
+        }
+        return <img src={soundIcon} alt="Sound" />;
+    };
+
+    const handleRemoveFromQueue = (songId) => {
+        console.log("Usunięto piosenkę o ID:", songId);
+    };
 
     const playerMenuOptions = [
         {
@@ -106,6 +111,17 @@ function PlayerBar() {
             playSong(currentSong);
         }
     };
+
+    const handleSeekChange = (e) => {
+        const pct = Number(e.target.value);
+        if (!duration || !isFinite(duration)) return;
+        const seconds = (pct / 100) * duration;
+        seekTo(seconds);
+    };
+
+    const handleVolumeChange = (e) => {
+        setVolumePercent(e.target.value); // value 0..100
+    };
     const isCurrentSongFavorite = currentSong && favorites ? !!favorites[currentSong.id] : false;
 
     const handleFavoriteClick = () => {
@@ -115,7 +131,7 @@ function PlayerBar() {
     };
 
     const songTitle = currentSong?.title || "Wybierz utwór";
-    const artistName = currentSong?.artist?.name || "SoundSpace";
+    const artistName = (currentSong?.artist && (currentSong.artist.name || currentSong.artist)) || "SoundSpace";
     const artistLink = `/artist/${currentSong?.artist?.id || ''}`;
     const coverArt = currentSong?.coverArtUrl || albumArtPlaceholder;
 
@@ -167,15 +183,23 @@ function PlayerBar() {
                     </button>
 
                     {/* Pasek postępu (na razie statyczny) */}
+
                     <div className="progress-bar-container">
-                        <span className="time-current">1:30</span>
-                        <input type="range" className="progress-bar" min="0" max="100" defaultValue="50" />
-                        <span className="time-duration">3:00</span>
+                        <span className="time-current">{formatTime(currentTime)}</span>
+                        <input
+                            type="range"
+                            className="progress-bar"
+                            min="0"
+                            max="100"
+                            value={duration ? Math.round((currentTime / duration) * 100) : 0}
+                            onChange={handleSeekChange}
+                        />
+                        <span className="time-duration">{formatTime(duration)}</span>
                     </div>
 
                     <button
                         className={`control-button shuffle ${isShuffleOn ? 'active' : ''}`}
-                        onClick={() => setIsShuffleOn(!isShuffleOn)}
+                        onClick={() => toggleShuffle()}
                     >
                         {isShuffleOn ? (
                             <img src={shuffleIconOn} alt="Losowe (Włączone)" />
@@ -185,13 +209,13 @@ function PlayerBar() {
                     </button>
 
                     <button
-                        className={`control-button repeat ${isRepeatOn ? 'active' : ''}`}
-                        onClick={() => setIsRepeatOn(!isRepeatOn)}
+                        className={`control-button repeat ${isRepeatOn || isRepeatOneOn ? 'active' : ''}`}
+                        onClick={() => toggleRepeat()}
                     >
-                        {isRepeatOn ? (
-                            <img src={repeatIconOn} alt="Pętla (Włączona)" />
+                        {isRepeatOneOn ? (
+                            <img src={repeatIconOn} alt="repeat wlaczony" />
                         ) : (
-                            <img src={repeatIcon} alt="Pętla (Wyłączona)" />
+                            <img src={repeatIcon} alt="repeat wylaczony" />
                         )}
                     </button>
                 </div>
@@ -220,24 +244,20 @@ function PlayerBar() {
                     className="volume-slider"
                     min="0"
                     max="100"
-                    value={volume}
-                    onChange={(e) => {
-                        setVolume(e.target.value)
-                        setPreviousVolume(e.target.value);
-                    }}
+                    value={uiVolumePercent}
+                    onChange={handleVolumeChange}
                 />
             </div>
             {isQueueVisible && (
                 <div className="queue-popup custom-scrollbar" ref={queuePopupRef}>
                     <h3 className="queue-title">Kolejka odtwarzania</h3>
                     <ul className="queue-list">
-                        {/* Sprawdzamy czy kolejka ma elementy */}
                         {queue.length > 0 ? (
                             queue.map((song, index) => (
                                 <li key={`${song.id}-${index}`} className="queue-item">
                                     <div className="queue-song-details">
                                         <span className="queue-song-title">{song.title}</span>
-                                        <span className="queue-artist-name">{song.artist.name || song.artist}</span>
+                                        <span className="queue-artist-name">{song.artist?.name || song.artist}</span>
                                     </div>
                                     <button
                                         className="queue-remove-button"
