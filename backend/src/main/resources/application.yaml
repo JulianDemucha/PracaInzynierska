@@ -16,6 +16,15 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+app:
+  storage:
+    root: ./data
+
 server:
   port: ${SERVER_PORT}
 
