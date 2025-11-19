@@ -1,13 +1,15 @@
 package com.soundspace.entity;
 
 import com.soundspace.enums.Genre;
-import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "songs")
+@Setter
 public class Song {
 
     @Id
@@ -17,21 +19,28 @@ public class Song {
     @Column
     private String title;
 
+    @Getter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="user_id")
-    private AppUser creator;
+    @JoinColumn(name = "user_id")
+    private AppUser author;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "genre", nullable = false)
     private Genre genre;
 
-    @Column
-    private String filePath;
+    @Column(name = "storage_key")
+    private String storageKey;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Visibility visibility;
+    @Column(name = "size_bytes")
+    private long sizeBytes;
 
+    @Column(name = "mime_type")
+    private String mimeType;
+
+    @Column(name = "publicly_visible", nullable = false)
+    private Boolean publiclyVisible;
+
+    @Getter
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
