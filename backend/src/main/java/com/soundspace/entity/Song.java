@@ -10,6 +10,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "songs")
 @Setter
+@Getter
 public class Song {
 
     @Id
@@ -19,7 +20,6 @@ public class Song {
     @Column
     private String title;
 
-    @Getter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private AppUser author;
@@ -40,7 +40,6 @@ public class Song {
     @Column(name = "publicly_visible", nullable = false)
     private Boolean publiclyVisible;
 
-    @Getter
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 

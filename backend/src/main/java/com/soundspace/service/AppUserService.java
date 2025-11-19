@@ -127,4 +127,9 @@ public class AppUserService {
             return true;
         } else return s.isBlank();
     }
+
+    public AppUser getUserByEmail(String email) {
+        return repo.findByEmail(email).orElseThrow();
+    }
+
 }

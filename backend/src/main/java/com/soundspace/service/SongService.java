@@ -63,7 +63,16 @@ public class SongService {
 
             try {
 
-                songRepository.save(s);
+                Song savedSong = songRepository.save(s);
+
+                return SongDto.builder()
+                        .id(savedSong.getId())
+                        .title(savedSong.getTitle())
+                        .authorUsername(savedSong.getAuthor().getUsername())
+                        .publiclyVisible(savedSong.getPubliclyVisible())
+                        .genre(savedSong.getGenre().toString())
+                        .createdAt(savedSong.getCreatedAt().toString())
+                        .build();
 
             } catch (Exception e) {
 
@@ -76,13 +85,7 @@ public class SongService {
                 throw e;
             }
 
-            return SongDto.builder()
-                    .title(title)
-                    .authorUsername(appUser.getLogin())
-                    .publiclyVisible(publiclyVisible)
-                    .genre(genre)
-                    .createdAt(s.getCreatedAt().toString())
-                    .build();
+
 
         } catch (IOException e) {
             log.error("Błąd I/O podczas uploadu pliku", e);
