@@ -2,10 +2,13 @@ package com.soundspace.entity;
 
 import com.soundspace.enums.Genre;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "songs")
@@ -24,9 +27,12 @@ public class Song {
     @JoinColumn(name = "user_id")
     private AppUser author;
 
+    @Size(max = 3)
+    @ElementCollection(targetClass = Genre.class)
     @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "song_genres", joinColumns = @JoinColumn(name = "song_id"))
     @Column(name = "genre", nullable = false)
-    private Genre genre;
+    private List<Genre> genres = new ArrayList<>();
 
     @Column(name = "storage_key")
     private String storageKey;

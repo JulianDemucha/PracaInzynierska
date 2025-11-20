@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,12 +22,8 @@ public class SongUploadRequest {
     @Size(max = 32)
     private String title;
 
-    @NotBlank
-    @Size(max = 32)
-    private String genre;
-
-    @NotNull
-    private Long userId;
+    @Size(max = 3)
+    private List<String> genre;
 
     private Boolean publiclyVisible = false;
 }

@@ -40,13 +40,11 @@ public class SongController {
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<SongDto> upload(
             @AuthenticationPrincipal UserDetails userDetails,
-            @ModelAttribute @Valid SongUploadRequest req) {
+            @ModelAttribute @Valid SongUploadRequest request) {
+
         SongDto result = songUploadService.upload(
-                req.getFile(),
-                req.getTitle(),
-                req.getGenre(),
-                appUserService.getUserByEmail(userDetails.getUsername()).getId(),
-                req.getPubliclyVisible() != null && req.getPubliclyVisible()
+                request,
+                appUserService.getUserByEmail(userDetails.getUsername())
         );
         URI location = URI.create("/api/songs/" + result.id());
         return ResponseEntity.created(location).body(result);

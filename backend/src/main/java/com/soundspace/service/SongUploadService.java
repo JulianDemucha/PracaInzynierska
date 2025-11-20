@@ -6,6 +6,7 @@ import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.repository.SongRepository;
+import com.soundspace.security.dto.SongUploadRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
@@ -20,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -37,10 +40,11 @@ public class SongUploadService {
 
 
     @Transactional
-    public SongDto upload(MultipartFile file, String title, String genre, Long userId, boolean publiclyVisible) {
+    public SongDto upload(SongUploadRequest request, AppUser appUser) {
+        MultipartFile file = request.getFile();
+
+
         Path tmpPath = null;
-        AppUser appUser = appUserRepository.findById(userId).orElseThrow(
-                () -> new IllegalArgumentException("Uzytkownik nie istnieje"));
 
         try {
             tmpPath = validateSongFileAndSaveToTemp(file);
@@ -48,14 +52,12 @@ public class SongUploadService {
             long fileSize = Files.size(tmpPath);
 
             // docelowy zapis
-            String storageKey = storage.saveFromPath(tmpPath, userId, TARGET_EXTENSION, saveSubDirectory);
+            String storageKey = storage.saveFromPath(tmpPath, appUser.getId(), TARGET_EXTENSION, saveSubDirectory);
             log.info("Zapisano plik: storageKey={}", storageKey);
 
             Song s = validateAndBuildSong(
-                    title,
-                    genre,
+                    request,
                     appUser,
-                    publiclyVisible,
                     storageKey,
                     fileSize,
                     mimeType
@@ -65,12 +67,17 @@ public class SongUploadService {
 
                 Song savedSong = songRepository.save(s);
 
+                List<String> dtoGenres = new ArrayList<>();
+                for (Genre genre : savedSong.getGenres()) {
+                    dtoGenres.add(genre.toString());
+                }
+
                 return SongDto.builder()
                         .id(savedSong.getId())
                         .title(savedSong.getTitle())
                         .authorUsername(savedSong.getAuthor().getUsername())
                         .publiclyVisible(savedSong.getPubliclyVisible())
-                        .genre(savedSong.getGenre().toString())
+                        .genres(dtoGenres)
                         .createdAt(savedSong.getCreatedAt().toString())
                         .build();
 
@@ -86,7 +93,6 @@ public class SongUploadService {
             }
 
 
-
         } catch (IOException e) {
             log.error("Błąd I/O podczas uploadu pliku", e);
             throw new UncheckedIOException("Błąd I/O podczas uploadu pliku", e);
@@ -100,28 +106,31 @@ public class SongUploadService {
         }
     }
 
-    private Song validateAndBuildSong(String title, String genre, AppUser user, boolean publiclyVisible,
-                                      String storageKey, long sizeBytes, String mimeType) throws IllegalArgumentException {
+    private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser,
+                                      String storageKey, long sizeBytes, String mimeType)
+            throws IllegalArgumentException {
+
+        String title = request.getTitle();
 
         if (title == null || title.isBlank() || title.length() > 32) {
             throw new IllegalArgumentException("Nieprawidłowy tytuł");
         }
 
-        if (genre == null || genre.isBlank()) {
-            throw new IllegalArgumentException("Brak ustawionego gatunku (genre)");
-        }
-        Genre validatedGenre;
+        List<Genre> validatedGenreList = new ArrayList<>();
         try {
-            validatedGenre = Genre.valueOf(genre.toUpperCase().trim());
+            for (String genre : request.getGenre())
+                if (genre != null && !genre.isBlank())
+                    validatedGenreList.add(Genre.valueOf(genre.toUpperCase().trim()));
+
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Nieprawidłowy gatunek (genre)");
         }
 
         Song s = new Song();
         s.setTitle(title);
-        s.setAuthor(user);
-        s.setGenre(validatedGenre);
-        s.setPubliclyVisible(publiclyVisible);
+        s.setAuthor(appUser);
+        s.setGenres(validatedGenreList);
+        s.setPubliclyVisible(request.getPubliclyVisible());
         s.setStorageKey(storageKey);
         s.setMimeType(mimeType);
         s.setSizeBytes(sizeBytes);
