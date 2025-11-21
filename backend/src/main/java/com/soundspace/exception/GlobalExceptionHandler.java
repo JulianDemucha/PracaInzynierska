@@ -27,6 +27,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UncheckedIOException.class)
     public ResponseEntity<?> handleIO(UncheckedIOException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Blad I/O"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("Blad I/O", ex.getMessage()));
+    }
+
+    @ExceptionHandler(SongUploadException.class)
+    public ResponseEntity<?> handleSongUploadError(SongUploadException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of("błąd uploadu piosenki", ex.getMessage()));
+    }
+
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<?> handleStorageException(StorageException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of("błąd storage", ex.getMessage()));
+    }
+
+    @ExceptionHandler(StorageFileNotFoundException.class)
+    public ResponseEntity<?> handleStorageFileNotFoundException(StorageFileNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("błąd storage", ex.getMessage()));
     }
 }
