@@ -27,6 +27,10 @@ public class Song {
     @JoinColumn(name = "user_id")
     private AppUser author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "album_id")
+    private Album album;
+
     @Size(max = 3)
     @ElementCollection(targetClass = Genre.class)
     @Enumerated(EnumType.STRING)

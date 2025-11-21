@@ -9,6 +9,7 @@ public record SongDto(
         Long id,
         String title,
         String authorUsername,
+        Long albumId,
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,

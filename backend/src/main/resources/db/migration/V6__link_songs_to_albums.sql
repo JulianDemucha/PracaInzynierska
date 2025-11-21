@@ -1,0 +1,5 @@
+ALTER TABLE songs
+    ADD album_id BIGINT;
+
+ALTER TABLE songs
+    ADD CONSTRAINT FK_SONGS_ON_ALBUM FOREIGN KEY (album_id) REFERENCES albums (id);

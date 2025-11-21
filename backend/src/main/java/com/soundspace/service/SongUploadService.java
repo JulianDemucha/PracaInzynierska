@@ -2,6 +2,7 @@ package com.soundspace.service;
 
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
+import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
@@ -39,6 +40,7 @@ public class SongUploadService {
     private static final String COVERS_TARGET_DIRECTORY = "songs/covers";
     private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tyllko .m4a
     private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
+    private final AlbumService albumService;
 
 
     @Transactional
@@ -46,14 +48,13 @@ public class SongUploadService {
         MultipartFile audioFile = request.getAudioFile();
         MultipartFile coverFile = request.getCoverFile();
 
-
         Path tmpAudioPath = null;
         Path tmpCoverPath;
         String audioStorageKey;
         String coverStorageKey;
 
         try {
-            // walidacja audio
+            // walidacja audio i zapis do temp file
             tmpAudioPath = validateSongFileAndSaveToTemp(audioFile);
             String mimeType = detectAndValidateFileMimeType(tmpAudioPath);
             long audioFileSize = Files.size(tmpAudioPath);
@@ -62,11 +63,13 @@ public class SongUploadService {
             audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), TARGET_AUDIO_EXTENSION, SONGS_TARGET_DIRECTORY);
             log.info("Zapisano plik: audioStorageKey={}", audioStorageKey);
 
-
+            // resize i convert cover image i zapis do temp file
             tmpCoverPath = processCoverAndSaveToTemp(coverFile);
             long coverFileSize = Files.size(tmpCoverPath);
 
+            // docelowy zapis cover
             coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
+            log.info("Zapisano plik: coverStorageKey={}", coverStorageKey);
 
             Song s = validateAndBuildSong(
                     request,
@@ -87,10 +90,13 @@ public class SongUploadService {
                     dtoGenres.add(genre.toString());
                 }
 
+                Long albumId = savedSong.getAlbum() == null ? null : savedSong.getAlbum().getId();
+
                 return SongDto.builder()
                         .id(savedSong.getId())
                         .title(savedSong.getTitle())
                         .authorUsername(savedSong.getAuthor().getUsername())
+                        .albumId(albumId)
                         .publiclyVisible(savedSong.getPubliclyVisible())
                         .genres(dtoGenres)
                         .createdAt(savedSong.getCreatedAt().toString())
@@ -145,12 +151,13 @@ public class SongUploadService {
         s.setTitle(title);
         s.setAuthor(appUser);
         s.setGenres(validatedGenreList);
-        s.setPubliclyVisible(request.getPubliclyVisible());
+        s.setAlbum(albumService.findById(request.getAlbumId()));
         s.setAudioStorageKey(audioStorageKey);
         s.setCoverStorageKey(coverStorageKey);
         s.setMimeType(mimeType);
         s.setAudioSizeBytes(audioSizeBytes);
         s.setCoverSizeBytes(coverSizeBytes);
+        s.setPubliclyVisible(request.getPubliclyVisible());
         s.setCreatedAt(Instant.now());
         return s;
     }

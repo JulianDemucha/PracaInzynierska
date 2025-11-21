@@ -28,6 +28,8 @@ public class SongUploadRequest {
     @Size(max = 3)
     private List<String> genre;
 
+    private Long albumId;
+
     private Boolean publiclyVisible = false;
 }
 

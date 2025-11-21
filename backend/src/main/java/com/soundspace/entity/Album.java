@@ -3,6 +3,7 @@ package com.soundspace.entity;
 
 import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.time.Instant;
 
@@ -11,6 +12,7 @@ import java.time.Instant;
 public class Album {
 
     @Id
+    @Getter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
