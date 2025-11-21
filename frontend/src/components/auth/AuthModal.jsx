@@ -4,16 +4,21 @@ import './AuthModal.css';
 import googleIcon from '../../assets/images/googleIcon.png';
 
 function AuthModal() {
+    // --- STANY ---
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [sex, setSex] = useState("MALE");
+
     const [errors, setErrors] = useState({
+        username: "",
         email: "",
         password: "",
+        confirmPassword: "",
         general: ""
     });
+
     const {
         isModalOpen,
         closeModal,
@@ -26,6 +31,7 @@ function AuthModal() {
         error: authError
     } = useAuth();
 
+    // --- RESETOWANIE PRZY OTWARCIU ---
     useEffect(() => {
         if (isModalOpen) {
             setEmail("");
@@ -37,6 +43,7 @@ function AuthModal() {
         }
     }, [isModalOpen, modalView]);
 
+    // --- OBSŁUGA BŁĘDÓW ---
     useEffect(() => {
         if (authError) {
             setErrors(prev => ({...prev, general: authError}));
@@ -51,49 +58,80 @@ function AuthModal() {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     };
 
-    const handleSubmit = async (e) => {
+    // --- LOGOWANIE ---
+    const handleSubmitLogin = async (e) => {
         e.preventDefault();
 
-        if (!email || !password) {
-            setErrors(prev => ({ ...prev, general: "Wypełnij wymagane pola." }));
-            return;
+        // Reset błędów na start
+        let newErrors = { email: "", password: "", general: "" };
+        let hasError = false;
+
+        if (!email) {
+            newErrors.email = "Wpisz adres email.";
+            hasError = true;
+        } else if (!validateEmail(email)) {
+            newErrors.email = "Nieprawidłowy format email.";
+            hasError = true;
         }
 
-        if (!validateEmail(email)) {
-            setErrors(prev => ({ ...prev, email: "Nieprawidłowy adres e-mail." }));
+        if (!password) {
+            newErrors.password = "Wpisz hasło.";
+            hasError = true;
+        }
+
+        if (hasError) {
+            setErrors(prev => ({ ...prev, ...newErrors }));
             return;
         }
 
         const result = await login({ email, password });
-
         if (!result.ok) {
             setErrors(prev => ({ ...prev, general: result.error || "Błąd logowania." }));
-            return;
         }
-
     };
 
+    // --- REJESTRACJA ---
     const handleSubmitRegister = async (e) => {
         e.preventDefault();
 
         const newErrors = {username: "", email: "", password: "", confirmPassword: "", general: ""};
-        if (!username) newErrors.username = "Wprowadź nazwę użytkownika.";
-        if (!email || !validateEmail(email)) newErrors.email = "Podaj poprawny email.";
-        if (!password || password.length < 6) newErrors.password = "Hasło musi mieć co najmniej 6 znaków.";
-        if (password !== confirmPassword) newErrors.confirmPassword = "Hasła nie są zgodne.";
+        let hasError = false;
+
+        if (!username.trim()) {
+            newErrors.username = "Wprowadź nazwę użytkownika.";
+            hasError = true;
+        }
+
+        if (!email) {
+            newErrors.email = "Podaj email.";
+            hasError = true;
+        } else if (!validateEmail(email)) {
+            newErrors.email = "Podaj poprawny email.";
+            hasError = true;
+        }
+
+        if (!password || password.length < 6) {
+            newErrors.password = "Hasło musi mieć min. 6 znaków.";
+            hasError = true;
+        }
+
+        if (password !== confirmPassword) {
+            newErrors.confirmPassword = "Hasła nie są zgodne.";
+            hasError = true;
+        }
 
         setErrors(newErrors);
 
-        if (newErrors.username || newErrors.email || newErrors.password || newErrors.confirmPassword) {
-            return;
-        }
+        if (hasError) return;
 
         const result = await register({ username, email, password, sex });
-
         if (!result.ok) {
             setErrors(prev => ({ ...prev, general: result.error || "Błąd rejestracji." }));
-            return;
         }
+    };
+
+    const clearError = (field) => {
+        setErrors(prev => ({ ...prev, [field]: "", general: "" }));
     };
 
     return (
@@ -102,37 +140,35 @@ function AuthModal() {
                 <button className="close-button" onClick={() => closeModal()}>X</button>
 
                 {modalView === 'login' ? (
-                    <form className="auth-form" onSubmit={handleSubmit} noValidate>
+                    // --- FORMULARZ LOGOWANIA ---
+                    <form className="auth-form" onSubmit={handleSubmitLogin} noValidate>
                         <h2>Zaloguj się</h2>
+
+                        {errors.general && <div className="general-error">{errors.general}</div>}
 
                         <input
                             type="email"
                             placeholder="Email"
                             value={email}
+                            className={errors.email ? "input-error" : ""}
                             onChange={(e) => {
                                 setEmail(e.target.value);
-                                setErrors(prev => ({ ...prev, email: "" }));
+                                clearError('email');
                             }}
-                            required
-                            aria-describedby="email-error"
                         />
-                        {errors.email && <div id="email-error" className="field-error">{errors.email}</div>}
+                        {errors.email && <div className="field-error">{errors.email}</div>}
 
                         <input
                             type="password"
-                            id="password"
-                            placeholder="••••••••"
+                            placeholder="Hasło"
                             value={password}
+                            className={errors.password ? "input-error" : ""}
                             onChange={(e) => {
                                 setPassword(e.target.value);
-                                setErrors(prev => ({ ...prev, password: "" }));
+                                clearError('password');
                             }}
-                            required
-                            aria-describedby="password-error"
                         />
-                        {errors.password && <div id="password-error">{errors.password}</div>}
-
-                        {errors.general && <div>{errors.general}</div>}
+                        {errors.password && <div className="field-error">{errors.password}</div>}
 
                         <button className="auth-submit-button" type="submit" disabled={authLoading}>
                             {authLoading ? "Logowanie..." : "Zaloguj"}
@@ -141,7 +177,7 @@ function AuthModal() {
                         <div className="auth-divider"><span>LUB</span></div>
 
                         <button type="button" className="google-login-button">
-                            <img className="google-logo" src={googleIcon} alt="Logowanie przez Google" />
+                            <img className="google-logo" src={googleIcon} alt="G" />
                             Zaloguj się przez Google
                         </button>
 
@@ -151,18 +187,21 @@ function AuthModal() {
                         </p>
                     </form>
                 ) : (
+                    // --- FORMULARZ REJESTRACJI ---
                     <form className="auth-form" onSubmit={handleSubmitRegister} noValidate>
                         <h2>Stwórz konto</h2>
+
+                        {errors.general && <div className="general-error">{errors.general}</div>}
 
                         <input
                             type="text"
                             placeholder="Nazwa użytkownika"
                             value={username}
+                            className={errors.username ? "input-error" : ""}
                             onChange={(e) => {
                                 setUsername(e.target.value);
-                                setErrors(prev => ({ ...prev, username: "" }));
+                                clearError('username');
                             }}
-                            required
                         />
                         {errors.username && <div className="field-error">{errors.username}</div>}
 
@@ -170,11 +209,11 @@ function AuthModal() {
                             type="email"
                             placeholder="Email"
                             value={email}
+                            className={errors.email ? "input-error" : ""}
                             onChange={(e) => {
                                 setEmail(e.target.value);
-                                setErrors(prev => ({ ...prev, email: "" }));
+                                clearError('email');
                             }}
-                            required
                         />
                         {errors.email && <div className="field-error">{errors.email}</div>}
 
@@ -182,11 +221,11 @@ function AuthModal() {
                             type="password"
                             placeholder="Hasło"
                             value={password}
+                            className={errors.password ? "input-error" : ""}
                             onChange={(e) => {
                                 setPassword(e.target.value);
-                                setErrors(prev => ({ ...prev, password: "" }));
+                                clearError('password');
                             }}
-                            required
                         />
                         {errors.password && <div className="field-error">{errors.password}</div>}
 
@@ -194,22 +233,23 @@ function AuthModal() {
                             type="password"
                             placeholder="Powtórz hasło"
                             value={confirmPassword}
+                            className={errors.confirmPassword ? "input-error" : ""}
                             onChange={(e) => {
                                 setConfirmPassword(e.target.value);
-                                setErrors(prev => ({ ...prev, confirmPassword: "" }));
+                                clearError('confirmPassword');
                             }}
-                            required
                         />
                         {errors.confirmPassword && <div className="field-error">{errors.confirmPassword}</div>}
 
-                        <label htmlFor="sex">Płeć</label>
-                        <select id="sex" value={sex} onChange={(e) => setSex(e.target.value)}>
+                        <label htmlFor="sex" style={{ fontSize: '0.9rem', color: '#b3b3b3', marginBottom: '-5px' }}>Płeć</label>
+                        <select
+                            id="sex"
+                            value={sex}
+                            onChange={(e) => setSex(e.target.value)}
+                        >
                             <option value="MALE">Mężczyzna</option>
                             <option value="FEMALE">Kobieta</option>
-                            {/*<option value="OTHER">Inna/nie chcę podawać</option>*/} {/* dodac jeszcze 74 opcje w backendzie a pozniej zintegrowac */}
                         </select>
-
-                        {errors.general && <div className="field-error">{errors.general}</div>}
 
                         <button className="auth-submit-button" type="submit" disabled={authLoading}>
                             {authLoading ? "Rejestracja..." : "Zarejestruj"}
@@ -218,7 +258,7 @@ function AuthModal() {
                         <div className="auth-divider"><span>LUB</span></div>
 
                         <button type="button" className="google-login-button" disabled>
-                            <img className="google-logo" src={googleIcon} alt="Rejestracja przez Google" />
+                            <img className="google-logo" src={googleIcon} alt="G" />
                             Zarejestruj się przez Google
                         </button>
 
