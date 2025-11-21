@@ -106,6 +106,7 @@ public class SongUploadService {
 
                 try {
                     storage.delete(audioStorageKey);
+                    storage.delete(coverStorageKey);
                 } catch (Exception e1) {
                     log.warn("Błąd w trakcie usuwania pliku", e1);
                 }
