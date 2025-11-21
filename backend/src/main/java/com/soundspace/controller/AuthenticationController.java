@@ -43,15 +43,19 @@ public class AuthenticationController {
     @PostMapping("/authenticate")
     public ResponseEntity<?> authenticate(
             @RequestBody AuthenticationRequest authenticationRequest,
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
     ) {
         String jwt = authenticationService.authenticate(authenticationRequest);
         String email = authenticationRequest.getEmail();
-
         cookieService.setJwtAndRefreshCookie(jwt,
                 refreshTokenService.createRefreshToken(email).getRefreshToken(), response,
                 60 * 15 /* 15 min */, 60 * 60 * 24 * 30/* 30 D */);
 
+        // revoke old if present
+        if(refreshToken != null) {
+            refreshTokenService.revokeRefreshToken(refreshToken);
+        }
         return ResponseEntity.ok().build();
     }
 

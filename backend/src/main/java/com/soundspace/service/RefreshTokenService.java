@@ -73,10 +73,10 @@ public class RefreshTokenService {
     }
 
     public void revokeRefreshToken(String refreshToken) {
-        RefreshToken RefreshToken = getRefreshTokenByToken(refreshToken);
-        RefreshToken.setRevoked(true);
-        RefreshToken.setRevokedAt(Instant.now());
-        refreshTokenRepository.save(RefreshToken);
+        RefreshToken refreshTokenToRevoke = getRefreshTokenByToken(refreshToken);
+        refreshTokenToRevoke.setRevoked(true);
+        refreshTokenToRevoke.setRevokedAt(Instant.now());
+        refreshTokenRepository.save(refreshTokenToRevoke);
     }
 
     public RefreshToken getRefreshTokenByToken(String token){
