@@ -2,7 +2,6 @@ package com.soundspace.service;
 
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
-import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
@@ -152,7 +151,7 @@ public class SongUploadService {
         s.setTitle(title);
         s.setAuthor(appUser);
         s.setGenres(validatedGenreList);
-        s.setAlbum(albumService.findById(request.getAlbumId()));
+        s.setAlbum(albumService.findById(request.getAlbumId()).orElse(null));
         s.setAudioStorageKey(audioStorageKey);
         s.setCoverStorageKey(coverStorageKey);
         s.setMimeType(mimeType);
