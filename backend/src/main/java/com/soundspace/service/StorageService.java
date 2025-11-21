@@ -19,8 +19,8 @@ public class StorageService {
     }
 
     /**  plik source -> storage i zwraca storageKey czyli path gdzie jest */
-    public String saveFromPath(Path source, Long ownerId, String ext, String subDirectory) throws IOException {
-        String key = String.format("%s/%d/%s.%s",subDirectory, ownerId == null ? 0 : ownerId, UUID.randomUUID(), ext);
+    public String saveFromPath(Path source, Long ownerId, String extension, String subDirectory) throws IOException {
+        String key = String.format("%s/%d/%s.%s",subDirectory, ownerId == null ? 0 : ownerId, UUID.randomUUID(), extension);
         Path target = rootPath.resolve(key).normalize();
         Files.createDirectories(target.getParent());
         try {            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
