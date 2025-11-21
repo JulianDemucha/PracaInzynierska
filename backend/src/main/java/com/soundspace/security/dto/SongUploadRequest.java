@@ -15,8 +15,11 @@ import java.util.List;
 @AllArgsConstructor
 public class SongUploadRequest {
 
-    @NotNull(message = "Plik jest wymagany")
-    private MultipartFile file;
+    @NotNull(message = "Plik audio (m4a) jest wymagany")
+    private MultipartFile audioFile;
+
+    @NotNull(message = "Plik okładki jest wymagany")
+    private MultipartFile coverFile;
 
     @NotBlank
     @Size(max = 32)

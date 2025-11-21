@@ -29,7 +29,7 @@ public class SongStreamingService {
 
         validateAccess(song, requesterEmail);
 
-        Path path = storageService.resolvePath(song.getStorageKey());
+        Path path = storageService.resolvePath(song.getAudioStorageKey());
         if (!Files.exists(path)) {
             throw new NoSuchElementException("Plik fizyczny nie istnieje");
         }

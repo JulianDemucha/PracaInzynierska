@@ -34,11 +34,17 @@ public class Song {
     @Column(name = "genre", nullable = false)
     private List<Genre> genres = new ArrayList<>();
 
-    @Column(name = "storage_key")
-    private String storageKey;
+    @Column(name = "audio_storage_key")
+    private String audioStorageKey;
 
-    @Column(name = "size_bytes")
-    private long sizeBytes;
+    @Column(name = "cover_storage_key")
+    private String coverStorageKey;
+
+    @Column(name = "audio_size_bytes")
+    private long audioSizeBytes;
+
+    @Column(name= "cover_size_bytes")
+    private long coverSizeBytes;
 
     @Column(name = "mime_type")
     private String mimeType;

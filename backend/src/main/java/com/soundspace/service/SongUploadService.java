@@ -1,10 +1,11 @@
 package com.soundspace.service;
 
+import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
-import com.soundspace.repository.AppUserRepository;
+import com.soundspace.exception.SongUploadException;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.security.dto.SongUploadRequest;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -31,35 +31,50 @@ public class SongUploadService {
 
     private final StorageService storage;
     private final SongRepository songRepository;
-    private final AppUserRepository appUserRepository;
+    private final Tika tika;
+    private final ImageService imageService;
 
     private static final int MAX_BYTES = 100 * 1024 * 1024; // 100MB
-    private static final String saveSubDirectory = "songs"; // ze np /data/songs jak tu
-    private final String TARGET_EXTENSION = "m4a"; // service wpuszcza tyllko .m4a
-    private final Tika tika = new Tika();
+    private static final String SONGS_TARGET_DIRECTORY = "songs/audio"; // ze np /data/songs jak tu
+    private static final String COVERS_TARGET_DIRECTORY = "songs/covers";
+    private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tyllko .m4a
+    private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
 
 
     @Transactional
     public SongDto upload(SongUploadRequest request, AppUser appUser) {
-        MultipartFile file = request.getFile();
+        MultipartFile audioFile = request.getAudioFile();
+        MultipartFile coverFile = request.getCoverFile();
 
 
-        Path tmpPath = null;
+        Path tmpAudioPath = null;
+        Path tmpCoverPath;
+        String audioStorageKey;
+        String coverStorageKey;
 
         try {
-            tmpPath = validateSongFileAndSaveToTemp(file);
-            String mimeType = detectAndValidateFileMimeType(tmpPath);
-            long fileSize = Files.size(tmpPath);
+            // walidacja audio
+            tmpAudioPath = validateSongFileAndSaveToTemp(audioFile);
+            String mimeType = detectAndValidateFileMimeType(tmpAudioPath);
+            long audioFileSize = Files.size(tmpAudioPath);
 
-            // docelowy zapis
-            String storageKey = storage.saveFromPath(tmpPath, appUser.getId(), TARGET_EXTENSION, saveSubDirectory);
-            log.info("Zapisano plik: storageKey={}", storageKey);
+            // docelowy zapis audio
+            audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), TARGET_AUDIO_EXTENSION, SONGS_TARGET_DIRECTORY);
+            log.info("Zapisano plik: audioStorageKey={}", audioStorageKey);
+
+
+            tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+            long coverFileSize = Files.size(tmpCoverPath);
+
+            coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
 
             Song s = validateAndBuildSong(
                     request,
                     appUser,
-                    storageKey,
-                    fileSize,
+                    audioStorageKey,
+                    coverStorageKey,
+                    audioFileSize,
+                    coverFileSize,
                     mimeType
             );
 
@@ -84,7 +99,7 @@ public class SongUploadService {
             } catch (Exception e) {
 
                 try {
-                    storage.delete(storageKey);
+                    storage.delete(audioStorageKey);
                 } catch (Exception e1) {
                     log.warn("Błąd w trakcie usuwania pliku", e1);
                 }
@@ -95,11 +110,11 @@ public class SongUploadService {
 
         } catch (IOException e) {
             log.error("Błąd I/O podczas uploadu pliku", e);
-            throw new UncheckedIOException("Błąd I/O podczas uploadu pliku", e);
+            throw new SongUploadException("Błąd I/O podczas uploadu pliku", e);
 
         } finally {
             try {
-                if (tmpPath != null) Files.deleteIfExists(tmpPath);
+                if (tmpAudioPath != null) Files.deleteIfExists(tmpAudioPath);
             } catch (IOException e) {
                 log.warn("Nie udało się usunąć pliku tymczasowego", e);
             }
@@ -107,7 +122,7 @@ public class SongUploadService {
     }
 
     private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser,
-                                      String storageKey, long sizeBytes, String mimeType)
+                                      String audioStorageKey, String coverStorageKey, long audioSizeBytes, long coverSizeBytes, String mimeType)
             throws IllegalArgumentException {
 
         String title = request.getTitle();
@@ -131,11 +146,22 @@ public class SongUploadService {
         s.setAuthor(appUser);
         s.setGenres(validatedGenreList);
         s.setPubliclyVisible(request.getPubliclyVisible());
-        s.setStorageKey(storageKey);
+        s.setAudioStorageKey(audioStorageKey);
+        s.setCoverStorageKey(coverStorageKey);
         s.setMimeType(mimeType);
-        s.setSizeBytes(sizeBytes);
+        s.setAudioSizeBytes(audioSizeBytes);
+        s.setCoverSizeBytes(coverSizeBytes);
         s.setCreatedAt(Instant.now());
         return s;
+    }
+
+    private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
+        ProcessedImage processedCover =
+                imageService.resizeImageAndConvert(coverFile, 1200, 1200, TARGET_COVER_EXTENSION, 0.80);
+
+        Path tmpCoverPath = Files.createTempFile("cover-", "." + TARGET_COVER_EXTENSION);
+        Files.write(tmpCoverPath, processedCover.bytes());
+        return tmpCoverPath;
     }
 
     private Path validateSongFileAndSaveToTemp(MultipartFile file) throws IOException {
@@ -147,7 +173,7 @@ public class SongUploadService {
             throw new IllegalArgumentException("Plik jest za duży");
         }
 
-        Path tmp = Files.createTempFile("upload-", "." + TARGET_EXTENSION /* i tak service wpuszcza tylko .m4a */);
+        Path tmp = Files.createTempFile("upload-", "." + TARGET_AUDIO_EXTENSION /* i tak service wpuszcza tylko .m4a */);
 
         try (InputStream in = file.getInputStream()) {
             Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);

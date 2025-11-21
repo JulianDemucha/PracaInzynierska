@@ -11,5 +11,7 @@ public record SongDto(
         String authorUsername,
         List<String> genres,
         boolean publiclyVisible,
-        String createdAt
+        String createdAt,
+        String audioFileUrl,
+        String coverFileUrl
 ){}
