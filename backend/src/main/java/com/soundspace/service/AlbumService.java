@@ -1,11 +1,15 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.AlbumDto;
+import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
+import com.soundspace.entity.Song;
 import com.soundspace.repository.AlbumRepository;
+import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -15,6 +19,8 @@ import java.util.Optional;
 public class AlbumService {
     private final AlbumRepository albumRepository;
     private final AppUserService appUserService;
+    private final SongCoreService songCoreService;
+    private final SongRepository songRepository;
 
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
@@ -42,7 +48,21 @@ public class AlbumService {
 
     public AlbumDto getAlbum(Long id) {
         Optional<Album> album = albumRepository.findById(id);
-        if(album.isEmpty()) throw new IllegalArgumentException("Album not found");
+        if(album.isEmpty()) throw new IllegalArgumentException("Nie znaleziono albumu");
         return AlbumDto.toDto(album.get());
+    }
+
+    public SongDto addSongToAlbum(Long albumId, Long songId) {
+        Optional<Album> albumOptional = albumRepository.findById(albumId);
+        Optional<Song> songOptional = songCoreService.getSongById(songId);
+
+        if(albumOptional.isEmpty()) throw new IllegalArgumentException("Nie znaleziono albumu");
+        if(songOptional.isEmpty()) throw new IllegalArgumentException("Nie znaleziono piosenki");
+
+        Album album = albumOptional.get();
+        Song song = songOptional.get();
+
+        song.setAlbum(album);
+        return SongDto.toDto(songRepository.save(song));
     }
 }
