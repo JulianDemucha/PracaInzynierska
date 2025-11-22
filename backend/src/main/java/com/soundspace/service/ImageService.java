@@ -3,7 +3,6 @@ package com.soundspace.service;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.exception.ImageProcessingException;
 import com.soundspace.exception.InvalidStorageLocationException;
-import com.soundspace.exception.StorageFileNotFoundException;
 import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.tika.Tika;
