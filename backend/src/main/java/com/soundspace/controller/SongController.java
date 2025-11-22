@@ -87,7 +87,7 @@ public class SongController {
         Song song = songCoreService.getSongById(id)
                 .orElseThrow(() -> new SongNotFoundException(id));
 
-        Resource resource = imageService.loadCoverResource(song.getCoverStorageKey());
+        Resource resource = imageService.loadImageResource(song.getCoverStorageKey());
         String contentType = song.getCoverFileMimeType();
 
         MediaType mediaType;

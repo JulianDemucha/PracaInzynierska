@@ -19,7 +19,7 @@ public class StorageService {
     public StorageService(@Value("${app.storage.root:./data/audio}") String rootStr) {
         try {
             this.rootPath = Paths.get(rootStr).toAbsolutePath().normalize();
-            Files.createDirectories(this.rootPath); // Od razu tworzymy root, jak nie istnieje
+            Files.createDirectories(this.rootPath); // tworzymy root, jak nie istnieje
         } catch (IOException e) {
             throw new StorageException("Nie można zainicjować folderu storage", e);
         }
