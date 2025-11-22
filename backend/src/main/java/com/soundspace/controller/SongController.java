@@ -74,8 +74,6 @@ public class SongController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }
-
-        //todo obsluzyc AccessDeinedException w global handlerze
     }
 
     //// todo?

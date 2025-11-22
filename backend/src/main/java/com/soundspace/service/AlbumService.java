@@ -5,11 +5,13 @@ import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
+import com.soundspace.exception.AccessDeniedException;
+import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -29,10 +31,10 @@ public class AlbumService {
 
     public AlbumDto createAlbum(CreateAlbumRequest request) {
 
-        if(request.getTitle() == null || request.getTitle().isBlank())
+        if (request.getTitle() == null || request.getTitle().isBlank())
             throw new IllegalArgumentException("Title cannot be null or empty");
 
-        if(request.getDescription() == null || request.getDescription().isBlank())
+        if (request.getDescription() == null || request.getDescription().isBlank())
             request.setDescription(request.getTitle());
 
         Album album = Album.builder()
@@ -48,21 +50,32 @@ public class AlbumService {
 
     public AlbumDto getAlbum(Long id) {
         Optional<Album> album = albumRepository.findById(id);
-        if(album.isEmpty()) throw new IllegalArgumentException("Nie znaleziono albumu");
+        if (album.isEmpty()) throw new IllegalArgumentException("Nie znaleziono albumu");
         return AlbumDto.toDto(album.get());
     }
 
-    public SongDto addSongToAlbum(Long albumId, Long songId) {
-        Optional<Album> albumOptional = albumRepository.findById(albumId);
+    @Transactional
+    public SongDto addSongToAlbum(Long albumId, Long songId, String userEmail) {
+        Album album = getAlbumById(albumId).orElseThrow(
+                () -> new AlbumNotFoundException(albumId));
+
+        // jezeli album jest prywatny i requestujacy user nie jest autorem albumu - throw
+        if (!album.getPubliclyVisible() && !appUserService.getUserByEmail(userEmail).getId()
+                .equals(album.getAuthor().getId()))
+            throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
+
         Optional<Song> songOptional = songCoreService.getSongById(songId);
 
-        if(albumOptional.isEmpty()) throw new IllegalArgumentException("Nie znaleziono albumu");
-        if(songOptional.isEmpty()) throw new IllegalArgumentException("Nie znaleziono piosenki");
-
-        Album album = albumOptional.get();
+        if (songOptional.isEmpty()) throw new IllegalArgumentException("Nie znaleziono piosenki");
         Song song = songOptional.get();
 
+        album.getSongs().add(song);
         song.setAlbum(album);
+
         return SongDto.toDto(songRepository.save(song));
+    }
+
+    public Optional<Album> getAlbumById(Long albumId) {
+        return albumRepository.findById(albumId);
     }
 }

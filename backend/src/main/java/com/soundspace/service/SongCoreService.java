@@ -2,8 +2,12 @@ package com.soundspace.service;
 
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
+import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
+import com.soundspace.exception.AccessDeniedException;
+import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.exception.SongNotFoundException;
+import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import java.util.stream.Collectors;
 public class SongCoreService {
     public final SongRepository songRepository;
     private final AppUserService appUserService;
+    private final AlbumRepository albumRepository;
 
     public Optional<Song> getSongById(Long id) {
         return songRepository.findById(id);
@@ -46,7 +51,30 @@ public class SongCoreService {
 
         boolean isRequestingUserAuthorOfSongs = appUserService.getUserByEmail(userEmail).getId().equals(songsAuthorId);
 
-        List<SongDto> songs = new java.util.ArrayList<>(songsProjection.stream().map(p -> SongDto.builder()
+        List<SongDto> songs = getSongsFromSongProjection(songsProjection);
+
+        // usuwa piosenki z listy jezeli sa prywatne, a requestujacy user nie jest autorem piosenek
+        if (!isRequestingUserAuthorOfSongs)
+            songs.removeIf(song -> !song.publiclyVisible());
+
+        return songs;
+    }
+
+    public List<SongDto> getSongsByAlbumId(Long albumId, String userEmail) {
+        List<SongProjection> songsProjection = songRepository.findSongsByAlbumNative(albumId);
+        Album album = albumRepository.getAlbumById(albumId);
+        if (album == null) throw new AlbumNotFoundException(albumId);
+
+        // jezeli album jest prywatny i requestujacy user nie jest autorem albumu - throw
+        if (!album.getPubliclyVisible() && !appUserService.getUserByEmail(userEmail).getId()
+                .equals(album.getAuthor().getId()))
+            throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
+
+        return getSongsFromSongProjection(songsProjection);
+    }
+
+    private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
+        return new java.util.ArrayList<>(songsProjection.stream().map(p -> SongDto.builder()
                 .id(p.getId())
                 .authorId(p.getAuthorId())
                 .title(p.getTitle())
@@ -56,11 +84,5 @@ public class SongCoreService {
                 .createdAt(p.getCreatedAt().toString())
                 .coverStorageKey(p.getCoverStorageKey())
                 .build()).toList());
-
-        // usuwa piosenki z listy jezeli sa prywatne, a requestujacy user nie jest autorem piosenek
-        if (!isRequestingUserAuthorOfSongs)
-            songs.removeIf(song -> !song.publiclyVisible());
-
-        return songs;
     }
 }

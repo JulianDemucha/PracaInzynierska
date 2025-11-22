@@ -1,14 +1,13 @@
 package com.soundspace.entity;
 
-
-import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -22,6 +21,10 @@ public class Album {
     @Getter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToMany(mappedBy = "album", fetch = FetchType.LAZY)
+//    @OrderBy("positionInAlbum ASC") // dodac positionInAlbum do Song
+    private List<Song> songs = new ArrayList<>();
 
     @Column
     private String title;
