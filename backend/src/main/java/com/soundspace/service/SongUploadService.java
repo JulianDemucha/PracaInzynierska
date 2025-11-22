@@ -85,24 +85,7 @@ public class SongUploadService {
 
             try {
 
-                Song savedSong = songRepository.save(s);
-
-                List<String> dtoGenres = new ArrayList<>();
-                for (Genre genre : savedSong.getGenres()) {
-                    dtoGenres.add(genre.toString());
-                }
-
-                Long albumId = savedSong.getAlbum() == null ? null : savedSong.getAlbum().getId();
-
-                return SongDto.builder()
-                        .id(savedSong.getId())
-                        .title(savedSong.getTitle())
-                        .authorId(savedSong.getAuthor().getId())
-                        .albumId(albumId)
-                        .publiclyVisible(savedSong.getPubliclyVisible())
-                        .genres(dtoGenres)
-                        .createdAt(savedSong.getCreatedAt().toString())
-                        .build();
+                return SongDto.toDto(songRepository.save(s));
 
             } catch (Exception e) {
 
