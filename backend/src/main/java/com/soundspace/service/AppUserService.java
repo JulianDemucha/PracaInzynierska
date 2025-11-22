@@ -132,4 +132,8 @@ public class AppUserService {
         return repo.findByEmail(email).orElseThrow();
     }
 
+    public AppUser getUserById(Long id) {
+        return repo.findById(id).orElseThrow();
+    }
+
 }
