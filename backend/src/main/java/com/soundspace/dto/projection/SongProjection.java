@@ -8,7 +8,7 @@ import java.util.List;
 public interface SongProjection {
     Long getId();
     String getTitle();
-    String getAuthorLogin();
+    Long getAuthorId();
     Long getAlbumId();
     String getGenresStr();
     boolean getPubliclyVisible();

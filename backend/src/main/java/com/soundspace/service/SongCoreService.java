@@ -31,7 +31,7 @@ public class SongCoreService {
 
         return SongDto.builder()
                 .id(song.getId())
-                .authorLogin(song.getAuthor().getLogin())
+                .authorId(song.getAuthor().getId())
                 .title(song.getTitle())
                 .albumId(albumId)
                 .createdAt(song.getCreatedAt().toString())
@@ -48,7 +48,7 @@ public class SongCoreService {
 
         List<SongDto> songs = new java.util.ArrayList<>(songsProjection.stream().map(p -> SongDto.builder()
                 .id(p.getId())
-                .authorLogin(p.getAuthorLogin())
+                .authorId(p.getAuthorId())
                 .title(p.getTitle())
                 .albumId(p.getAlbumId())
                 .genres(p.getGenres())

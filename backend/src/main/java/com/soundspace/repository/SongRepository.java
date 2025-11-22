@@ -11,7 +11,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
         SELECT 
           s.id,
           s.title,
-          u.login AS author_login,
+          u.id AS author_id,
           s.album_id,
           string_agg(g.genre, ',') AS genresStr,
           s.publicly_visible,
