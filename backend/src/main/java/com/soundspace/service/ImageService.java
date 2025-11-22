@@ -1,11 +1,18 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.ProcessedImage;
+import com.soundspace.dto.SongDto;
+import com.soundspace.entity.Song;
 import com.soundspace.exception.ImageProcessingException;
+import com.soundspace.exception.SongNotFoundException;
+import com.soundspace.exception.StorageFileNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.tika.Tika;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -34,6 +42,8 @@ public class ImageService {
             "webp", "image/webp",
             "avif", "image/avif"
     );
+    private final StorageService storageService;
+    private final SongCoreService songCoreService;
 
 
     public ProcessedImage resizeImageAndConvert(MultipartFile imageFile, int width, int height, String outputFormat, double quality) {
@@ -108,5 +118,13 @@ public class ImageService {
     private String mimeFromFormat(String format) {
         if (format == null) return null;
         return FORMAT_TO_MIME.get(format.toLowerCase());
+    }
+
+    public Resource loadCoverResource(String storageKey) {
+        Resource resource = storageService.loadAsResource(storageKey);
+        if (resource == null || !resource.exists() || !resource.isReadable()) {
+            throw new StorageFileNotFoundException("Plik nie istnieje: " + storageKey);
+        }
+        return resource;
     }
 }

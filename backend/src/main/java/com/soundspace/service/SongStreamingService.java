@@ -63,7 +63,7 @@ public class SongStreamingService {
 
     public String getSongMimeType(Long songId) {
         return songRepository.findById(songId)
-                .map(Song::getMimeType)
-                .orElse("application/octet-stream");
+                .map(Song::getCoverFileMimeType)
+                .orElse("application/octet-stream"); // fallback
     }
 }

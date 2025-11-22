@@ -25,9 +25,11 @@ public class StorageService {
         }
     }
 
-    /**  plik source -> storage i zwraca storageKey czyli path gdzie jest */
+    /**
+     * plik source -> storage i zwraca storageKey czyli path gdzie jest
+     */
     public String saveFromPath(Path source, Long ownerId, String extension, String subDirectory) throws IOException {
-        String key = String.format("%s/%d/%s.%s",subDirectory, ownerId == null ? 0 : ownerId, UUID.randomUUID(), extension);
+        String key = String.format("%s/%d/%s.%s", subDirectory, ownerId == null ? 0 : ownerId, UUID.randomUUID(), extension);
         Path target = rootPath.resolve(key).normalize();
         Files.createDirectories(target.getParent());
         try {
@@ -43,14 +45,19 @@ public class StorageService {
         }
     }
 
-    public Resource loadAsResource(String storageKey) throws IOException {
-        Path file = rootPath.resolve(storageKey).normalize();
-        Resource resource = new UrlResource(file.toUri());
+    public Resource loadAsResource(String storageKey) {
+        try {
+            Path file = rootPath.resolve(storageKey).normalize();
+            Resource resource = new UrlResource(file.toUri());
 
-        if (resource.exists() || resource.isReadable()) {
-            return resource;
-        } else {
-            throw new StorageFileNotFoundException("Nie znaleziono pliku: " + storageKey);
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new StorageFileNotFoundException("Nie znaleziono pliku: " + storageKey);
+            }
+
+        } catch (IOException e) {
+            throw new StorageFileNotFoundException(e.getMessage());
         }
     }
 
@@ -66,4 +73,5 @@ public class StorageService {
             throw new StorageException("Nie udało się usunąć pliku: " + storageKey, e);
         }
     }
+
 }

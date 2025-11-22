@@ -13,6 +13,6 @@ public record SongDto(
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,
-        String audioFileUrl,
-        String coverFileUrl
+        String audioStorageKey,
+        String coverStorageKey
 ){}

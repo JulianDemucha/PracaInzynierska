@@ -50,8 +50,11 @@ public class Song {
     @Column(name= "cover_size_bytes")
     private long coverSizeBytes;
 
-    @Column(name = "mime_type")
-    private String mimeType;
+    @Column(name = "audio_file_mime_type")
+    private String audioFileMimeType;
+
+    @Column(name = "cover_file_mime_type")
+    private String coverFileMimeType;
 
     @Column(name = "publicly_visible", nullable = false)
     private Boolean publiclyVisible;

@@ -44,4 +44,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleStorageFileNotFoundException(StorageFileNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("błąd storage", ex.getMessage()));
     }
+
+    @ExceptionHandler(SongNotFoundException.class)
+    public ResponseEntity<?> handleSongNotFoundException(SongNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 }

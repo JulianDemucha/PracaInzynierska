@@ -55,7 +55,7 @@ public class SongUploadService {
         try {
             // walidacja audio i zapis do temp file
             tmpAudioPath = validateSongFileAndSaveToTemp(audioFile);
-            String mimeType = detectAndValidateFileMimeType(tmpAudioPath);
+            String audioFileMimeType = detectAndValidateAudioFileMimeType(tmpAudioPath);
             long audioFileSize = Files.size(tmpAudioPath);
 
             // docelowy zapis audio
@@ -64,7 +64,9 @@ public class SongUploadService {
 
             // resize i convert cover image i zapis do temp file
             tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+            String coverFileMimeType = tika.detect(tmpCoverPath.toFile());
             long coverFileSize = Files.size(tmpCoverPath);
+
 
             // docelowy zapis cover
             coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
@@ -77,7 +79,8 @@ public class SongUploadService {
                     coverStorageKey,
                     audioFileSize,
                     coverFileSize,
-                    mimeType
+                    audioFileMimeType,
+                    coverFileMimeType
             );
 
             try {
@@ -127,8 +130,9 @@ public class SongUploadService {
         }
     }
 
-    private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser,
-                                      String audioStorageKey, String coverStorageKey, long audioSizeBytes, long coverSizeBytes, String mimeType)
+    private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser, String audioStorageKey,
+                                      String coverStorageKey, long audioSizeBytes, long coverSizeBytes,
+                                      String audioFileMimeType, String coverFileMimeType)
             throws IllegalArgumentException {
 
         String title = request.getTitle();
@@ -154,7 +158,8 @@ public class SongUploadService {
         s.setAlbum(albumService.findById(request.getAlbumId()).orElse(null));
         s.setAudioStorageKey(audioStorageKey);
         s.setCoverStorageKey(coverStorageKey);
-        s.setMimeType(mimeType);
+        s.setAudioFileMimeType(audioFileMimeType);
+        s.setCoverFileMimeType(coverFileMimeType);
         s.setAudioSizeBytes(audioSizeBytes);
         s.setCoverSizeBytes(coverSizeBytes);
         s.setPubliclyVisible(request.getPubliclyVisible());
@@ -189,7 +194,7 @@ public class SongUploadService {
         return tmp;
     }
 
-    private String detectAndValidateFileMimeType(Path tmp) throws IOException {
+    private String detectAndValidateAudioFileMimeType(Path tmp) throws IOException {
         String detected = tika.detect(tmp.toFile());
         boolean okDetected = detected != null && detected.startsWith("audio") &&
                 (detected.contains("mp4") || detected.contains("m4a") ||

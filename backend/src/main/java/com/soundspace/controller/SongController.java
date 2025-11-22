@@ -1,12 +1,16 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.SongDto;
+import com.soundspace.entity.Song;
+import com.soundspace.exception.SongNotFoundException;
 import com.soundspace.security.dto.SongUploadRequest;
-import com.soundspace.service.AppUserService;
-import com.soundspace.service.SongUploadService;
+import com.soundspace.service.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
@@ -15,16 +19,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.io.support.ResourceRegion;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import com.soundspace.service.SongStreamingService;
 
 // Wyjątki
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
 import java.net.URI;
+import java.util.Optional;
 
 // com.soundspace.controller.SongController
 @RestController
@@ -36,6 +38,13 @@ public class SongController {
     private final SongUploadService songUploadService;
     private final AppUserService appUserService;
     private final SongStreamingService songStreamingService;
+    private final SongCoreService songCoreService;
+    private final ImageService imageService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long id) {
+        return ResponseEntity.ok(songCoreService.getSongDtoById(id));
+    }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<SongDto> upload(
@@ -73,7 +82,33 @@ public class SongController {
         }
 
         //todo obsluzyc AccessDeinedException w global handlerze
+    }
 
+    //// todo?
+    //// moze zrobic encje storageKey i nowy controller z endpointem ktory wydaje pliki po id_storagekey? rootpath to i tak /data wiec
+    /// poki bylaby walidacja na to ze nikt nie probuje pobrac nic z prywatnego songa, ani samego pliku audio, powinno byc git
+    ///  dzieki temu w jednym endpointcie mozna by bylo pobierac obrazki do wszystkiego
+    @GetMapping("/cover/{id}")
+    public ResponseEntity<Resource> getCoverImageBySongId(@PathVariable Long id) {
+        Song song = songCoreService.getSongById(id)
+                .orElseThrow(() -> new SongNotFoundException(id));
 
+        Resource resource = imageService.loadCoverResource(song.getCoverStorageKey());
+        String contentType = song.getCoverFileMimeType();
+
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(contentType);
+        } catch (InvalidMediaTypeException e) {
+            mediaType = MediaType.IMAGE_JPEG;
+        }
+
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=43200, public"); // cache 12h
+                //// !!! po zmianie obrazka przez 12h w cache dalej bedzie stary !!!
+
+        return builder.body(resource);
     }
 }
