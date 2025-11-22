@@ -1,11 +1,9 @@
 package com.soundspace.controller;
-
 import com.soundspace.dto.SongDto;
 import com.soundspace.entity.Song;
 import com.soundspace.exception.SongNotFoundException;
 import com.soundspace.security.dto.SongUploadRequest;
 import com.soundspace.service.*;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.web.bind.annotation.*;
-
-// Wyjątki
 import java.io.IOException;
+import java.util.List;
 import java.util.NoSuchElementException;
-
 import java.net.URI;
-import java.util.Optional;
 
-// com.soundspace.controller.SongController
 @RestController
 @RequestMapping("/api/songs")
 @RequiredArgsConstructor
@@ -110,5 +104,11 @@ public class SongController {
                 //// !!! po zmianie obrazka przez 12h w cache dalej bedzie stary !!!
 
         return builder.body(resource);
+    }
+    @GetMapping("/user/{id}")
+    public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long id
+            , @AuthenticationPrincipal UserDetails userDetails) {
+        String email = (userDetails != null) ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(songCoreService.getSongsByUserId(id, email));
     }
 }

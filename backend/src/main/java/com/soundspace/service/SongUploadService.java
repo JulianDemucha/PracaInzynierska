@@ -97,7 +97,7 @@ public class SongUploadService {
                 return SongDto.builder()
                         .id(savedSong.getId())
                         .title(savedSong.getTitle())
-                        .authorUsername(savedSong.getAuthor().getUsername())
+                        .authorLogin(savedSong.getAuthor().getUsername())
                         .albumId(albumId)
                         .publiclyVisible(savedSong.getPubliclyVisible())
                         .genres(dtoGenres)

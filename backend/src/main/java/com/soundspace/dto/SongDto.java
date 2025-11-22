@@ -8,11 +8,10 @@ import java.util.List;
 public record SongDto(
         Long id,
         String title,
-        String authorUsername,
+        String authorLogin,
         Long albumId,
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,
-        String audioStorageKey,
-        String coverStorageKey
+        String coverStorageKey //poki co zostawiam bo jakby byl globalny endpoint do odczytu obrazow to sie przyda w odpowiedzi
 ){}
