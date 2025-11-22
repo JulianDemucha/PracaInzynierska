@@ -2,7 +2,7 @@ package com.soundspace.controller;
 import com.soundspace.dto.SongDto;
 import com.soundspace.entity.Song;
 import com.soundspace.exception.SongNotFoundException;
-import com.soundspace.security.dto.SongUploadRequest;
+import com.soundspace.dto.request.SongUploadRequest;
 import com.soundspace.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

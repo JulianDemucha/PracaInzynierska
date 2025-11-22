@@ -1,8 +1,8 @@
 package com.soundspace.controller;
 
-import com.soundspace.security.dto.AuthenticationRequest;
-import com.soundspace.security.dto.RefreshTokenCookieDto;
-import com.soundspace.security.dto.RegisterRequest;
+import com.soundspace.dto.request.AuthenticationRequest;
+import com.soundspace.dto.RefreshTokenCookieDto;
+import com.soundspace.dto.request.RegisterRequest;
 import com.soundspace.service.AuthenticationService;
 import com.soundspace.service.CookieService;
 import com.soundspace.service.RefreshTokenService;

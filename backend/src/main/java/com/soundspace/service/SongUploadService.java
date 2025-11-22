@@ -7,7 +7,7 @@ import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import com.soundspace.exception.SongUploadException;
 import com.soundspace.repository.SongRepository;
-import com.soundspace.security.dto.SongUploadRequest;
+import com.soundspace.dto.request.SongUploadRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;

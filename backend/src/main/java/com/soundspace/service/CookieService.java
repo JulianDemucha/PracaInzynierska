@@ -1,6 +1,6 @@
 package com.soundspace.service;
 
-import com.soundspace.security.dto.RefreshTokenCookieDto;
+import com.soundspace.dto.RefreshTokenCookieDto;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;

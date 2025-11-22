@@ -4,7 +4,7 @@ import com.soundspace.dto.mapper.AppUserMapper;
 import com.soundspace.entity.AppUser;
 import com.soundspace.enums.Sex;
 import com.soundspace.repository.AppUserRepository;
-import com.soundspace.security.dto.AppUserUpdateRequest;
+import com.soundspace.dto.request.AppUserUpdateRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

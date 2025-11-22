@@ -1,4 +1,4 @@
-package com.soundspace.security.dto;
+package com.soundspace.dto;
 
 import lombok.Builder;
 import lombok.Data;

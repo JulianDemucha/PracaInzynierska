@@ -1,7 +1,7 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.AppUserDto;
-import com.soundspace.security.dto.AppUserUpdateRequest;
+import com.soundspace.dto.request.AppUserUpdateRequest;
 import com.soundspace.service.AppUserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

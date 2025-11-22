@@ -4,7 +4,7 @@ import com.soundspace.entity.AppUser;
 import com.soundspace.entity.RefreshToken;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.repository.RefreshTokenRepository;
-import com.soundspace.security.dto.RefreshTokenCookieDto;
+import com.soundspace.dto.RefreshTokenCookieDto;
 import com.soundspace.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;

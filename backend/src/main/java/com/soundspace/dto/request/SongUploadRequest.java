@@ -1,4 +1,4 @@
-package com.soundspace.security.dto;
+package com.soundspace.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
