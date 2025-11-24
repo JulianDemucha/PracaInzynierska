@@ -1,5 +1,6 @@
 package com.soundspace.dto;
 
+import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import lombok.Builder;
@@ -19,11 +20,13 @@ public record SongDto(
 ){
 
     public static SongDto toDto(Song song) {
+        Album album = song.getAlbum();
+        Long albumId = album == null ? null : album.getId();
         return new SongDto(
                 song.getId(),
                 song.getTitle(),
                 song.getAuthor().getId(),
-                song.getAlbum().getId(),
+                albumId,
                 song.getGenres().stream().map(Genre::toString).toList(),
                 song.getPubliclyVisible(),
                 song.getCreatedAt().toString(),
