@@ -30,6 +30,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public String register(RegisterRequest request) {
+        // todo: zrobic customowe wyjatki i od razu je w klasach handlowac na 409 albo w global handlerze
         if (repo.existsByEmail(request.getEmail()) || repo.existsByLogin(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Email or username already exists");
@@ -52,7 +53,7 @@ public class AuthenticationService {
 
         var user = AppUser.builder()
                 .login(request.getUsername())
-                .sex(Sex.valueOf(request.getSex()))
+                .sex(Sex.valueOf(request.getSex().toUpperCase().trim()))
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role(Role.ROLE_USER)

@@ -64,10 +64,7 @@ public class AlbumService {
                 .equals(album.getAuthor().getId()))
             throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
 
-        Optional<Song> songOptional = songCoreService.getSongById(songId);
-
-        if (songOptional.isEmpty()) throw new IllegalArgumentException("Nie znaleziono piosenki");
-        Song song = songOptional.get();
+        Song song = songCoreService.getSongById(songId);
 
         album.getSongs().add(song);
         song.setAlbum(album);

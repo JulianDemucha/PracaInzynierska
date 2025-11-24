@@ -3,47 +3,40 @@ package com.soundspace.service;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Album;
+import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.exception.SongNotFoundException;
+import com.soundspace.exception.StorageFileNotFoundException;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SongCoreService {
     public final SongRepository songRepository;
     private final AppUserService appUserService;
     private final AlbumRepository albumRepository;
+    private final StorageService storageService;
 
-    public Optional<Song> getSongById(Long id) {
-        return songRepository.findById(id);
+    public Song getSongById(Long id) {
+        return songRepository.findById(id).orElseThrow(
+                () -> new SongNotFoundException(id)
+        );
     }
 
     public SongDto getSongDtoById(Long id) {
-        Song song = songRepository.findById(id).orElseThrow(
-                () -> new SongNotFoundException(id)
-        );
-
-        Long albumId = song.getAlbum() == null ? null : song.getAlbum().getId();
-
-        return SongDto.builder()
-                .id(song.getId())
-                .authorId(song.getAuthor().getId())
-                .title(song.getTitle())
-                .albumId(albumId)
-                .createdAt(song.getCreatedAt().toString())
-                .coverStorageKey(song.getCoverStorageKey())
-                .genres(song.getGenres().stream().map(Enum::toString).collect(Collectors.toList()))
-                .publiclyVisible(song.getPubliclyVisible())
-                .build();
+        return SongDto.toDto(getSongById(id));
     }
 
     public List<SongDto> getSongsByUserId(Long songsAuthorId, String userEmail) {
@@ -84,5 +77,24 @@ public class SongCoreService {
                 .createdAt(p.getCreatedAt().toString())
                 .coverStorageKey(p.getCoverStorageKey())
                 .build()).toList());
+    }
+
+    public void deleteSongById(Long id, String email) {
+        Song song = getSongById(id);
+        try{
+        if (!song.getAuthor().getId().equals(getSongById(id).getAuthor().getId()))
+            throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosennki");
+
+        songRepository.delete(song);
+
+            storageService.delete(song.getAudioStorageKey());
+            storageService.delete(song.getCoverStorageKey());
+        } catch (IOException e){
+            log.info(e.getMessage());
+            throw new StorageFileNotFoundException(e.getMessage());
+        } catch (AccessDeniedException e){
+            log.info(e.getMessage());
+            throw e;
+        }
     }
 }
