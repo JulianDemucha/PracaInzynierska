@@ -119,6 +119,7 @@ function ProfilePage() {
                                         imageUrl={getCoverUrl(song.id)}
                                         title={song.title}
                                         subtitle={`${new Date(song.createdAt).getFullYear()} • Utwór`}
+                                        data={song}
                                     />
                                 ))
                             ) : (
