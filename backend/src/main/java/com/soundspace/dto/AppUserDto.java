@@ -22,7 +22,7 @@ public record AppUserDto (
     public static AppUserDto toDto(AppUser appUser) {
         return new AppUserDto(
                 appUser.getId(),
-                appUser.getUsername(),
+                appUser.getLogin(),
                 appUser.getEmail(),
                 appUser.getSex().toString(),
                 appUser.getRole().toString(),
