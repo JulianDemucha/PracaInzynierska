@@ -48,7 +48,7 @@ function SongPage() {
 
                 const mappedSong = {
                     ...data,
-                    artist: { id: 0, name: data.authorUsername || data.authorLogin || "Nieznany" },
+                    artist: {id: data.authorId, name: data.authorUsername},
                     coverArtUrl: getCoverUrl(data.id),
                     duration: "3:00",
                     comments: []
