@@ -12,6 +12,7 @@ public record SongDto(
         Long id,
         String title,
         Long authorId,
+        String authorUsername,
         Long albumId,
         List<String> genres,
         boolean publiclyVisible,
@@ -22,10 +23,14 @@ public record SongDto(
     public static SongDto toDto(Song song) {
         Album album = song.getAlbum();
         Long albumId = album == null ? null : album.getId();
+
+        String usernameToShow = song.getAuthor().getLogin();
+
         return new SongDto(
                 song.getId(),
                 song.getTitle(),
                 song.getAuthor().getId(),
+                usernameToShow,
                 albumId,
                 song.getGenres().stream().map(Genre::toString).toList(),
                 song.getPubliclyVisible(),
