@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import {useAuth} from "../context/useAuth.js";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from "../context/useAuth.js";
 import { Link } from 'react-router-dom';
 import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
@@ -8,33 +8,46 @@ import AddSongModal from '../components/song/AddSongModal.jsx';
 import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 import MediaCard from '../components/cards/MediaCard.jsx';
 
-// --- DANE TESTOWE ---
-const mockUserContent = {
-    songs: [
-        { id: 1, title: "Utwór Kowala", year: 2024, coverArtUrl: "https://placehold.co/200x200/8A2BE2/white?text=Kowal", type: "Utwór" },
-        { id: 2, title: "Mój utwór nr 2", year: 2023, coverArtUrl: "https://placehold.co/200x200/53346D/white?text=Utwor+2", type: "Utwór" },
-    ],
+import { getUserSongs, getCoverUrl } from '../services/songService.js';
+
+// --- DANE TESTOWE DLA RESZTY ZAKŁADEK (Póki nie ma backendu dla albumów/playlist) ---
+const mockOtherContent = {
     playlists: [
         { id: 1, title: "Moja playlista nr 1", year: 2022, coverArtUrl: "https://placehold.co/200x200/1DB954/white?text=Playlista+1", type: "Playlista" },
         { id: 2, title: "Moja playlista nr 2", year: 2021, coverArtUrl: "https://placehold.co/200x200/E73C7E/white?text=Playlista+2", type: "Playlista" },
     ],
-    albums: [
-
-    ],
+    albums: [],
     comments: [
         { id: 1, text: "Mój komentarz 1..." }
     ]
 };
 
-
 function ProfilePage() {
     const { currentUser, logout, loading } = useAuth();
+
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
 
-    const content = mockUserContent;
+    // Stan DANYCH z backendu
+    const [userSongs, setUserSongs] = useState([]);
+
+    // 1. POBIERANIE PIOSENEK Z BACKENDU
+    useEffect(() => {
+        const fetchMySongs = async () => {
+            if (currentUser?.id) {
+                try {
+                    const data = await getUserSongs(currentUser.id);
+                    setUserSongs(data);
+                } catch (error) {
+                    console.error("Błąd pobierania utworów użytkownika:", error);
+                }
+            }
+        };
+
+        fetchMySongs();
+    }, [currentUser]);
 
     if (loading && !currentUser) {
         return (
@@ -47,30 +60,29 @@ function ProfilePage() {
     return (
         <div className="profile-page">
 
-            {/* ===== 1. NAGŁÓWEK PROFILU (Zdjęcie, Nazwa, Bio) ===== */}
+            {/* ===== NAGŁÓWEK ===== */}
             <header className="profile-header">
                 <img
-                    src={currentUser.avatar || defaultAvatar}
+                    src={currentUser?.avatar || defaultAvatar}
                     alt="Awatar użytkownika"
                     className="profile-avatar"
                 />
                 <div className="profile-info">
                     <div className="profile-username-wrapper">
-                        <h1 className="profile-username">{currentUser.username || 'Nazwa Użytkownika'}</h1>
-                        {/* TODO 'currentUser.isVerified'  */}
+                        <h1 className="profile-username">{currentUser?.username || 'Nazwa Użytkownika'}</h1>
                     </div>
                     <p className="profile-bio">
-                        Nowy album 21.11.25 20:30
+                        {/* Tu można w przyszłości wyświetlać bio z bazy */}
+                        Dołączył: {new Date().getFullYear()}
                     </p>
                 </div>
             </header>
 
-            {/* ===== 2. NAWIGACJA (Zakładki i Edycja) ===== */}
+            {/* ===== NAWIGACJA ===== */}
             <nav className="profile-nav">
                 <ul className="profile-tabs">
                     <li onClick={() => setActiveTab('wszystko')} className={activeTab === 'wszystko' ? 'active' : ''}>Wszystko</li>
                     <li onClick={() => setActiveTab('wlasne')} className={activeTab === 'wlasne' ? 'active' : ''}>Własne utwory</li>
-                    {/* ZMIANA: Dodano zakładkę "Albumy" */}
                     <li onClick={() => setActiveTab('albumy')} className={activeTab === 'albumy' ? 'active' : ''}>Albumy</li>
                     <li onClick={() => setActiveTab('playlisty')} className={activeTab === 'playlisty' ? 'active' : ''}>Playlisty</li>
                     <li onClick={() => setActiveTab('komentarze')} className={activeTab === 'komentarze' ? 'active' : ''}>Komentarze</li>
@@ -91,22 +103,22 @@ function ProfilePage() {
                 </div>
             </nav>
 
-            {/* ===== 3. ZAWARTOŚĆ (ZMIENIONA NA SIATKĘ KART) ===== */}
+            {/* ===== ZAWARTOŚĆ ===== */}
             <section className="profile-content">
 
-                {/* --- Pokaż "Własne utwory" --- */}
+                {/* --- Pokaż "Własne utwory" (Z BACKENDU) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
                     <div className="content-section">
                         <h2>Własne utwory</h2>
                         <div className="media-grid">
-                            {content.songs.length > 0 ? (
-                                content.songs.map(song => (
+                            {userSongs.length > 0 ? (
+                                userSongs.map(song => (
                                     <MediaCard
                                         key={song.id}
                                         linkTo={`/song/${song.id}`}
-                                        imageUrl={song.coverArtUrl}
+                                        imageUrl={getCoverUrl(song.id)}
                                         title={song.title}
-                                        subtitle={`${song.year} • ${song.type}`}
+                                        subtitle={`${new Date(song.createdAt).getFullYear()} • Utwór`}
                                     />
                                 ))
                             ) : (
@@ -116,13 +128,13 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Albumy" --- */}
+                {/* --- Pokaż "Albumy" (MOCK) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
                         <h2>Albumy</h2>
                         <div className="media-grid">
-                            {content.albums.length > 0 ? (
-                                content.albums.map(album => (
+                            {mockOtherContent.albums.length > 0 ? (
+                                mockOtherContent.albums.map(album => (
                                     <MediaCard
                                         key={album.id}
                                         linkTo={`/album/${album.id}`}
@@ -138,12 +150,12 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Playlisty" --- */}
+                {/* --- Pokaż "Playlisty" (MOCK) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
                         <h2>Playlisty</h2>
                         <div className="media-grid">
-                            {content.playlists.map(playlist => (
+                            {mockOtherContent.playlists.map(playlist => (
                                 <MediaCard
                                     key={playlist.id}
                                     linkTo={`/playlist/${playlist.id}`}
@@ -156,16 +168,20 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Komentarze"  --- */}
+                {/* --- Pokaż "Komentarze" (MOCK) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'komentarze') && (
                     <div className="content-section">
                         <h2>Komentarze</h2>
-                        <div className="song-row-placeholder">Mój komentarz 1...</div>
+                        <div className="song-row-placeholder">
+                            {mockOtherContent.comments.length > 0
+                                ? "Tutaj pojawią się Twoje komentarze (W budowie...)"
+                                : "Brak komentarzy"}
+                        </div>
                     </div>
                 )}
             </section>
 
-            {/* Modale (bez zmian) */}
+            {/* Modale */}
             <EditProfileModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
