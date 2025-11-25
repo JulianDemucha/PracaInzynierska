@@ -3,20 +3,23 @@ import { useAuth } from "../context/useAuth.js";
 import { Link } from 'react-router-dom';
 import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
+
+// Komponenty
 import EditProfileModal from '../components/profile/EditProfileModal.jsx';
 import AddSongModal from '../components/song/AddSongModal.jsx';
 import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 import MediaCard from '../components/cards/MediaCard.jsx';
 
+// Serwisy
 import { getUserSongs, getCoverUrl } from '../services/songService.js';
+import { getUserAlbums, getAlbumCoverUrl } from '../services/albumService.js'; // <--- NOWY IMPORT
 
-// --- DANE TESTOWE DLA RESZTY ZAKŁADEK (Póki nie ma backendu dla albumów/playlist) ---
+// --- DANE TESTOWE (Tylko Playlisty i Komentarze zostały jako mock) ---
 const mockOtherContent = {
     playlists: [
         { id: 1, title: "Moja playlista nr 1", year: 2022, coverArtUrl: "https://placehold.co/200x200/1DB954/white?text=Playlista+1", type: "Playlista" },
         { id: 2, title: "Moja playlista nr 2", year: 2021, coverArtUrl: "https://placehold.co/200x200/E73C7E/white?text=Playlista+2", type: "Playlista" },
     ],
-    albums: [],
     comments: [
         { id: 1, text: "Mój komentarz 1..." }
     ]
@@ -30,23 +33,30 @@ function ProfilePage() {
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
 
-    // Stan DANYCH z backendu
+    // --- STANY DANYCH Z BACKENDU ---
     const [userSongs, setUserSongs] = useState([]);
+    const [userAlbums, setUserAlbums] = useState([]); // <--- NOWY STAN
 
-    // 1. POBIERANIE PIOSENEK Z BACKENDU
+    // 1. POBIERANIE DANYCH (PIOSENKI I ALBUMY)
     useEffect(() => {
-        const fetchMySongs = async () => {
+        const fetchData = async () => {
             if (currentUser?.id) {
                 try {
-                    const data = await getUserSongs(currentUser.id);
-                    setUserSongs(data);
+                    // Pobierz piosenki
+                    const songsData = await getUserSongs(currentUser.id);
+                    setUserSongs(songsData);
+
+                    // Pobierz albumy (NOWE)
+                    const albumsData = await getUserAlbums(currentUser.id);
+                    setUserAlbums(albumsData);
+
                 } catch (error) {
-                    console.error("Błąd pobierania utworów użytkownika:", error);
+                    console.error("Błąd pobierania danych profilu:", error);
                 }
             }
         };
 
-        fetchMySongs();
+        fetchData();
     }, [currentUser]);
 
     if (loading && !currentUser) {
@@ -72,7 +82,6 @@ function ProfilePage() {
                         <h1 className="profile-username">{currentUser?.username || 'Nazwa Użytkownika'}</h1>
                     </div>
                     <p className="profile-bio">
-                        {/* Tu można w przyszłości wyświetlać bio z bazy */}
                         Dołączył: {new Date().getFullYear()}
                     </p>
                 </div>
@@ -128,20 +137,23 @@ function ProfilePage() {
                         </div>
                     </div>
                 )}
-
-                {/* --- Pokaż "Albumy" (MOCK) --- */}
+                {/* --- Sekcja Albumy w ProfilePage.jsx --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
                         <h2>Albumy</h2>
                         <div className="media-grid">
-                            {mockOtherContent.albums.length > 0 ? (
-                                mockOtherContent.albums.map(album => (
+                            {userAlbums.length > 0 ? (
+                                userAlbums.map(album => (
                                     <MediaCard
                                         key={album.id}
+                                        // TUTAJ JEST KLUCZ DO NAWIGACJI:
                                         linkTo={`/album/${album.id}`}
-                                        imageUrl={album.coverArtUrl}
+
+                                        // Tymczasowo domyślny obrazek, skoro nie ruszamy backendu
+                                        imageUrl={defaultAvatar}
+
                                         title={album.title}
-                                        subtitle={`${album.year} • Album`}
+                                        subtitle={`${new Date(album.createdAt).getFullYear()} • Album`}
                                     />
                                 ))
                             ) : (
@@ -193,7 +205,10 @@ function ProfilePage() {
             />
             <CreateAlbumModal
                 isOpen={isCreateAlbumModalOpen}
-                onClose={() => setIsCreateAlbumModalOpen(false)}
+                onClose={() => {
+                    setIsCreateAlbumModalOpen(false);
+                    window.location.reload();
+                }}
             />
         </div>
     );
