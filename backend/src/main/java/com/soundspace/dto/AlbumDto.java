@@ -9,16 +9,21 @@ public record AlbumDto(
         String title,
         String description,
         Long authorId,
+        String authorName,
         boolean publiclyVisible,
         String createdAt
 ) {
 
     public static AlbumDto toDto(Album album) {
+
+        String nameToShow = album.getAuthor().getLogin();
+
         return new AlbumDto(
                 album.getId(),
                 album.getTitle(),
                 album.getDescription(),
                 album.getAuthor().getId(),
+                nameToShow,
                 album.getPubliclyVisible(),
                 album.getCreatedAt().toString()
         );
