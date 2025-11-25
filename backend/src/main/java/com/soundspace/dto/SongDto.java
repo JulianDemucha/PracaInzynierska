@@ -17,25 +17,22 @@ public record SongDto(
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,
-        String coverStorageKey //poki co zostawiam bo jakby byl globalny endpoint do odczytu obrazow to sie przyda w odpowiedzi
-){
+        Long storageKeyId
+) {
 
     public static SongDto toDto(Song song) {
         Album album = song.getAlbum();
-        Long albumId = album == null ? null : album.getId();
-
-        String usernameToShow = song.getAuthor().getLogin();
 
         return new SongDto(
                 song.getId(),
                 song.getTitle(),
                 song.getAuthor().getId(),
-                usernameToShow,
-                albumId,
-                song.getGenres().stream().map(Genre::toString).toList(),
-                song.getPubliclyVisible(),
+                song.getAuthor().getLogin(),
+                album == null ? null : album.getId(),
+                song.getGenres() == null ? List.of() : song.getGenres().stream().map(Genre::toString).toList(),
+                song.getPubliclyVisible() != null && song.getPubliclyVisible(),
                 song.getCreatedAt().toString(),
-                song.getCoverStorageKey()
+                song.getCoverStorageKey().getId()
         );
     }
 

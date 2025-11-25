@@ -4,9 +4,11 @@ import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
+import com.soundspace.entity.StorageKey;
 import com.soundspace.enums.Genre;
 import com.soundspace.exception.SongUploadException;
 import com.soundspace.repository.SongRepository;
+import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.dto.request.SongUploadRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +33,16 @@ public class SongUploadService {
 
     private final StorageService storage;
     private final SongRepository songRepository;
+    private final StorageKeyRepository storageKeyRepository;
     private final Tika tika;
     private final ImageService imageService;
-
-    private static final int MAX_BYTES = 100 * 1024 * 1024; // 100MB
-    private static final String SONGS_TARGET_DIRECTORY = "songs/audio"; // ze np /data/songs jak tu
-    private static final String COVERS_TARGET_DIRECTORY = "songs/covers";
-    private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tyllko .m4a
-    private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
     private final AlbumService albumService;
 
+    private static final int MAX_BYTES = 100 * 1024 * 1024; // 100MB
+    private static final String SONGS_TARGET_DIRECTORY = "songs/audio";
+    private static final String COVERS_TARGET_DIRECTORY = "songs/covers";
+    private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tylko .m4a
+    private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
 
     @Transactional
     public SongDto upload(SongUploadRequest request, AppUser appUser) {
@@ -48,9 +50,13 @@ public class SongUploadService {
         MultipartFile coverFile = request.getCoverFile();
 
         Path tmpAudioPath = null;
-        Path tmpCoverPath;
+        Path tmpCoverPath = null;
+
         String audioStorageKey;
         String coverStorageKey;
+
+        StorageKey audioStorageKeyEntity;
+        StorageKey coverStorageKeyEntity;
 
         try {
             // walidacja audio i zapis do temp file
@@ -62,43 +68,73 @@ public class SongUploadService {
             audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), TARGET_AUDIO_EXTENSION, SONGS_TARGET_DIRECTORY);
             log.info("Zapisano plik: audioStorageKey={}", audioStorageKey);
 
+            // StorageKey dla audio
+            audioStorageKeyEntity = new StorageKey();
+            audioStorageKeyEntity.setKey(audioStorageKey);
+            audioStorageKeyEntity.setMimeType(audioFileMimeType);
+            audioStorageKeyEntity.setSizeBytes(audioFileSize);
+            audioStorageKeyEntity = storageKeyRepository.save(audioStorageKeyEntity);
+
             // resize i convert cover image i zapis do temp file
             tmpCoverPath = processCoverAndSaveToTemp(coverFile);
             String coverFileMimeType = tika.detect(tmpCoverPath.toFile());
             long coverFileSize = Files.size(tmpCoverPath);
 
-
-            // docelowy zapis cover
+            // docelowy zapis cove
             coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
             log.info("Zapisano plik: coverStorageKey={}", coverStorageKey);
+
+            // StorageKey dla cover
+            coverStorageKeyEntity = new StorageKey();
+            coverStorageKeyEntity.setKey(coverStorageKey);
+            coverStorageKeyEntity.setMimeType(coverFileMimeType);
+            coverStorageKeyEntity.setSizeBytes(coverFileSize);
+            coverStorageKeyEntity = storageKeyRepository.save(coverStorageKeyEntity);
 
             Song s = validateAndBuildSong(
                     request,
                     appUser,
-                    audioStorageKey,
-                    coverStorageKey,
-                    audioFileSize,
-                    coverFileSize,
-                    audioFileMimeType,
-                    coverFileMimeType
+                    audioStorageKeyEntity,
+                    coverStorageKeyEntity
             );
 
             try {
-
-                return SongDto.toDto(songRepository.save(s));
-
+                Song saved = songRepository.save(s);
+                return SongDto.toDto(saved);
             } catch (Exception e) {
+                /// cleanup: usuwanie plików ze storage i rekordy storage_keys - jesli zapisywanie sie nie powiodlo
+
+                log.error("Błąd w trakcie zapisu piosenki do bazy danych", e);
+                try {
+                    if (audioStorageKey != null) storage.delete(audioStorageKey);
+
+                } catch (Exception ex) {
+                    log.warn("Błąd usuwania pliku audio po nieudanym zapisie piosenki", ex);
+                }
 
                 try {
-                    storage.delete(audioStorageKey);
-                    storage.delete(coverStorageKey);
-                } catch (Exception e1) {
-                    log.warn("Błąd w trakcie usuwania pliku", e1);
+                    if (coverStorageKey != null) storage.delete(coverStorageKey);
+
+                } catch (Exception ex) {
+                    log.warn("Błąd usuwania pliku cover po nieudanym zapisie piosenki", ex);
                 }
-                log.error("Błąd w trakcie zapisu piosenki do bazy danych", e);
+
+                try {
+                    storageKeyRepository.delete(audioStorageKeyEntity);
+
+                } catch (Exception ex) {
+                    log.warn("Błąd usuwania rekordu storageKey audio po nieudanym zapisie piosenki", ex);
+                }
+
+                try {
+                    storageKeyRepository.delete(coverStorageKeyEntity);
+
+                } catch (Exception ex) {
+                    log.warn("Błąd usuwania rekordu storageKey cover po nieudanym zapisie piosenki", ex);
+                }
+
                 throw e;
             }
-
 
         } catch (IOException e) {
             log.error("Błąd I/O podczas uploadu pliku", e);
@@ -107,15 +143,22 @@ public class SongUploadService {
         } finally {
             try {
                 if (tmpAudioPath != null) Files.deleteIfExists(tmpAudioPath);
+
             } catch (IOException e) {
-                log.warn("Nie udało się usunąć pliku tymczasowego", e);
+                log.warn("Nie udało się usunąć pliku tymczasowego audio", e);
+            }
+
+            try {
+                if (tmpCoverPath != null) Files.deleteIfExists(tmpCoverPath);
+
+            } catch (IOException e) {
+                log.warn("Nie udało się usunąć pliku tymczasowego cover", e);
             }
         }
     }
 
-    private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser, String audioStorageKey,
-                                      String coverStorageKey, long audioSizeBytes, long coverSizeBytes,
-                                      String audioFileMimeType, String coverFileMimeType)
+    private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser,
+                                      StorageKey audioStorageKeyEntity, StorageKey coverStorageKeyEntity)
             throws IllegalArgumentException {
 
         String title = request.getTitle();
@@ -139,12 +182,8 @@ public class SongUploadService {
         s.setAuthor(appUser);
         s.setGenres(validatedGenreList);
         s.setAlbum(albumService.findById(request.getAlbumId()).orElse(null));
-        s.setAudioStorageKey(audioStorageKey);
-        s.setCoverStorageKey(coverStorageKey);
-        s.setAudioFileMimeType(audioFileMimeType);
-        s.setCoverFileMimeType(coverFileMimeType);
-        s.setAudioSizeBytes(audioSizeBytes);
-        s.setCoverSizeBytes(coverSizeBytes);
+        s.setAudioStorageKey(audioStorageKeyEntity);
+        s.setCoverStorageKey(coverStorageKeyEntity);
         s.setPubliclyVisible(request.getPubliclyVisible());
         s.setCreatedAt(Instant.now());
         return s;
@@ -183,12 +222,9 @@ public class SongUploadService {
                 (detected.contains("mp4") || detected.contains("m4a") ||
                         detected.equalsIgnoreCase("audio/mp4")); // tylko .m4a
 
-
         if (!okDetected) {
             throw new IllegalArgumentException("Niespójna zawartość pliku");
         }
         return detected;
     }
-
-
 }

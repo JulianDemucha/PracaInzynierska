@@ -20,11 +20,11 @@ public class Song {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(name="title", nullable = false)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private AppUser author;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,23 +38,13 @@ public class Song {
     @Column(name = "genre", nullable = false)
     private List<Genre> genres = new ArrayList<>();
 
-    @Column(name = "audio_storage_key")
-    private String audioStorageKey;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "audio_storage_key_id", nullable = false)
+    private StorageKey audioStorageKey;
 
-    @Column(name = "cover_storage_key")
-    private String coverStorageKey;
-
-    @Column(name = "audio_size_bytes")
-    private long audioSizeBytes;
-
-    @Column(name= "cover_size_bytes")
-    private long coverSizeBytes;
-
-    @Column(name = "audio_file_mime_type")
-    private String audioFileMimeType;
-
-    @Column(name = "cover_file_mime_type")
-    private String coverFileMimeType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cover_storage_key_id", nullable = false)
+    private StorageKey coverStorageKey;
 
     @Column(name = "publicly_visible", nullable = false)
     private Boolean publiclyVisible;

@@ -2,6 +2,7 @@ package com.soundspace.controller;
 import com.soundspace.dto.SongDto;
 import com.soundspace.entity.Song;
 import com.soundspace.dto.request.SongUploadRequest;
+import com.soundspace.entity.StorageKey;
 import com.soundspace.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -83,8 +84,9 @@ public class SongController {
     public ResponseEntity<Resource> getCoverImageBySongId(@PathVariable Long id) {
         Song song = songCoreService.getSongById(id);
 
-        Resource resource = imageService.loadImageResource(song.getCoverStorageKey());
-        String contentType = song.getCoverFileMimeType();
+        StorageKey coverStorageKey = song.getCoverStorageKey();
+        Resource resource = imageService.loadImageResource(coverStorageKey.getKey());
+        String contentType = coverStorageKey.getMimeType();
 
         MediaType mediaType;
         try {
