@@ -216,9 +216,12 @@ function CreateAlbumModal({isOpen, onClose}) {
 
     const handleFinish = () => {
         if (addedSongsCount === 0) {
-            if(!window.confirm("Nie dodałeś żadnych piosenek. Czy na pewno chcesz zakończyć?")) return;
+            setShowValidation(true);
+            setErrorMessage("Album musi zawierać przynajmniej jedną piosenkę! Dodaj utwór, aby zakończyć.");
+            return;
         }
         onClose();
+        window.location.reload()
     };
 
     return (
