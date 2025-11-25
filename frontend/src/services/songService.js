@@ -25,3 +25,8 @@ export const deleteSong = async (songId) => {
     const response = await api.delete(`/songs/${songId}`);
     return response.data;
 };
+
+export const getSongsByGenre = async (genreName) => {
+    const response = await api.get(`/songs/genre/${genreName}`);
+    return response.data;
+};

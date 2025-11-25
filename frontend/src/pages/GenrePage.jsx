@@ -1,63 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './GenrePage.css';
 import MediaCard from '../components/cards/MediaCard.jsx';
+import { getSongsByGenre, getCoverUrl } from '../services/songService';
 
 // Limit elementów wyświetlanych w stanie zwiniętym
 const MAX_ITEMS_PER_SECTION = 7;
-
-// --- BAZA DANYCH  ---
-const mockAllMedia = [
-    { id: "p1", type: "playlist", title: "Hity Pop 2024", subtitle: "Najlepsze", genre: ["pop", "dance"], img: "https://placehold.co/300x300/FF007F/white?text=PopHits" },
-    { id: "a1", type: "album", title: "Rock Legends", subtitle: "The Classics", genre: ["rock", "classic_rock", "metal"], img: "https://placehold.co/300x300/000000/white?text=Rock" },
-    { id: "s1", type: "song", title: "Jazz Vibes", subtitle: "Smooth Jazz", genre: ["jazz", "instrumental"], img: "https://placehold.co/300x300/8A2BE2/white?text=Jazz" },
-    { id: "p2", type: "playlist", title: "Hip-Hop Radar", subtitle: "Premiery", genre: ["hip_hop", "trap", "rnb"], img: "https://placehold.co/300x300/FFA500/white?text=HipHop" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "a2", type: "album", title: "Pop Album", subtitle: "Artist X", genre: ["pop"], img: "https://placehold.co/300x300/1DB954/white?text=PopAlb" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s2", type: "song", title: "Electronic Chill", subtitle: "Relax", genre: ["electronic", "pop"], img: "https://placehold.co/300x300/00FFFF/white?text=Electro" },
-    { id: "s3", type: "song", title: "Rock Anthem", subtitle: "Band Y", genre: ["rock"], img: "https://placehold.co/300x300/6A0DAD/white?text=RockSong" },
-];
 
 function GenrePage() {
     const { genreName } = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('wszystko');
 
-    // --- NOWE STANY DO KONTROLI ZWIJANIA/ROZWIJANIA ---
+    // --- STANY DANYCH ---
+    const [genreSongs, setGenreSongs] = useState([]);
+
+    const genreAlbums = [];
+    const genrePlaylists = [];
+
+    // --- STANY UI ---
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // --- STANY DO KONTROLI ZWIJANIA/ROZWIJANIA ---
     const [showAllSongs, setShowAllSongs] = useState(false);
     const [showAllAlbums, setShowAllAlbums] = useState(false);
     const [showAllPlaylists, setShowAllPlaylists] = useState(false);
 
-    const genreContent = mockAllMedia.filter(item => {
-        const itemGenres = Array.isArray(item.genre) ? item.genre : [item.genre];
-        return itemGenres.some(g => g.toLowerCase() === genreName.toLowerCase());
-    });
+    // --- POBIERANIE DANYCH Z API ---
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                // Pobieramy utwory po gatunku
+                const songsData = await getSongsByGenre(genreName);
+                setGenreSongs(songsData);
 
-    const genreSongs = genreContent.filter(item => item.type === 'song');
-    const genreAlbums = genreContent.filter(item => item.type === 'album');
-    const genrePlaylists = genreContent.filter(item => item.type === 'playlist');
+            } catch (err) {
+                console.error("Błąd podczas pobierania muzyki:", err);
+                setError("Nie udało się pobrać danych.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (genreName) {
+            fetchData();
+        }
+    }, [genreName]);
 
     const formattedGenreTitle = genreName.replace('_', ' ').toUpperCase();
 
-    // --- MODAL ---
-    if (genreContent.length === 0) {
+    // Sprawdzamy czy cokolwiek jest w kategoriach
+    const isEmpty = genreSongs.length === 0 && genreAlbums.length === 0 && genrePlaylists.length === 0;
+
+    // --- RENDEROWANIE STANU ŁADOWANIA ---
+    if (loading) {
+        return (
+            <div className="genre-page loading-state">
+                <div style={{ padding: '50px', textAlign: 'center', color: 'white' }}>
+                    <h2>Ładowanie utworów...</h2>
+                </div>
+            </div>
+        );
+    }
+
+    // --- MODAL (PUSTY STAN) ---
+    if (!loading && isEmpty) {
         return (
             <div className="genre-page empty-state">
                 <div className="empty-modal">
@@ -79,7 +89,8 @@ function GenrePage() {
                 </div>
                 <div className="genre-info">
                     <h2>Przeglądaj {formattedGenreTitle}</h2>
-                    <p>Znaleziono: {genreContent.length} pozycji</p>
+                    {/* Sumujemy długości wszystkich tablic */}
+                    <p>Znaleziono: {genreSongs.length + genreAlbums.length + genrePlaylists.length} pozycji</p>
                 </div>
             </header>
 
@@ -95,6 +106,7 @@ function GenrePage() {
             </nav>
 
             <section className="genre-content">
+                {/* --- SEKCJA UTWORÓW --- */}
                 {(activeTab === 'wszystko' || activeTab === 'utwory') && genreSongs.length > 0 && (
                     <div className="content-section">
                         <h2>Utwory</h2>
@@ -103,8 +115,11 @@ function GenrePage() {
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
-                                    subtitle={item.subtitle}
-                                    imageUrl={item.img}
+                                    // Zakładam, że w bazie masz pole 'artist' lub 'author'.
+                                    // Jeśli nie, zmień 'item.artist' na odpowiednie pole.
+                                    subtitle={item.artist || "Nieznany artysta"}
+                                    // Używamy helpera z serwisu do generowania URL okładki
+                                    imageUrl={getCoverUrl(item.id)}
                                     linkTo={`/song/${item.id}`}
                                 />
                             ))}
@@ -121,7 +136,7 @@ function GenrePage() {
                     </div>
                 )}
 
-                {/* --- SEKCJA ALBUMÓW --- */}
+                {/* --- SEKCJA ALBUMÓW (Obecnie pusta, czeka na backend) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && genreAlbums.length > 0 && (
                     <div className="content-section">
                         <h2>Albumy</h2>
@@ -130,8 +145,8 @@ function GenrePage() {
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
-                                    subtitle={item.subtitle}
-                                    imageUrl={item.img}
+                                    subtitle={item.artist}
+                                    imageUrl={item.coverUrl} // Tutaj logika będzie zależeć od endpointu albumów
                                     linkTo={`/album/${item.id}`}
                                 />
                             ))}
@@ -147,7 +162,7 @@ function GenrePage() {
                     </div>
                 )}
 
-                {/* --- SEKCJA PLAYLIST --- */}
+                {/* --- SEKCJA PLAYLIST (Obecnie pusta, czeka na backend) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && genrePlaylists.length > 0 && (
                     <div className="content-section">
                         <h2>Playlisty</h2>
@@ -156,8 +171,8 @@ function GenrePage() {
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
-                                    subtitle={item.subtitle}
-                                    imageUrl={item.img}
+                                    subtitle={item.description || "Playlista"}
+                                    imageUrl={item.coverUrl}
                                     linkTo={`/playlist/${item.id}`}
                                 />
                             ))}
@@ -179,6 +194,7 @@ function GenrePage() {
 
 // Funkcja pomocnicza do generowania koloru
 function stringToColor(str) {
+    if(!str) return '#555';
     let hash = 0;
     for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
     let color = '#';
