@@ -2,6 +2,7 @@ package com.soundspace.repository;
 
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
+import com.soundspace.enums.Genre;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -52,4 +53,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     @Modifying(clearAutomatically = true)
     @Query("update Song s set s.album = null where s.album.id = :albumId")
     void unsetAlbumForAlbumId(@Param("albumId") Long albumId);
+
+    @Query("SELECT s FROM Song s JOIN s.genres g WHERE g = :genre")
+    List<Song> findAllByGenre(@Param("genre") Genre genre);
 }
