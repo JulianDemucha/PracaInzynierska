@@ -64,8 +64,9 @@ public class AlbumController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<AlbumDto>> getUserAlbums(@PathVariable Long userId) {
-        return ResponseEntity.ok(albumService.findAllAlbumsByUserId(userId));
+    public ResponseEntity<List<AlbumDto>> getUserAlbums(@PathVariable Long userId,
+                                                        @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(albumService.findAllAlbumsByUserId(userId, extractUserEmail(userDetails)));
     }
 
     private String extractUserEmail(UserDetails userDetails) {

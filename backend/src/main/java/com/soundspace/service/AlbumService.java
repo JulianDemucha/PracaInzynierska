@@ -10,6 +10,7 @@ import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,15 +45,22 @@ public class AlbumService {
         return AlbumDto.toDto(album);
     }
 
-    public List<AlbumDto> findAllAlbumsByUserId(Long userId) {
-        return albumRepository.findAllByAuthorId(userId)
+    public List<AlbumDto> findAllAlbumsByUserId(Long userId, String userEmail) {
+        if(userEmail == null) throw new UsernameNotFoundException("Brak uprawnień");
+
+        List<AlbumDto> albums = new java.util.ArrayList<>(albumRepository.findAllByAuthorId(userId)
                 .stream()
                 .map(AlbumDto::toDto)
-                .toList();
+                .toList());
+
+        // jeżeli requestujący user nie jest tym samym co user w request'cie - remove niepubliczne utwory
+        if(userId.equals(appUserService.getUserByEmail(userEmail).getId()))
+            albums.removeIf(album -> !album.publiclyVisible());
+
+        return albums;
     }
 
     public AlbumDto createAlbum(CreateAlbumRequest request, String userEmail) {
-
         // jeżeli requestujący user nie jest tym samym co user w request'cie - throw
         if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
                 .equals(request.getAuthorId()))
