@@ -4,6 +4,7 @@ import com.soundspace.entity.Song;
 import com.soundspace.dto.request.SongUploadRequest;
 import com.soundspace.entity.StorageKey;
 import com.soundspace.service.*;
+import com.soundspace.enums.Genre;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -116,6 +117,10 @@ public class SongController {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
         songCoreService.deleteSongById(id, email);
         return ResponseEntity.noContent().build(); //402
+    }
+    @GetMapping("/genre/{genreName}")
+    public ResponseEntity<List<SongDto>> getSongsByGenre(@PathVariable String genreName) {
+        return ResponseEntity.ok(songCoreService.getSongsByGenre(genreName));
     }
 
 }
