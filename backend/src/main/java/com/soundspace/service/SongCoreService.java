@@ -10,6 +10,7 @@ import com.soundspace.exception.*;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
+import com.soundspace.enums.Genre;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -131,6 +132,17 @@ public class SongCoreService {
         } catch (Exception e) {
             log.info("Błąd podczas usuwania pliku/storage: {}", e.getMessage());
             throw new StorageException(e.getMessage());
+        }
+    }
+    public List<SongDto> getSongsByGenre(String genreName) {
+        try {
+            Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
+            return songRepository.findAllByGenre(genre)
+                    .stream()
+                    .map(SongDto::toDto)
+                    .toList();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
         }
     }
 }
