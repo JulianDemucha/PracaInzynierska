@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import './SongPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
-import { getSongById, getCoverUrl } from '../services/songService.js';
+import { useAuth } from '../context/useAuth.js';
+import { getSongById, getCoverUrl, deleteSong } from '../services/songService.js';
 
 import defaultAvatar from '../assets/images/default-avatar.png';
 import defaultCover from '../assets/images/default-avatar.png';
@@ -16,6 +17,7 @@ import likeIcon from '../assets/images/like.png';
 import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
+import binIcon from '../assets/images/bin.png';
 
 function SongPage() {
     const { id } = useParams();
@@ -28,6 +30,12 @@ function SongPage() {
     const [commentSort, setCommentSort] = useState('popular');
     const [visibleComments, setVisibleComments] = useState(10);
     const [commentLikes, setCommentLikes] = useState({});
+
+    const navigate = useNavigate();
+    const { currentUser } = useAuth();
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const {
         currentSong,
@@ -89,6 +97,26 @@ function SongPage() {
             playSong(song);
         }
     };
+
+    const handleDeleteClick = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteSong(song.id);
+            // Po sukcesie wracamy na profil
+            navigate('/profile');
+        } catch (err) {
+            console.error("Błąd usuwania:", err);
+            alert("Nie udało się usunąć utworu.");
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
+
+    const isOwner = currentUser && song && currentUser.id === song.artist.id;
 
     const isFavorite = !!favorites[song?.id];
     const currentRating = ratings[song?.id];
@@ -192,6 +220,11 @@ function SongPage() {
                         <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
                     </button>
                 </div>
+                {isOwner && (
+                    <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
+                        <img src={binIcon} alt="Usuń" />
+                    </button>
+                )}
             </section>
 
             {/* ===== SEKCJA KOMENTARZY (Placeholder, bo backend tego jeszcze nie ma) ===== */}
@@ -225,6 +258,31 @@ function SongPage() {
                     </>
                 )}
             </section>
+
+            {isDeleteModalOpen && (
+                <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
+                    <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Czy na pewno chcesz usunąć ten utwór?</h3>
+                        <p>Tej operacji nie można cofnąć.</p>
+                        <div className="delete-modal-actions">
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                disabled={isDeleting}
+                            >
+                                Anuluj
+                            </button>
+                            <button
+                                className="confirm-delete-btn"
+                                onClick={confirmDelete}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Usuwanie..." : "Usuń bezpowrotnie"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

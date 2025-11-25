@@ -258,3 +258,115 @@
     color: #b3b3b3;
     min-width: 20px;
 }
+
+/* --- Przycisk Usuń (Ikona Kosza) --- */
+.delete-song-button {
+    margin-left: auto; /* Pcha przycisk na sam koniec prawej strony */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px; /* Trochę "oddechu" wokół ikony dla łatwiejszego klikania */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* Okrągłe tło po najechaniu */
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Stylizacja samej ikony wewnątrz przycisku */
+.delete-song-button img {
+    width: 24px; /* Dostosuj rozmiar ikony do swoich potrzeb */
+    height: 24px;
+    display: block;
+    /* Opcjonalnie: jeśli Twoja ikona bin.png jest biała, możesz ją pokolorować na czerwono filtrem CSS (jeśli jest czarna/kolorowa, usuń tę linię) */
+    /* filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%); */
+    opacity: 0.7; /* Lekko przygaszona domyślnie */
+    transition: opacity 0.2s ease;
+}
+
+/* Efekt po najechaniu myszką */
+.delete-song-button:hover {
+    background-color: rgba(255, 68, 68, 0.1); /* Delikatne czerwone tło */
+    transform: scale(1.1); /* Lekkie powiększenie całego przycisku */
+}
+
+.delete-song-button:hover img {
+    opacity: 1; /* Pełna widoczność ikony */
+}
+
+/* Efekt kliknięcia */
+.delete-song-button:active {
+    transform: scale(0.95);
+}
+
+/* --- MODAL POTWIERDZENIA --- */
+.delete-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.delete-modal-content {
+    background-color: #1e1e1e;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #333;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    color: white;
+}
+
+.delete-modal-content h3 {
+    margin-top: 0;
+    color: white;
+}
+
+.delete-modal-content p {
+    color: #aaa;
+    margin-bottom: 2rem;
+}
+
+.delete-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.cancel-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.cancel-btn:hover {
+    background-color: #333;
+}
+
+.confirm-delete-btn {
+    background-color: #ff4444;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.confirm-delete-btn:hover {
+    background-color: #cc0000;
+}
+
+.confirm-delete-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
