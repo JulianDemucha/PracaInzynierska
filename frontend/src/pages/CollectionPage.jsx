@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import './CollectionPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
+import { useAuth } from '../context/useAuth.js';
+import {
+    getAlbumById,
+    getSongsByAlbumId,
+    getAlbumCoverUrl,
+    deleteAlbum
+} from '../services/albumService.js';
+import binIcon from '../assets/images/bin.png';
 
-// SERWISY
-import { getAlbumById, getSongsByAlbumId, getAlbumCoverUrl } from '../services/albumService.js';
-import { getCoverUrl } from '../services/songService.js'; // Helper do okładki piosenki (jeśli potrzebny)
+// import { getCoverUrl } from '../services/songService.js'; // Helper do okładki piosenki (jeśli potrzebny)
 
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';
@@ -22,6 +28,7 @@ import ContextMenu from '../components/common/ContextMenu.jsx';
 function CollectionPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
 
     // --- STANY ---
     const [collection, setCollection] = useState(null); // Dane albumu
@@ -30,6 +37,9 @@ function CollectionPage() {
     const [error, setError] = useState(null);
 
     const [isAlbumFavorite, setIsAlbumFavorite] = useState(false);
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Globalny Player
     const {
@@ -73,6 +83,23 @@ function CollectionPage() {
 
         fetchData();
     }, [id]);
+
+    const handleDeleteClick = () => setIsDeleteModalOpen(true);
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteAlbum(collection.id);
+            navigate('/profile'); // Wracamy na profil po usunięciu
+        } catch (err) {
+            console.error("Błąd usuwania albumu:", err);
+            alert("Nie udało się usunąć albumu.");
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
+
+    const isOwner = currentUser && collection && currentUser.id === collection.authorId;
 
     if (loading) return <div className="collection-page" style={{padding:'20px'}}>Ładowanie albumu...</div>;
     if (error || !collection) return <div className="collection-page" style={{padding:'20px'}}>{error || "Album nie istnieje."}</div>;
@@ -140,6 +167,11 @@ function CollectionPage() {
                 <button className={`song-control-button ${isAlbumFavorite ? 'active' : ''}`} onClick={() => setIsAlbumFavorite(!isAlbumFavorite)}>
                     <img src={isAlbumFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
+                {isOwner && (
+                    <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń album">
+                        <img src={binIcon} alt="Usuń" />
+                    </button>
+                )}
                 <ContextMenu options={albumMenuOptions} />
             </section>
 
@@ -206,6 +238,32 @@ function CollectionPage() {
                     })}
                 </ul>
             </section>
+            {isDeleteModalOpen && (
+                <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
+                    <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Usunąć album "{collection?.title}"?</h3>
+                        <p style={{color: '#ff4444'}}>
+                            Uwaga: Usunięcie albumu spowoduje bezpowrotne usunięcie wszystkich {songs.length} piosenek, które się w nim znajdują!
+                        </p>
+                        <div className="delete-modal-actions">
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                disabled={isDeleting}
+                            >
+                                Anuluj
+                            </button>
+                            <button
+                                className="confirm-delete-btn"
+                                onClick={confirmDelete}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Usuwanie..." : "Usuń wszystko"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
