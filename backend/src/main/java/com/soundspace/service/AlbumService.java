@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,6 +28,13 @@ public class AlbumService {
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
         return albumRepository.findById(id);
+    }
+
+    public List<AlbumDto> getUserAlbums(Long userId) {
+        return albumRepository.findAllByAuthorId(userId)
+                .stream()
+                .map(AlbumDto::toDto)
+                .toList();
     }
 
     public AlbumDto createAlbum(CreateAlbumRequest request) {

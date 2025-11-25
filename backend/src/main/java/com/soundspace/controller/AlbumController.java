@@ -49,5 +49,9 @@ public class AlbumController {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
         return ResponseEntity.ok(songCoreService.getSongsByAlbumId(albumId, email));
     }
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<AlbumDto>> getUserAlbums(@PathVariable Long userId) {
+        return ResponseEntity.ok(albumService.getUserAlbums(userId));
+    }
 
 }
