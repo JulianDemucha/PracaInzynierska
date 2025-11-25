@@ -5,14 +5,6 @@ export function PlayerProvider({ children }) {
     const audioRef = useRef(null);
 
     const [currentSong, setCurrentSong] = useState(null);
-    /** zamien se na to jak dodasz songa jakiegos poki nie mamy zaimplementowanego wyswietlania songow */
-    // const [currentSong, setCurrentSong] = useState({
-    //     id: 1,
-    //     title: "test",
-    //     artist: { id: 1, name: "testartist" },
-    //     coverArtUrl: "/assets/images/bin"
-    // });
-
     const [isPlaying, setIsPlaying] = useState(false);
     const [queue, setQueue] = useState([]);
     const [history, setHistory] = useState([]);
