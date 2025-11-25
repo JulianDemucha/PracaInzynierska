@@ -2,7 +2,7 @@ import React, {useState, useRef, useEffect} from 'react';
 import ReactCrop, {centerCrop, makeAspectCrop} from "react-image-crop";
 import api from "../../context/axiosClient.js";
 import { createAlbum, addSongToAlbum } from '../../services/albumService.js';
-import { useAuth } from '../../context/useAuth.js'; // POTRZEBNE DO AUTHOR_ID
+import { useAuth } from '../../context/useAuth.js';
 import 'react-image-crop/dist/ReactCrop.css';
 import './CreateAlbumModal.css';
 import defaultAvatar from '../../assets/images/default-avatar.png';
@@ -14,10 +14,14 @@ const genres = [
 ];
 
 function CreateAlbumModal({isOpen, onClose}) {
-    const { currentUser } = useAuth(); // Pobieramy usera, bo backend wymaga authorId
+    const { currentUser } = useAuth();
 
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+
+    // --- WALIDACJA ---
+    const [showValidation, setShowValidation] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     // Dane Albumu
     const [albumTitle, setAlbumTitle] = useState("");
@@ -28,7 +32,7 @@ function CreateAlbumModal({isOpen, onClose}) {
     const [imgSrc, setImgSrc] = useState(defaultAvatar);
     const [crop, setCrop] = useState();
     const imgRef = useRef(null);
-    const [albumCoverBlob, setAlbumCoverBlob] = useState(null); // Tu trzymamy okładkę w pamięci
+    const [albumCoverBlob, setAlbumCoverBlob] = useState(null);
 
     // Wynik kroku 1
     const [createdAlbumId, setCreatedAlbumId] = useState(null);
@@ -38,6 +42,7 @@ function CreateAlbumModal({isOpen, onClose}) {
     const [audioFile, setAudioFile] = useState(null);
     const [addedSongsCount, setAddedSongsCount] = useState(0);
 
+    // Resetowanie
     useEffect(() => {
         if (isOpen) {
             setStep(1);
@@ -51,6 +56,10 @@ function CreateAlbumModal({isOpen, onClose}) {
             setSongTitle("");
             setAudioFile(null);
             setAddedSongsCount(0);
+
+            // Reset walidacji
+            setShowValidation(false);
+            setErrorMessage("");
         }
     }, [isOpen]);
 
@@ -60,6 +69,9 @@ function CreateAlbumModal({isOpen, onClose}) {
     const handleFileChange = (e, type) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        // Czyścimy błędy przy interakcji
+        setErrorMessage("");
 
         if (type === 'cover') {
             setImgSrc('');
@@ -71,7 +83,7 @@ function CreateAlbumModal({isOpen, onClose}) {
             reader.readAsDataURL(file);
         } else if (type === 'song') {
             if (!file.name.toLowerCase().endsWith('.m4a')) {
-                alert("Tylko pliki .m4a!");
+                setErrorMessage("Wymagany plik .m4a!");
                 return;
             }
             setAudioFile(file);
@@ -90,16 +102,28 @@ function CreateAlbumModal({isOpen, onClose}) {
     };
 
     const handleGenreClick = (genre) => {
+        if (showValidation) setErrorMessage(""); // Czyść błąd
+
         const isSelected = selectedGenres.includes(genre);
         if (isSelected) setSelectedGenres(prev => prev.filter(g => g !== genre));
         else if (selectedGenres.length < 3) setSelectedGenres(prev => [...prev, genre]);
         else alert("Max 3 gatunki");
     };
 
-    // --- KROK 1: CREATE ALBUM (JSON ONLY) ---
+    // --- KROK 1: TWORZENIE ALBUMU ---
     const handleCreateAlbum = async () => {
-        if (!albumTitle || !imgSrc || !crop || selectedGenres.length === 0) {
-            alert("Uzupełnij nazwę, okładkę i gatunek albumu.");
+        // WALIDACJA KROKU 1
+        const isTitleMissing = !albumTitle.trim();
+        const isCoverMissing = imgSrc === defaultAvatar || !crop;
+        const isGenreMissing = selectedGenres.length === 0;
+
+        if (isTitleMissing || isCoverMissing || isGenreMissing) {
+            setShowValidation(true);
+            if (isGenreMissing && !isTitleMissing && !isCoverMissing) {
+                setErrorMessage("Wybierz przynajmniej jeden gatunek.");
+            } else {
+                setErrorMessage("Uzupełnij wymagane pola (tytuł, okładka, gatunek).");
+            }
             return;
         }
 
@@ -108,79 +132,83 @@ function CreateAlbumModal({isOpen, onClose}) {
             return;
         }
 
+        // Reset błędów przed wysyłką
+        setErrorMessage("");
+        setShowValidation(false);
         setIsLoading(true);
+
         try {
-            // 1. Zapisujemy obrazek w pamięci (Blob) na później
             const blob = await getCroppedImg(imgRef.current, crop);
             setAlbumCoverBlob(blob);
 
-            // 2. Przygotowujemy JSON (zgodny z CreateAlbumRequest w Javie)
             const albumPayload = {
                 title: albumTitle,
-                description: albumTitle, // Opcjonalnie, backend wymaga description? Jeśli nie, można pominąć.
-                authorId: currentUser.id, // Backend w AlbumService tego wymaga!
+                description: albumTitle,
+                authorId: currentUser.id,
                 publiclyVisible: isPublic
             };
 
-            // 3. Wysyłamy JSON
             const albumDto = await createAlbum(albumPayload);
-
-            console.log("Album utworzony (ID):", albumDto.id);
             setCreatedAlbumId(albumDto.id);
-            setStep(2); // Przechodzimy dalej
+            setStep(2);
 
         } catch (error) {
             console.error("Błąd tworzenia albumu:", error);
-            alert("Nie udało się utworzyć albumu (Sprawdź konsolę).");
+            setErrorMessage("Błąd serwera: Nie udało się utworzyć albumu.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    // --- KROK 2: ADD SONG (MULTIPART) ---
+    // --- KROK 2: DODAWANIE PIOSENKI ---
     const handleAddSong = async () => {
-        if (!songTitle || !audioFile) {
-            alert("Wybierz plik audio i tytuł.");
+        // WALIDACJA KROKU 2
+        const isSongTitleMissing = !songTitle.trim();
+        const isAudioMissing = !audioFile;
+
+        if (isSongTitleMissing || isAudioMissing) {
+            setShowValidation(true);
+            setErrorMessage("Wpisz tytuł i wybierz plik audio.");
             return;
         }
 
+        setErrorMessage("");
+        setShowValidation(false);
         setIsLoading(true);
+
         try {
             const formData = new FormData();
             formData.append('audioFile', audioFile);
             formData.append('title', songTitle);
 
-            // DOKLEJAMY OKŁADKĘ ALBUMU DO KAŻDEJ PIOSENKI
             if (albumCoverBlob) {
                 formData.append('coverFile', albumCoverBlob, "cover.jpg");
             }
 
-            // Dziedziczymy ustawienia albumu
             selectedGenres.forEach(g => formData.append('genre', g));
             formData.append('publiclyVisible', isPublic.toString());
-
-            // Opcjonalnie (jeśli backend w SongController to obsługuje w DTO, a jak nie to i tak robimy addSongToAlbum poniżej)
             formData.append('albumId', createdAlbumId);
 
-            // Upload piosenki
             const songRes = await api.post("/songs/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             const songDto = songRes.data;
 
-            // Powiązanie z albumem
             await addSongToAlbum(createdAlbumId, songDto.id);
 
-            // Reset
+            // Reset pól piosenki
             setSongTitle("");
             setAudioFile(null);
-            document.getElementById('song-upload-step2').value = null;
+            const fileInput = document.getElementById('song-upload-step2');
+            if(fileInput) fileInput.value = null;
+
             setAddedSongsCount(prev => prev + 1);
-            alert(`Dodano: ${songDto.title}`);
+            // Nie używamy alertu, tylko małego komunikatu (opcjonalnie)
+            // Ale tu po prostu formularz się wyczyści, co jest znakiem sukcesu
 
         } catch (error) {
             console.error("Błąd piosenki:", error);
-            alert("Nie udało się dodać piosenki.");
+            setErrorMessage("Nie udało się dodać piosenki. Spróbuj ponownie.");
         } finally {
             setIsLoading(false);
         }
@@ -188,7 +216,7 @@ function CreateAlbumModal({isOpen, onClose}) {
 
     const handleFinish = () => {
         if (addedSongsCount === 0) {
-            if(!window.confirm("Nie dodałeś żadnych piosenek. Zakończyć?")) return;
+            if(!window.confirm("Nie dodałeś żadnych piosenek. Czy na pewno chcesz zakończyć?")) return;
         }
         onClose();
     };
@@ -199,19 +227,27 @@ function CreateAlbumModal({isOpen, onClose}) {
                 <button className="close-button" onClick={onClose}>×</button>
 
                 {step === 1 ? (
-                    /* KROK 1: DANE ALBUMU */
+                    /* --- KROK 1: DANE ALBUMU --- */
                     <>
                         <h2>Stwórz Album (1/2)</h2>
                         <div className="edit-form">
                             <label>Nazwa albumu</label>
                             <input
                                 type="text" placeholder="Tytuł"
-                                value={albumTitle} onChange={e => setAlbumTitle(e.target.value)}
+                                value={albumTitle}
+                                onChange={e => {
+                                    setAlbumTitle(e.target.value);
+                                    if(showValidation) setErrorMessage("");
+                                }}
+                                className={showValidation && !albumTitle.trim() ? 'error-border' : ''}
                             />
 
-                            <label>Okładka (Zostanie przypisana do utworów)</label>
+                            <label>Okładka (Będzie wspólna dla utworów)</label>
                             <div className="cover-art-buttons">
-                                <label htmlFor="album-cover" className="file-upload-button">
+                                <label
+                                    htmlFor="album-cover"
+                                    className={`file-upload-button ${showValidation && imgSrc === defaultAvatar ? 'error-border' : ''}`}
+                                >
                                     {imgSrc === defaultAvatar ? 'Wybierz okładkę' : 'Zmień'}
                                 </label>
                                 <input
@@ -228,8 +264,8 @@ function CreateAlbumModal({isOpen, onClose}) {
                                 </div>
                             )}
 
-                            <label>Gatunek (Wspólny dla utworów)</label>
-                            <div className="genre-picker-container">
+                            <label>Gatunek (Będzie wspólny)</label>
+                            <div className={`genre-picker-container ${showValidation && selectedGenres.length === 0 ? 'error-border' : ''}`}>
                                 {genres.map(g => (
                                     <div key={g}
                                          className={`genre-pill ${selectedGenres.includes(g) ? 'selected' : ''}`}
@@ -250,34 +286,47 @@ function CreateAlbumModal({isOpen, onClose}) {
                                 </div>
                             </fieldset>
 
+                            {errorMessage && <div className="validation-message">{errorMessage}</div>}
+
                             <button className="save-button" onClick={handleCreateAlbum} disabled={isLoading}>
-                                {isLoading ? 'Tworzenie...' : 'Dalej: Dodaj piosenki'}
+                                {isLoading ? 'Tworzenie...' : 'Dalej: Dodaj utwory'}
                             </button>
                         </div>
                     </>
                 ) : (
-                    /* KROK 2: PIOSENKI */
+                    /* --- KROK 2: PIOSENKI --- */
                     <>
                         <h2>Dodaj utwory do albumu</h2>
                         <div className="edit-form">
                             <div className="info-text">
-                                Album utworzony! Piosenki automatycznie przejmą okładkę, gatunek i widoczność.
+                                Album utworzony! Teraz dodaj do niego piosenki.<br/>
+                                <small>Okładka, gatunek i widoczność zostaną pobrane z albumu.</small>
                             </div>
 
                             <label>Tytuł utworu</label>
                             <input
                                 type="text" placeholder="Tytuł"
-                                value={songTitle} onChange={e => setSongTitle(e.target.value)}
+                                value={songTitle}
+                                onChange={e => {
+                                    setSongTitle(e.target.value);
+                                    if(showValidation) setErrorMessage("");
+                                }}
+                                className={showValidation && !songTitle.trim() ? 'error-border' : ''}
                             />
 
                             <label>Plik audio (.m4a)</label>
-                            <label htmlFor="song-upload-step2" className="file-upload-button">
+                            <label
+                                htmlFor="song-upload-step2"
+                                className={`file-upload-button ${showValidation && !audioFile ? 'error-border' : ''}`}
+                            >
                                 {audioFile ? audioFile.name : "Wybierz plik"}
                             </label>
                             <input
                                 type="file" id="song-upload-step2" className="file-upload-input"
                                 accept=".m4a" onChange={(e) => handleFileChange(e, 'song')}
                             />
+
+                            {errorMessage && <div className="validation-message">{errorMessage}</div>}
 
                             <div style={{display:'flex', gap:'10px', marginTop:'20px'}}>
                                 <button className="add-song-button-small" onClick={handleAddSong} disabled={isLoading}>
