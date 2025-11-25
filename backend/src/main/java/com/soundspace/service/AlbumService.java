@@ -5,6 +5,7 @@ import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
+import com.soundspace.enums.Genre;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.repository.AlbumRepository;
@@ -131,6 +132,19 @@ public class AlbumService {
 
         songRepository.unsetAlbumForAlbumId(albumId);
         albumRepository.delete(album);
+    }
+
+    public List<AlbumDto> getAlbumsByGenre(String genreName) {
+        try {
+            Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
+
+            return albumRepository.findAllByGenre(genre)
+                    .stream()
+                    .map(AlbumDto::toDto)
+                    .toList();
+        } catch (IllegalArgumentException e) {
+            return List.of();
+        }
     }
 
 }

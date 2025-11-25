@@ -73,5 +73,10 @@ public class AlbumController {
         return (userDetails != null) ? userDetails.getUsername() : null;
     }
 
+    @GetMapping("/genre/{genreName}")
+    public ResponseEntity<List<AlbumDto>> getAlbumsByGenre(@PathVariable String genreName) {
+        return ResponseEntity.ok(albumService.getAlbumsByGenre(genreName));
+    }
+
 
 }

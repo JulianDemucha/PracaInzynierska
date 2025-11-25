@@ -1,6 +1,8 @@
 package com.soundspace.entity;
 
+import com.soundspace.enums.Genre;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,6 +30,13 @@ public class Album {
 
     @Column
     private String title;
+
+    @Size(max = 3)
+    @ElementCollection(targetClass = Genre.class)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "album_genres", joinColumns = @JoinColumn(name = "album_id"))
+    @Column(name = "genre", nullable = false)
+    private List<Genre> genres = new ArrayList<>();
 
     @Column
     private String description;
