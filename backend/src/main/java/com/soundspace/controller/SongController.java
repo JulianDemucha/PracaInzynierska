@@ -1,8 +1,8 @@
 package com.soundspace.controller;
 import com.soundspace.dto.SongDto;
 import com.soundspace.entity.Song;
-import com.soundspace.exception.SongNotFoundException;
 import com.soundspace.dto.request.SongUploadRequest;
+import com.soundspace.entity.StorageKey;
 import com.soundspace.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -82,11 +82,11 @@ public class SongController {
     ///  dzieki temu w jednym endpointcie mozna by bylo pobierac obrazki do wszystkiego
     @GetMapping("/cover/{id}")
     public ResponseEntity<Resource> getCoverImageBySongId(@PathVariable Long id) {
-        Song song = songCoreService.getSongById(id)
-                .orElseThrow(() -> new SongNotFoundException(id));
+        Song song = songCoreService.getSongById(id);
 
-        Resource resource = imageService.loadImageResource(song.getCoverStorageKey());
-        String contentType = song.getCoverFileMimeType();
+        StorageKey coverStorageKey = song.getCoverStorageKey();
+        Resource resource = imageService.loadImageResource(coverStorageKey.getKey());
+        String contentType = coverStorageKey.getMimeType();
 
         MediaType mediaType;
         try {
@@ -109,4 +109,13 @@ public class SongController {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
         return ResponseEntity.ok(songCoreService.getSongsByUserId(id, email));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSongById(@PathVariable Long id,
+                                               @AuthenticationPrincipal UserDetails userDetails) {
+        String email = (userDetails != null) ? userDetails.getUsername() : null;
+        songCoreService.deleteSongById(id, email);
+        return ResponseEntity.noContent().build(); //402
+    }
+
 }

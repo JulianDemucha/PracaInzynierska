@@ -9,11 +9,12 @@ public interface SongProjection {
     Long getId();
     String getTitle();
     Long getAuthorId();
+    String getAuthorUsername();
     Long getAlbumId();
     String getGenresStr();
     boolean getPubliclyVisible();
     Instant getCreatedAt();
-    String getCoverStorageKey();
+    Long getCoverStorageKeyId();
 
     default List<String> getGenres() {
         String raw = getGenresStr();

@@ -1,5 +1,6 @@
 package com.soundspace.dto;
 
+import com.soundspace.entity.AppUser;
 import lombok.Builder;
 
 import java.util.List;
@@ -13,7 +14,21 @@ public record AppUserDto (
         String role,
         String createdAt,
         String authProvider,
-        boolean emailVerified,
+        Boolean emailVerified,
         String bio
 //        List<Long> commentsIds
-){}
+){
+
+    public static AppUserDto toDto(AppUser appUser) {
+        return new AppUserDto(
+                appUser.getId(),
+                appUser.getLogin(),
+                appUser.getEmail(),
+                appUser.getSex().toString(),
+                appUser.getRole().toString(),
+                appUser.getCreatedAt().toString(),
+                appUser.getAuthProvider().toString(),
+                appUser.isEmailVerified(),
+                appUser.getBio());
+    }
+}

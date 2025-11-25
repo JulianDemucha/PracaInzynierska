@@ -178,3 +178,350 @@
     transform: scale(1.03);
     box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
 }
+
+.edit-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.edit-modal-content {
+    background: #0D0D0D;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    color: white;
+    position: relative;
+    width: 100%;
+    max-width: 550px;
+    margin: 2rem 0;
+    border: 1px solid #282828;
+}
+
+/* Przycisk 'X' */
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover { color: white; }
+
+/* Główny formularz */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem; /* Lekko zmniejszone, żeby zmieścić więcej */
+}
+
+/* Etykiety (Label) */
+.edit-form label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #b3b3b3;
+    margin-bottom: 0.2rem;
+    display: block;
+}
+
+/* Inputy */
+.edit-form input[type="text"] {
+    padding: 14px;
+    border-radius: 4px;
+    border: 1px solid #404040;
+    background: #1A1A1A;
+    color: white;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+.edit-form input:focus {
+    outline: none;
+    border-color: #8A2BE2;
+}
+
+/* === Sekcja Awatara  === */
+.cover-art-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.file-upload-input {
+    display: none;
+}
+.file-upload-button {
+    background-color: #1A1A1A;
+    border: 1px solid #404040;
+    color: #b3b3b3;
+    padding: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 1rem;
+    text-align: center;
+    transition: border-color 0.2s ease;
+    flex-grow: 1;
+}
+.file-upload-button:hover {
+    border-color: #8A2BE2;
+    color: white;
+}
+.remove-image-button {
+    background-color: #333;
+    border: 1px solid #c9302c;
+    color: #c9302c;
+    padding: 14px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+.remove-image-button:hover {
+    background-color: #c9302c;
+    color: white;
+}
+
+/* Cropper */
+.cropper-container {
+    width: 250px; /* Nieco większy dla albumu */
+    height: 250px;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #404040;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cropper-container .ReactCrop__image {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* === Sekcja Gatunków (Genre Picker) === */
+.genre-picker-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    max-height: 120px; /* Scroll jeśli dużo */
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Styl paska przewijania dla gatunków */
+.genre-picker-container::-webkit-scrollbar {
+    width: 6px;
+}
+.genre-picker-container::-webkit-scrollbar-thumb {
+    background-color: #404040;
+    border-radius: 3px;
+}
+
+.genre-pill {
+    background-color: #282828;
+    color: #b3b3b3;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #404040;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.genre-pill:hover {
+    background-color: #333;
+    color: white;
+    border-color: #666;
+}
+
+.genre-pill.selected {
+    background-color: #8A2BE2;
+    color: white;
+    border-color: #8A2BE2;
+    box-shadow: 0 0 8px rgba(138, 43, 226, 0.4);
+}
+
+/* === Sekcja Widoczności === */
+.visibility-selection {
+    border: none;
+    border-top: 1px solid #404040;
+    padding: 1rem 0 0 0;
+    margin: 0;
+    display: flex;
+    gap: 1.5rem;
+}
+.visibility-selection legend {
+    padding: 0;
+    margin-left: 0;
+    width: 100%;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #b3b3b3;
+    margin-bottom: 0.5rem;
+}
+.visibility-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.visibility-option label {
+    margin-bottom: 0;
+    color: white;
+    cursor: pointer;
+}
+.visibility-option input[type="radio"] {
+    cursor: pointer;
+    accent-color: #8A2BE2;
+}
+
+/* === KROK 2: Style Specyficzne === */
+
+/* Box informacyjny w kroku 2 */
+.info-text {
+    background-color: #1a1a1a;
+    border-left: 4px solid #8A2BE2;
+    padding: 12px 16px;
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+.info-text strong {
+    color: white;
+    font-weight: bold;
+}
+.info-text small {
+    display: block;
+    margin-top: 4px;
+    color: #888;
+}
+
+/* Przyciski Akcji (Dół formularza) */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: center;
+}
+
+/* Główny przycisk (Dalej / Stwórz) */
+.save-button {
+    background: linear-gradient(to right, #8A2BE2, #6a1b9a);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    text-align: center;
+}
+.save-button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+}
+.save-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Przycisk "+ Dodaj kolejny utwór" (Krok 2) */
+.add-song-button-small {
+    flex: 1;
+    background-color: #8A2BE2; /* Ciemniejszy fiolet */
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.add-song-button-small:hover {
+    background-color: #8f34e3;
+}
+.add-song-button-small:disabled {
+    background-color: #333;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* Przycisk "Zakończ i Wydaj" (Krok 2) */
+.finish-button {
+    flex: 1;
+    background-color: #1DB954; /* Zielony (Spotify green style) */
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.finish-button:hover {
+    background-color: #1ed760;
+}
+.finish-button:disabled {
+    background-color: #333;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* --- WALIDACJA (BŁĘDY) --- */
+
+/* Czerwona ramka */
+.error-border {
+    border: 2px solid #ff4444 !important;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+    border-radius: 4px; /* Dopasowanie do inputów */
+}
+
+/* Specjalne dopasowanie zaokrąglenia dla kontenera gatunków */
+.genre-picker-container.error-border {
+    border-radius: 8px;
+    padding: 5px;
+}
+
+/* Komunikat błędu */
+.validation-message {
+    color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+    border: 1px solid #ff4444;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -1,5 +1,6 @@
 package com.soundspace.dto;
 
+import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import lombok.Builder;
@@ -11,23 +12,27 @@ public record SongDto(
         Long id,
         String title,
         Long authorId,
+        String authorUsername,
         Long albumId,
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,
-        String coverStorageKey //poki co zostawiam bo jakby byl globalny endpoint do odczytu obrazow to sie przyda w odpowiedzi
-){
+        Long storageKeyId
+) {
 
     public static SongDto toDto(Song song) {
+        Album album = song.getAlbum();
+
         return new SongDto(
                 song.getId(),
                 song.getTitle(),
                 song.getAuthor().getId(),
-                song.getAlbum().getId(),
-                song.getGenres().stream().map(Genre::toString).toList(),
-                song.getPubliclyVisible(),
+                song.getAuthor().getLogin(),
+                album == null ? null : album.getId(),
+                song.getGenres() == null ? List.of() : song.getGenres().stream().map(Genre::toString).toList(),
+                song.getPubliclyVisible() != null && song.getPubliclyVisible(),
                 song.getCreatedAt().toString(),
-                song.getCoverStorageKey()
+                song.getCoverStorageKey().getId()
         );
     }
 

@@ -1,7 +1,9 @@
 package com.soundspace.service;
 
+import com.soundspace.entity.StorageKey;
 import com.soundspace.exception.StorageException;
 import com.soundspace.exception.StorageFileNotFoundException;
+import com.soundspace.repository.StorageKeyRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.Resource;
@@ -15,14 +17,16 @@ import java.util.UUID;
 public class StorageService {
 
     private final Path rootPath;
+    private final StorageKeyRepository storageKeyRepository;
 
-    public StorageService(@Value("${app.storage.root:./data/audio}") String rootStr) {
+    public StorageService(@Value("${app.storage.root:./data/audio}") String rootStr, StorageKeyRepository storageKeyRepository) {
         try {
             this.rootPath = Paths.get(rootStr).toAbsolutePath().normalize();
             Files.createDirectories(this.rootPath); // tworzymy root, jak nie istnieje
         } catch (IOException e) {
             throw new StorageException("Nie można zainicjować folderu storage", e);
         }
+        this.storageKeyRepository = storageKeyRepository;
     }
 
     /**
@@ -72,6 +76,13 @@ public class StorageService {
         } catch (IOException e) {
             throw new StorageException("Nie udało się usunąć pliku: " + storageKey, e);
         }
+    }
+
+    public StorageKey getStorageKey(Long storageKeyId) {
+        return storageKeyRepository.findById(storageKeyId).orElseThrow(
+                () -> new StorageFileNotFoundException("Nie znaleziono pliku o storageKeyId: " + storageKeyId)
+        );
+
     }
 
 }

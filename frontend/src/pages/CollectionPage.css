@@ -292,3 +292,79 @@
 .song-list-item:hover .song-context-menu-wrapper .context-menu-trigger img {
     opacity: 1;
 }
+/* Style dla modala i przycisku usuwania (skopiowane z SongPage) */
+.delete-song-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+.delete-song-button:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+}
+.delete-song-button img {
+    width: 24px;
+    height: 24px;
+    opacity: 0.7;
+}
+.delete-song-button:hover img {
+    opacity: 1;
+}
+
+/* Modal */
+.delete-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.delete-modal-content {
+    background-color: #1e1e1e;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #333;
+    max-width: 450px;
+    text-align: center;
+    color: white;
+}
+.delete-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+.confirm-delete-btn {
+    background-color: #ff4444;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.confirm-delete-btn:hover {
+    background-color: #cc0000;
+}
+.cancel-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.cancel-btn:hover {
+    background-color: #333;
+}

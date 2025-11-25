@@ -5,14 +5,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -33,7 +34,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/me", "/api/auth/register"
                                 , "/api/auth/authenticate", "/api/auth/refreshToken").permitAll()
                         .anyRequest().authenticated()
-                ).formLogin(AbstractHttpConfigurer::disable)
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
+                .formLogin(AbstractHttpConfigurer::disable)
                 .authenticationProvider(authenticationProvider)
                 // w przyszlosci po wprowadzeniu oauth2, bedzie do niego oddzielny filterchain
 //                .oauth2Login(AbstractHttpConfigurer::disable)

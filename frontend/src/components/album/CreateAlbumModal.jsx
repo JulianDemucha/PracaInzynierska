@@ -1,103 +1,350 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import ReactCrop, {centerCrop, makeAspectCrop} from "react-image-crop";
+import api from "../../context/axiosClient.js";
+import { createAlbum, addSongToAlbum } from '../../services/albumService.js';
+import { useAuth } from '../../context/useAuth.js';
 import 'react-image-crop/dist/ReactCrop.css';
 import './CreateAlbumModal.css';
 import defaultAvatar from '../../assets/images/default-avatar.png';
 
-function CreateAlbumModal({isOpen, onClose}) {
+const genres = [
+    "POP", "ROCK", "JAZZ", "BLUES", "HIP_HOP", "RNB", "ELECTRONIC",
+    "DANCE", "METAL", "CLASSICAL", "REGGAE", "COUNTRY", "FOLK",
+    "PUNK", "FUNK", "TRAP", "SOUL", "LATIN", "K_POP", "INDIE", "ALTERNATIVE"
+];
 
+function CreateAlbumModal({isOpen, onClose}) {
+    const { currentUser } = useAuth();
+
+    const [step, setStep] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // --- WALIDACJA ---
+    const [showValidation, setShowValidation] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    // Dane Albumu
+    const [albumTitle, setAlbumTitle] = useState("");
+    const [selectedGenres, setSelectedGenres] = useState([]);
+    const [isPublic, setIsPublic] = useState(false);
+
+    // Obrazek
     const [imgSrc, setImgSrc] = useState(defaultAvatar);
     const [crop, setCrop] = useState();
+    const imgRef = useRef(null);
+    const [albumCoverBlob, setAlbumCoverBlob] = useState(null);
 
-    if (!isOpen) {
-        return null;
-    }
+    // Wynik kroku 1
+    const [createdAlbumId, setCreatedAlbumId] = useState(null);
 
-    // --- FUNKCJE DLA OBRAZKA ---
-    const handleFileChange = (e) => {
+    // Dane Piosenki
+    const [songTitle, setSongTitle] = useState("");
+    const [audioFile, setAudioFile] = useState(null);
+    const [addedSongsCount, setAddedSongsCount] = useState(0);
+
+    // Resetowanie
+    useEffect(() => {
+        if (isOpen) {
+            setStep(1);
+            setAlbumTitle("");
+            setSelectedGenres([]);
+            setIsPublic(false);
+            setImgSrc(defaultAvatar);
+            setCrop(undefined);
+            setAlbumCoverBlob(null);
+            setCreatedAlbumId(null);
+            setSongTitle("");
+            setAudioFile(null);
+            setAddedSongsCount(0);
+
+            // Reset walidacji
+            setShowValidation(false);
+            setErrorMessage("");
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    // --- PLIKI ---
+    const handleFileChange = (e, type) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setImgSrc('');
-        const reader = new FileReader();
-        reader.onload = () => {
-            setImgSrc(reader.result.toString() || '');
-            setCrop(centerCrop(
-                makeAspectCrop({unit: '%', width: 90}, 1, 100, 100),
-                100, 100
-            ));
-        };
-        reader.readAsDataURL(file);
+        // Czyścimy błędy przy interakcji
+        setErrorMessage("");
+
+        if (type === 'cover') {
+            setImgSrc('');
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImgSrc(reader.result.toString() || '');
+                setCrop(centerCrop(makeAspectCrop({unit: '%', width: 90}, 1, 100, 100), 100, 100));
+            };
+            reader.readAsDataURL(file);
+        } else if (type === 'song') {
+            if (!file.name.toLowerCase().endsWith('.m4a')) {
+                setErrorMessage("Wymagany plik .m4a!");
+                return;
+            }
+            setAudioFile(file);
+        }
     };
 
-    const removeCoverArt = () => {
-        setImgSrc(defaultAvatar);
-        const input = document.getElementById('album-cover-upload');
-        if (input) input.value = null;
+    const getCroppedImg = (image, crop) => {
+        const canvas = document.createElement('canvas');
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+        canvas.width = crop.width;
+        canvas.height = crop.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, crop.width, crop.height);
+        return new Promise((resolve) => canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.95));
+    };
+
+    const handleGenreClick = (genre) => {
+        if (showValidation) setErrorMessage(""); // Czyść błąd
+
+        const isSelected = selectedGenres.includes(genre);
+        if (isSelected) setSelectedGenres(prev => prev.filter(g => g !== genre));
+        else if (selectedGenres.length < 3) setSelectedGenres(prev => [...prev, genre]);
+        else alert("Max 3 gatunki");
+    };
+
+    // --- KROK 1: TWORZENIE ALBUMU ---
+    const handleCreateAlbum = async () => {
+        // WALIDACJA KROKU 1
+        const isTitleMissing = !albumTitle.trim();
+        const isCoverMissing = imgSrc === defaultAvatar || !crop;
+        const isGenreMissing = selectedGenres.length === 0;
+
+        if (isTitleMissing || isCoverMissing || isGenreMissing) {
+            setShowValidation(true);
+            if (isGenreMissing && !isTitleMissing && !isCoverMissing) {
+                setErrorMessage("Wybierz przynajmniej jeden gatunek.");
+            } else {
+                setErrorMessage("Uzupełnij wymagane pola (tytuł, okładka, gatunek).");
+            }
+            return;
+        }
+
+        if (!currentUser) {
+            alert("Błąd: Brak zalogowanego użytkownika.");
+            return;
+        }
+
+        // Reset błędów przed wysyłką
+        setErrorMessage("");
+        setShowValidation(false);
+        setIsLoading(true);
+
+        try {
+            const blob = await getCroppedImg(imgRef.current, crop);
+            setAlbumCoverBlob(blob);
+
+            const albumPayload = {
+                title: albumTitle,
+                description: albumTitle,
+                authorId: currentUser.id,
+                publiclyVisible: isPublic
+            };
+
+            const albumDto = await createAlbum(albumPayload);
+            setCreatedAlbumId(albumDto.id);
+            setStep(2);
+
+        } catch (error) {
+            console.error("Błąd tworzenia albumu:", error);
+            setErrorMessage("Błąd serwera: Nie udało się utworzyć albumu.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // --- KROK 2: DODAWANIE PIOSENKI ---
+    const handleAddSong = async () => {
+        // WALIDACJA KROKU 2
+        const isSongTitleMissing = !songTitle.trim();
+        const isAudioMissing = !audioFile;
+
+        if (isSongTitleMissing || isAudioMissing) {
+            setShowValidation(true);
+            setErrorMessage("Wpisz tytuł i wybierz plik audio.");
+            return;
+        }
+
+        setErrorMessage("");
+        setShowValidation(false);
+        setIsLoading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('audioFile', audioFile);
+            formData.append('title', songTitle);
+
+            if (albumCoverBlob) {
+                formData.append('coverFile', albumCoverBlob, "cover.jpg");
+            }
+
+            selectedGenres.forEach(g => formData.append('genre', g));
+            formData.append('publiclyVisible', isPublic.toString());
+            formData.append('albumId', createdAlbumId);
+
+            const songRes = await api.post("/songs/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            const songDto = songRes.data;
+
+            await addSongToAlbum(createdAlbumId, songDto.id);
+
+            // Reset pól piosenki
+            setSongTitle("");
+            setAudioFile(null);
+            const fileInput = document.getElementById('song-upload-step2');
+            if(fileInput) fileInput.value = null;
+
+            setAddedSongsCount(prev => prev + 1);
+            // Nie używamy alertu, tylko małego komunikatu (opcjonalnie)
+            // Ale tu po prostu formularz się wyczyści, co jest znakiem sukcesu
+
+        } catch (error) {
+            console.error("Błąd piosenki:", error);
+            setErrorMessage("Nie udało się dodać piosenki. Spróbuj ponownie.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleFinish = () => {
+        if (addedSongsCount === 0) {
+            setShowValidation(true);
+            setErrorMessage("Album musi zawierać przynajmniej jedną piosenkę! Dodaj utwór, aby zakończyć.");
+            return;
+        }
+        onClose();
+        window.location.reload()
     };
 
     return (
         <div className="edit-modal-backdrop" onClick={onClose}>
             <div className="edit-modal-content" onClick={(e) => e.stopPropagation()}>
                 <button className="close-button" onClick={onClose}>×</button>
-                <h2>Wydaj nowy album</h2>
 
-                <div className="edit-form">
-                    {/* Nazwa albumu */}
-                    <label htmlFor="album-name">Nazwa albumu</label>
-                    <input type="text" id="album-name" placeholder="Nazwa albumu" />
-                    {/* Okładka albumu */}
-                    <label>Okładka albumu</label>
-                    <div className="cover-art-buttons">
-                        <label htmlFor="album-cover-upload" className="file-upload-button">
-                            Zmień okładkę
-                        </label>
-                        <input
-                            type="file"
-                            id="album-cover-upload"
-                            className="file-upload-input"
-                            accept="image/png, image/jpeg"
-                            onChange={handleFileChange}
-                        />
-                        <button
-                            type="button"
-                            className="remove-image-button"
-                            onClick={removeCoverArt}
-                        >
-                            Usuń
-                        </button>
-                    </div>
+                {step === 1 ? (
+                    /* --- KROK 1: DANE ALBUMU --- */
+                    <>
+                        <h2>Stwórz Album (1/2)</h2>
+                        <div className="edit-form">
+                            <label>Nazwa albumu</label>
+                            <input
+                                type="text" placeholder="Tytuł"
+                                value={albumTitle}
+                                onChange={e => {
+                                    setAlbumTitle(e.target.value);
+                                    if(showValidation) setErrorMessage("");
+                                }}
+                                className={showValidation && !albumTitle.trim() ? 'error-border' : ''}
+                            />
 
-                    {/* Cropper */}
-                    <div className="cropper-container">
-                        <ReactCrop
-                            crop={crop}
-                            onChange={c => setCrop(c)}
-                            aspect={1}
-                        >
-                            <img src={imgSrc} alt="Podgląd okładki"/>
-                        </ReactCrop>
-                    </div>
-                    <fieldset className="visibility-selection">
-                        <legend>Widoczność</legend>
-                        <div className="visibility-option">
-                            <input type="radio" id="public" name="visibility" value="PUBLIC" defaultChecked />
-                            <label htmlFor="public">Publiczny</label>
+                            <label>Okładka (Będzie wspólna dla utworów)</label>
+                            <div className="cover-art-buttons">
+                                <label
+                                    htmlFor="album-cover"
+                                    className={`file-upload-button ${showValidation && imgSrc === defaultAvatar ? 'error-border' : ''}`}
+                                >
+                                    {imgSrc === defaultAvatar ? 'Wybierz okładkę' : 'Zmień'}
+                                </label>
+                                <input
+                                    type="file" id="album-cover" className="file-upload-input"
+                                    accept="image/*" onChange={(e) => handleFileChange(e, 'cover')}
+                                />
+                            </div>
+
+                            {imgSrc !== defaultAvatar && (
+                                <div className="cropper-container">
+                                    <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1}>
+                                        <img ref={imgRef} src={imgSrc} alt="Cover" />
+                                    </ReactCrop>
+                                </div>
+                            )}
+
+                            <label>Gatunek (Będzie wspólny)</label>
+                            <div className={`genre-picker-container ${showValidation && selectedGenres.length === 0 ? 'error-border' : ''}`}>
+                                {genres.map(g => (
+                                    <div key={g}
+                                         className={`genre-pill ${selectedGenres.includes(g) ? 'selected' : ''}`}
+                                         onClick={() => handleGenreClick(g)}
+                                    >{g}</div>
+                                ))}
+                            </div>
+
+                            <fieldset className="visibility-selection">
+                                <legend>Widoczność</legend>
+                                <div className="visibility-option">
+                                    <input type="radio" id="pub" checked={isPublic} onChange={() => setIsPublic(true)} />
+                                    <label htmlFor="pub">Publiczny</label>
+                                </div>
+                                <div className="visibility-option">
+                                    <input type="radio" id="priv" checked={!isPublic} onChange={() => setIsPublic(false)} />
+                                    <label htmlFor="priv">Prywatny</label>
+                                </div>
+                            </fieldset>
+
+                            {errorMessage && <div className="validation-message">{errorMessage}</div>}
+
+                            <button className="save-button" onClick={handleCreateAlbum} disabled={isLoading}>
+                                {isLoading ? 'Tworzenie...' : 'Dalej: Dodaj utwory'}
+                            </button>
                         </div>
-                        <div className="visibility-option">
-                            <input type="radio" id="private" name="visibility" value="PRIVATE" />
-                            <label htmlFor="private">Prywatny</label>
-                        </div>
-                    </fieldset>
+                    </>
+                ) : (
+                    /* --- KROK 2: PIOSENKI --- */
+                    <>
+                        <h2>Dodaj utwory do albumu</h2>
+                        <div className="edit-form">
+                            <div className="info-text">
+                                Album utworzony! Teraz dodaj do niego piosenki.<br/>
+                                <small>Okładka, gatunek i widoczność zostaną pobrane z albumu.</small>
+                            </div>
 
-                    {/*  SEKCJA PRZYCISKÓW "Stwórz" */}
-                    <div className="form-actions">
-                        <button className="save-button">Stwórz album</button>
-                    </div>
-                </div>
+                            <label>Tytuł utworu</label>
+                            <input
+                                type="text" placeholder="Tytuł"
+                                value={songTitle}
+                                onChange={e => {
+                                    setSongTitle(e.target.value);
+                                    if(showValidation) setErrorMessage("");
+                                }}
+                                className={showValidation && !songTitle.trim() ? 'error-border' : ''}
+                            />
+
+                            <label>Plik audio (.m4a)</label>
+                            <label
+                                htmlFor="song-upload-step2"
+                                className={`file-upload-button ${showValidation && !audioFile ? 'error-border' : ''}`}
+                            >
+                                {audioFile ? audioFile.name : "Wybierz plik"}
+                            </label>
+                            <input
+                                type="file" id="song-upload-step2" className="file-upload-input"
+                                accept=".m4a" onChange={(e) => handleFileChange(e, 'song')}
+                            />
+
+                            {errorMessage && <div className="validation-message">{errorMessage}</div>}
+
+                            <div style={{display:'flex', gap:'10px', marginTop:'20px'}}>
+                                <button className="add-song-button-small" onClick={handleAddSong} disabled={isLoading}>
+                                    {isLoading ? 'Dodawanie...' : '+ Dodaj utwór'}
+                                </button>
+                                <button className="finish-button" onClick={handleFinish} disabled={isLoading}>
+                                    Zakończ ({addedSongsCount})
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
-
-    )
+    );
 }
+
 export default CreateAlbumModal;

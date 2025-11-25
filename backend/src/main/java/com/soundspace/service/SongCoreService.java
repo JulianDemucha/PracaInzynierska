@@ -3,47 +3,37 @@ package com.soundspace.service;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Album;
+import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
-import com.soundspace.exception.AccessDeniedException;
-import com.soundspace.exception.AlbumNotFoundException;
-import com.soundspace.exception.SongNotFoundException;
+import com.soundspace.entity.StorageKey;
+import com.soundspace.exception.*;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
+import com.soundspace.repository.StorageKeyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SongCoreService {
     public final SongRepository songRepository;
     private final AppUserService appUserService;
     private final AlbumRepository albumRepository;
+    private final StorageService storageService;
+    private final StorageKeyRepository storageKeyRepository;
 
-    public Optional<Song> getSongById(Long id) {
-        return songRepository.findById(id);
+    public Song getSongById(Long id) {
+        return songRepository.findById(id).orElseThrow(
+                () -> new SongNotFoundException(id)
+        );
     }
 
     public SongDto getSongDtoById(Long id) {
-        Song song = songRepository.findById(id).orElseThrow(
-                () -> new SongNotFoundException(id)
-        );
-
-        Long albumId = song.getAlbum() == null ? null : song.getAlbum().getId();
-
-        return SongDto.builder()
-                .id(song.getId())
-                .authorId(song.getAuthor().getId())
-                .title(song.getTitle())
-                .albumId(albumId)
-                .createdAt(song.getCreatedAt().toString())
-                .coverStorageKey(song.getCoverStorageKey())
-                .genres(song.getGenres().stream().map(Enum::toString).collect(Collectors.toList()))
-                .publiclyVisible(song.getPubliclyVisible())
-                .build();
+        return SongDto.toDto(getSongById(id));
     }
 
     public List<SongDto> getSongsByUserId(Long songsAuthorId, String userEmail) {
@@ -74,15 +64,73 @@ public class SongCoreService {
     }
 
     private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
-        return new java.util.ArrayList<>(songsProjection.stream().map(p -> SongDto.builder()
-                .id(p.getId())
-                .authorId(p.getAuthorId())
-                .title(p.getTitle())
-                .albumId(p.getAlbumId())
-                .genres(p.getGenres())
-                .publiclyVisible(p.getPubliclyVisible())
-                .createdAt(p.getCreatedAt().toString())
-                .coverStorageKey(p.getCoverStorageKey())
-                .build()).toList());
+        return songsProjection.stream()
+                .map(p -> new SongDto(
+                        p.getId(),
+                        p.getTitle(),
+                        p.getAuthorId(),
+                        p.getAuthorUsername(),
+                        p.getAlbumId(),
+                        p.getGenres(),
+                        p.getPubliclyVisible(),
+                        p.getCreatedAt() == null ? null : p.getCreatedAt().toString(),
+                        p.getCoverStorageKeyId() // Long
+                ))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+
+
+    @Transactional
+    public void deleteSongById(Long id, String requesterEmail) {
+        Song song = getSongById(id);
+        AppUser requester = appUserService.getUserByEmail(requesterEmail);
+
+        if (requester == null || !song.getAuthor().getId().equals(requester.getId())) {
+            throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki");
+        }
+
+        // storageService moze rzucic IOException lub StorageException
+        try {
+            StorageKey audioKey = song.getAudioStorageKey();
+            if (audioKey != null && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
+                try {
+                    storageService.delete(audioKey.getKey());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć pliku audio z storage: {}", audioKey.getKey(), ex);
+                    throw ex;
+                }
+
+                try {
+                    storageKeyRepository.deleteById(audioKey.getId());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć rekordu storage_keys (audio) id={}: {}", audioKey.getId(), ex.getMessage());
+                }
+            }
+
+            StorageKey coverKey = song.getCoverStorageKey();
+            if (coverKey != null && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+                try {
+                    storageService.delete(coverKey.getKey());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć pliku cover z storage: {}", coverKey.getKey(), ex);
+                    throw ex;
+                }
+                try {
+                    storageKeyRepository.deleteById(coverKey.getId());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć rekordu storage_keys (cover) id={}: {}", coverKey.getId(), ex.getMessage());
+                }
+            }
+
+            songRepository.delete(song);
+
+        } catch (AccessDeniedException e) {
+            log.info(e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.info("Błąd podczas usuwania pliku/storage: {}", e.getMessage());
+            throw new StorageException(e.getMessage());
+        }
     }
 }

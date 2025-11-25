@@ -1,6 +1,7 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.ProcessedImage;
+import com.soundspace.entity.StorageKey;
 import com.soundspace.exception.ImageProcessingException;
 import com.soundspace.exception.InvalidStorageLocationException;
 import lombok.RequiredArgsConstructor;
@@ -113,11 +114,22 @@ public class ImageService {
         return FORMAT_TO_MIME.get(format.toLowerCase());
     }
 
+    // do usuniecia wraz z endpointem /songs/covers/{storageKey}
     public Resource loadImageResource(String storageKey) {
         Resource resource = storageService.loadAsResource(storageKey);
         if(storageKey == null) throw new IllegalArgumentException("Klucz (storageKey) nie może być null");
         if ( !(storageKey.startsWith("songs/covers") || storageKey.startsWith("users/avatars")) )
             throw new InvalidStorageLocationException(storageKey);
+        return resource;
+    }
+
+    public Resource loadImageResource(StorageKey storageKey) {
+        Resource resource = storageService.loadAsResource(storageKey.getKey());
+
+        String storageKeyStr = storageKey.getKey();
+        if ( !(storageKeyStr.startsWith("songs/covers") || storageKeyStr.startsWith("users/avatars")) )
+            throw new InvalidStorageLocationException(storageKeyStr);
+
         return resource;
     }
 }
