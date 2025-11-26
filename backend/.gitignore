@@ -5,7 +5,8 @@ target/
 !**/src/test/**/target/
 
 .env
-data/
+data/*
+!data/placeholders/
 
 
 ### STS ###
