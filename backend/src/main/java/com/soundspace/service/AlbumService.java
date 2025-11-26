@@ -39,15 +39,15 @@ public class AlbumService {
         // jeżeli requestujący user nie jest autorem albumu i album jest prywatny - throw
         if (userEmail == null || (
                 !album.getPubliclyVisible()
-                &&
-                !appUserService.getUserByEmail(userEmail).getId().equals(album.getAuthor().getId())
+                        &&
+                        !appUserService.getUserByEmail(userEmail).getId().equals(album.getAuthor().getId())
         )) throw new AccessDeniedException("Brak uprawnień");
 
         return AlbumDto.toDto(album);
     }
 
     public List<AlbumDto> findAllAlbumsByUserId(Long userId, String userEmail) {
-        if(userEmail == null) throw new UsernameNotFoundException("Brak uprawnień");
+        if (userEmail == null) throw new UsernameNotFoundException("Brak uprawnień");
 
         List<AlbumDto> albums = new java.util.ArrayList<>(albumRepository.findAllByAuthorId(userId)
                 .stream()
@@ -55,10 +55,20 @@ public class AlbumService {
                 .toList());
 
         // jeżeli requestujący user nie jest tym samym co user w request'cie - remove niepubliczne utwory
-        if(userId.equals(appUserService.getUserByEmail(userEmail).getId()))
+        if (userId.equals(appUserService.getUserByEmail(userEmail).getId()))
             albums.removeIf(album -> !album.publiclyVisible());
 
         return albums;
+    }
+
+    public List<AlbumDto> getPublicAlbumsByGenre(String genreName) {
+        Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
+
+        return albumRepository.findAllByGenre(genre)
+                .stream()
+                .filter(Album::getPubliclyVisible)
+                .map(AlbumDto::toDto)
+                .toList();
     }
 
     public AlbumDto createAlbum(CreateAlbumRequest request, String userEmail) {
@@ -126,25 +136,12 @@ public class AlbumService {
                 () -> new AlbumNotFoundException(albumId));
 
         // jeżeli requestujący user nie jest autorem albumu - throw
-        if (userEmail == null ||  !appUserService.getUserByEmail(userEmail).getId()
+        if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
                 .equals(album.getAuthor().getId()))
             throw new AccessDeniedException("Brak uprawnień");
 
         songRepository.unsetAlbumForAlbumId(albumId);
         albumRepository.delete(album);
-    }
-
-    public List<AlbumDto> getAlbumsByGenre(String genreName) {
-        try {
-            Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
-
-            return albumRepository.findAllByGenre(genre)
-                    .stream()
-                    .map(AlbumDto::toDto)
-                    .toList();
-        } catch (IllegalArgumentException e) {
-            return List.of();
-        }
     }
 
 }

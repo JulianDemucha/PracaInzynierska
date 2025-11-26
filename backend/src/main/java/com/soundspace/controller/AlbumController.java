@@ -69,13 +69,13 @@ public class AlbumController {
         return ResponseEntity.ok(albumService.findAllAlbumsByUserId(userId, extractUserEmail(userDetails)));
     }
 
-    private String extractUserEmail(UserDetails userDetails) {
-        return (userDetails != null) ? userDetails.getUsername() : null;
+    @GetMapping("/genre/{genreName}")
+    public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName) {
+        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName))  ;
     }
 
-    @GetMapping("/genre/{genreName}")
-    public ResponseEntity<List<AlbumDto>> getAlbumsByGenre(@PathVariable String genreName) {
-        return ResponseEntity.ok(albumService.getAlbumsByGenre(genreName));
+    private String extractUserEmail(UserDetails userDetails) {
+        return (userDetails != null) ? userDetails.getUsername() : null;
     }
 
 
