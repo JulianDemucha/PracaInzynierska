@@ -99,7 +99,7 @@ public class SongUploadService {
 
     /// upload piosenki z perspektywy albumu
     @Transactional
-    public SongDto upload(AlbumSongUploadRequest request, AppUser appUser) {
+    public SongDto upload(Long albumId, AlbumSongUploadRequest request, AppUser appUser) {
         MultipartFile audioFile = request.getAudioFile();
 
         Path tmpAudioPath = null;
@@ -113,6 +113,7 @@ public class SongUploadService {
             audioStorageKeyEntity = validateAndSaveAudioFile(tmpAudioPath, appUser);
 
             Song s = validateAndBuildSong(
+                    albumId,
                     request,
                     appUser,
                     audioStorageKeyEntity
@@ -168,10 +169,10 @@ public class SongUploadService {
         return s;
     }
 
-    private Song validateAndBuildSong(AlbumSongUploadRequest request, AppUser appUser,
+    private Song validateAndBuildSong(Long albumId, AlbumSongUploadRequest request, AppUser appUser,
                                       StorageKey audioStorageKeyEntity)
             throws IllegalArgumentException {
-        Album album = albumService.findById(request.getAlbumId()).orElseThrow();
+        Album album = albumService.findById(albumId).orElseThrow();
 
         String title = request.getTitle();
 

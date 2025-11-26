@@ -50,9 +50,9 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """, nativeQuery = true)
     List<SongProjection> findSongsByAlbumNative(@Param("albumId") Long albumId);
 
-    @Modifying(clearAutomatically = true)
-    @Query("update Song s set s.album = null where s.album.id = :albumId")
-    void unsetAlbumForAlbumId(@Param("albumId") Long albumId);
+    @Modifying
+    @Query("DELETE FROM Song s WHERE s.album.id = :albumId")
+    void deleteSongsByAlbumId(@Param("albumId") Long albumId);
 
     @Query("SELECT s FROM Song s JOIN s.genres g WHERE g = :genre")
     List<Song> findAllByGenre(@Param("genre") Genre genre);

@@ -1,7 +1,5 @@
 package com.soundspace.service;
-
 import com.soundspace.dto.AlbumDto;
-import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
@@ -96,38 +94,13 @@ public class AlbumService {
     }
 
     @Transactional
-    public SongDto addSongToAlbum(Long albumId, Long songId, String userEmail) {
+    public void removeAlbumSong(Long albumId, Long songId, String userEmail) {
         Album album = findById(albumId).orElseThrow(
                 () -> new AlbumNotFoundException(albumId));
 
-        // jeżeli requestujący user nie jest autorem albumu - throw
-        if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
-                .equals(album.getAuthor().getId()))
-            throw new AccessDeniedException("Brak uprawnień");
-
         Song song = songCoreService.getSongById(songId);
-
-        album.getSongs().add(song);
-        song.setAlbum(album);
-
-        return SongDto.toDto(songRepository.save(song));
-    }
-
-    @Transactional
-    public void removeSongFromAlbum(Long albumId, Long songId, String userEmail) {
-        Album album = findById(albumId).orElseThrow(
-                () -> new AlbumNotFoundException(albumId));
-
-        // jeżeli requestujący user nie jest autorem albumu - throw
-        if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
-                .equals(album.getAuthor().getId()))
-            throw new AccessDeniedException("Brak uprawnień");
-
-        Song song = songCoreService.getSongById(songId);
-
-        song.setAlbum(null);
-        album.getSongs().remove(song);
-        songRepository.save(song);
+        songCoreService.deleteSongById(songId, userEmail);
+        album.getSongs().remove(song); // nie potrzeba save, bo lista nie ma odniesienia w tabeli album
     }
 
     @Transactional
@@ -140,7 +113,7 @@ public class AlbumService {
                 .equals(album.getAuthor().getId()))
             throw new AccessDeniedException("Brak uprawnień");
 
-        songRepository.unsetAlbumForAlbumId(albumId);
+        songRepository.deleteSongsByAlbumId(albumId);
         albumRepository.delete(album);
     }
 

@@ -2,9 +2,13 @@ package com.soundspace.controller;
 
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.SongDto;
+import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.service.AlbumService;
+import com.soundspace.service.AppUserService;
 import com.soundspace.service.SongCoreService;
+import com.soundspace.service.SongUploadService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +25,8 @@ public class AlbumController {
 
     private final AlbumService albumService;
     private final SongCoreService songCoreService;
+    private final SongUploadService songUploadService;
+    private final AppUserService appUserService;
 
     @PostMapping("/create")
     public ResponseEntity<AlbumDto> createAlbum(@RequestBody CreateAlbumRequest createAlbumRequest,
@@ -43,17 +49,19 @@ public class AlbumController {
         return ResponseEntity.ok(albumService.getAlbumById(albumId, extractUserEmail(userDetails)));
     }
 
-    @PostMapping("/{albumId}/add/{songId}")
-    public ResponseEntity<SongDto> addSongToAlbum(@PathVariable Long albumId, @PathVariable Long songId,
+    @PostMapping("/{albumId}/add/")
+    public ResponseEntity<SongDto> addSongToAlbum(@PathVariable Long albumId,
+                                                  @ModelAttribute @Valid AlbumSongUploadRequest request,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(albumService.addSongToAlbum(albumId, songId, extractUserEmail(userDetails)));
+        return ResponseEntity.ok(songUploadService.upload(albumId, request,
+                appUserService.getUserByEmail(extractUserEmail(userDetails))));
     }
 
     @DeleteMapping("/{albumId}/remove/{songId}")
     public ResponseEntity<Void> removeSongFromAlbum(@PathVariable Long albumId,
                                                     @PathVariable Long songId,
                                                     @AuthenticationPrincipal UserDetails userDetails) {
-        albumService.removeSongFromAlbum(albumId, songId, extractUserEmail(userDetails));
+        albumService.removeAlbumSong(albumId, songId, extractUserEmail(userDetails));
         return ResponseEntity.noContent().build();
     }
 
@@ -71,7 +79,7 @@ public class AlbumController {
 
     @GetMapping("/genre/{genreName}")
     public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName) {
-        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName))  ;
+        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName));
     }
 
     private String extractUserEmail(UserDetails userDetails) {
