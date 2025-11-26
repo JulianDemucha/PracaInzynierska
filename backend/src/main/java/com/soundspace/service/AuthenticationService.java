@@ -6,6 +6,7 @@ import com.soundspace.enums.UserAuthProvider;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.dto.request.AuthenticationRequest;
 import com.soundspace.dto.request.RegisterRequest;
+import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,27 +29,30 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final StorageKeyRepository storageKeyRepository;
+
+    private static final Long DEFAULT_AVATAR_IMAGE_KEY_ID = 6767L;
 
     public String register(RegisterRequest request) {
         // todo: zrobic customowe wyjatki i od razu je w klasach handlowac na 409 albo w global handlerze
         if (repo.existsByEmail(request.getEmail()) || repo.existsByLogin(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Email or username already exists");
+                    "Email lub login jest zajęty");
         }
 
         if (request.getPassword().length() < 8 || request.getPassword().length() > 24) {
             throw new ResponseStatusException((HttpStatus.CONFLICT),
-                    "Password must be between 8 and 24 characters");
+                    "Hasło musi mieć pomiędzy 8 a 24 znaki");
         }
 
         if (request.getUsername().length() < 3 || request.getUsername().length() > 16) {
             throw new ResponseStatusException((HttpStatus.CONFLICT),
-                    "Username must be between 3 and 16 characters");
+                    "Login musi mieć pomiędzy 3 a 16 znaków");
         }
 
         if (!request.getEmail().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
             throw new ResponseStatusException((HttpStatus.CONFLICT),
-                    "Invalid email format");
+                    "Niewłaściwy email");
         }
 
         var user = AppUser.builder()
@@ -62,11 +66,12 @@ public class AuthenticationService {
                 .emailVerified(false)
                 .bio("")
                 .comments(new ArrayList<>())
+                // poki co defaultowy avatar
+                .avatarStorageKey(storageKeyRepository.findById(DEFAULT_AVATAR_IMAGE_KEY_ID).orElseThrow())
                 .build();
 
         repo.save(user);
-        log.info("Registered new user: {}", user.getUsername());
-
+        log.info("Zarejestrowano nowego użytkownika: id={}, username={}", user.getId(), user.getLogin());
         return jwtService.generateJwtToken(user);
     }
 
@@ -84,7 +89,7 @@ public class AuthenticationService {
             repo.save(user);
             return jwtService.generateJwtToken(user);
         }catch (AuthenticationException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password", e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nieprawidłowy emnail lub hasło", e);
         }
     }
 

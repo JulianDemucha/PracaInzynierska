@@ -1,6 +1,7 @@
 package com.soundspace.dto.request;
 
 import lombok.Builder;
+import org.springframework.web.multipart.MultipartFile;
 
 @Builder
 public record AppUserUpdateRequest (
@@ -8,5 +9,6 @@ public record AppUserUpdateRequest (
         String email,
         String password,
         String bio,
-        String sex
+        String sex,
+        MultipartFile avatarImageFile
 ){}

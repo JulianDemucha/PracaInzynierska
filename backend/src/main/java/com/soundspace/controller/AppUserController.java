@@ -3,7 +3,7 @@ package com.soundspace.controller;
 import com.soundspace.dto.AppUserDto;
 import com.soundspace.dto.request.AppUserUpdateRequest;
 import com.soundspace.service.AppUserService;
-import lombok.NonNull;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,9 +28,9 @@ public class AppUserController {
         return ResponseEntity.ok(appUserService.getAuthenticatedUser(authentication));
     }
 
-    @PutMapping("/me")
+    @PostMapping(value = "/me", consumes = "multipart/form-data")
     public ResponseEntity<?> updatePlayer(
-            @NonNull @RequestBody AppUserUpdateRequest playerUpdateRequest,
+            @ModelAttribute @Valid AppUserUpdateRequest playerUpdateRequest,
             Authentication authentication
     ) {
         //updatePlayer returns ResponseEntity<?>

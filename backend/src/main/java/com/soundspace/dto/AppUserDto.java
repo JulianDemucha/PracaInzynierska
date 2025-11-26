@@ -15,7 +15,8 @@ public record AppUserDto (
         String createdAt,
         String authProvider,
         Boolean emailVerified,
-        String bio
+        String bio,
+        Long avatarStorageKeyId
 //        List<Long> commentsIds
 ){
 
@@ -29,6 +30,8 @@ public record AppUserDto (
                 appUser.getCreatedAt().toString(),
                 appUser.getAuthProvider().toString(),
                 appUser.isEmailVerified(),
-                appUser.getBio());
+                appUser.getBio(),
+                appUser.getAvatarStorageKey().getId()
+                );
     }
 }
