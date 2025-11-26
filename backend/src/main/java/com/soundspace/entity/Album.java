@@ -25,7 +25,6 @@ public class Album {
     private Long id;
 
     @OneToMany(mappedBy = "album", fetch = FetchType.LAZY)
-//    @OrderBy("positionInAlbum ASC") // dodac positionInAlbum do Song
     private List<Song> songs = new ArrayList<>();
 
     @Column
