@@ -50,4 +50,8 @@ public class Album {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cover_storage_key_id", nullable = false)
+    private StorageKey coverStorageKey;
+
 }

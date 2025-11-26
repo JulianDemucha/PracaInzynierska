@@ -11,7 +11,8 @@ public record AlbumDto(
         Long authorId,
         String authorName,
         boolean publiclyVisible,
-        String createdAt
+        String createdAt,
+        Long coverStorageKeyId
 ) {
 
     public static AlbumDto toDto(Album album) {
@@ -25,7 +26,8 @@ public record AlbumDto(
                 album.getAuthor().getId(),
                 nameToShow,
                 album.getPubliclyVisible(),
-                album.getCreatedAt().toString()
+                album.getCreatedAt().toString(),
+                album.getCoverStorageKey().getId()
         );
     }
 }
