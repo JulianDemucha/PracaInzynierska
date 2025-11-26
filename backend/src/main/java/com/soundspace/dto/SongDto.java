@@ -17,7 +17,7 @@ public record SongDto(
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,
-        Long storageKeyId
+        Long coverStorageKeyId
 ) {
 
     public static SongDto toDto(Song song) {

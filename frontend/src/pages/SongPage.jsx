@@ -172,7 +172,7 @@ function SongPage() {
                     <h1>{song.title}</h1>
                     <div className="song-meta">
                         {/* Uwaga: Backend SongDto nie ma ID autora, tylko login. Link może nie działać idealnie, dopóki nie zmienisz routingu na /artist/username */}
-                        <Link to={`/artist/${song.artist.name}`} className="song-artist">{song.artist.name}</Link>
+                        <Link to={`/artist/${song.artist.id}`} className="song-artist">{song.artist.name}</Link>
                         <span>•</span>
                         <span className="song-duration">{song.duration}</span>
                         <span>•</span>

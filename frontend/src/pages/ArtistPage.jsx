@@ -1,74 +1,115 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {useParams} from 'react-router-dom';
 import './ArtistPage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
 import verifiedBadge from '../assets/images/verified.png';
 import MediaCard from '../components/cards/MediaCard.jsx';
+import api from '../context/axiosClient.js';
+import {getImageUrl} from '../services/imageService.js';
 
-// --- 2.  DANE TESTOWE ---
-const mockArtistDatabase = {
-    "123": {
-        id: 123,
-        username: "Artysta Testowy",
-        avatar: defaultAvatar,
-        bio: "Witaj na moim profilu. Sprawdź moje najnowsze utwory i albumy. Już wkrótce nowa płyta!",
-        isVerified: true,
-        songs: [
-            { id: 1, title: "Mój publiczny utwór nr 1", visibility: "PUBLIC", year: 2024, coverArtUrl: "https://placehold.co/200x200/8A2BE2/white?text=Utwor+1" },
-            { id: 2, title: "Mój prywatny utwór (nie widać)", visibility: "PUBLIC", year: 2024, coverArtUrl: null },
-            { id: 3, title: "Kolejny hit (publiczny)", visibility: "PUBLIC", year: 2023, coverArtUrl: "https://placehold.co/200x200/53346D/white?text=Hit" },
-        ],
-        playlists: [
-            { id: 1, title: "Playlista publiczna", visibility: "PUBLIC", year: 2022, coverArtUrl: "https://placehold.co/200x200/1DB954/white?text=Playlista" },
-            { id: 2, title: "Playlista prywatna (nie widać)", visibility: "PRIVATE", year: 2021, coverArtUrl: null },
-        ],
-        albums: [
-            { id: 1, title: "Nazwa Albumu", visibility: "PUBLIC", year: 2025, coverArtUrl: "https://placehold.co/200x200/E73C7E/white?text=Album" },
-        ]
-    }
+/** nie wiem jak to mialo dzialac skoro tu byl mock wszystkiego zlepionego razem i request lecial na aktualnego usera po /api/users/me*/
+
+// ew zmienic na pelna date, ale niby na spotify tez jest sam rok
+const getYearFromDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).getFullYear();
 };
 
-function ArtistPage() {
-    const { id } = useParams();
-    const artist = mockArtistDatabase[id] || null;
-    const [activeTab, setActiveTab] = useState('wszystko');
 
-    if (!artist) {
-        return <div className="profile-page">Ładowanie profilu artysty... lub artysta nie istnieje.</div>;
+function ArtistPage() {
+    const {id} = useParams()
+    const [artist, setArtist] = useState(null);
+    const [songs, setSongs] = useState(null);
+    const [albums, setAlbums] = useState(null);
+    const [playlists, setPlaylists] = useState([]); //narazie pusta lista poki playlist nie mamy
+
+    const [activeTab, setActiveTab] = useState('wszystko');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // user
+                const userPromise = api.get(`/users/${id}`);
+
+                // piosenki
+                const songsPromise = api.get(`/songs/user/${id}`);
+
+                // albumy
+                const albumsPromise = api.get(`/albums/user/${id}`);
+
+                // todo dodac fetchowanie playlist jak juz beda
+
+                const [userRes, songsRes, albumsRes] =
+                    await Promise.all([userPromise, songsPromise, albumsPromise]);
+
+                setArtist(userRes.data);
+                setSongs(songsRes.data);
+                setAlbums(albumsRes.data);
+            } catch (err) {
+                console.error("Błąd pobierania danych profilu:", err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchData();
+        }
+    }, [id]);
+
+    if(loading){
+        return <div className="profile-page">Ładowanie profilu...</div>;
     }
 
-    const publicSongs = artist.songs.filter(song => song.visibility === 'PUBLIC');
-    const publicPlaylists = artist.playlists.filter(playlist => playlist.visibility === 'PUBLIC');
-    const publicAlbums = artist.albums.filter(album => album.visibility === 'PUBLIC');
+    if (error || !artist) {
+        return <div className="profile-page">Nie znaleziono artysty.</div>; // lub wystąpił błąd idk
+    }
 
     return (
         <div className="profile-page">
 
             <header className="profile-header">
                 <img
-                    src={artist.avatar}
+                    src={defaultAvatar} //todo jak na backendzie bedzie obsluga image dla usera to oblsluzyc tu
                     alt="Awatar artysty"
                     className="profile-avatar"
                 />
                 <div className="profile-info">
                     <div className="profile-username-wrapper">
                         <h1 className="profile-username">{artist.username}</h1>
-                        {artist.isVerified && (
-                            <img src={verifiedBadge} alt="Zweryfikowany" className="verified-badge" title="Zweryfikowany artysta" />
+                        {artist.emailVerified && (
+                            <img src={verifiedBadge} alt="Zweryfikowany" className="verified-badge"
+                                 title="Zweryfikowany artysta"/>
                         )}
                     </div>
                     <p className="profile-bio">
-                        {artist.bio}
+                        {artist.bio || "brak bio"}
                     </p>
+                    {/** jak skoro mamy to createdat to mozna cos takiego dodac*/}
+                    {/*<p className="tu sobie ogarnij ja nie znam sie na geografii nie bede ci w cssie grzebal">*/}
+                    {/*    Dołączył: {getYearFromDate(artist.createdAt)}*/}
+                    {/*</p>*/}
                 </div>
             </header>
 
             <nav className="profile-nav">
                 <ul className="profile-tabs">
-                    <li onClick={() => setActiveTab('wszystko')} className={activeTab === 'wszystko' ? 'active' : ''}>Wszystko</li>
-                    <li onClick={() => setActiveTab('wlasne')} className={activeTab === 'wlasne' ? 'active' : ''}>Własne utwory</li>
-                    <li onClick={() => setActiveTab('albumy')} className={activeTab === 'albumy' ? 'active' : ''}>Albumy</li>
-                    <li onClick={() => setActiveTab('playlisty')} className={activeTab === 'playlisty' ? 'active' : ''}>Playlisty</li>
+                    <li onClick={() => setActiveTab('wszystko')}
+                        className={activeTab === 'wszystko' ? 'active' : ''}>Wszystko
+                    </li>
+                    <li onClick={() => setActiveTab('wlasne')} className={activeTab === 'wlasne' ? 'active' : ''}>Własne
+                        utwory
+                    </li>
+                    <li onClick={() => setActiveTab('albumy')}
+                        className={activeTab === 'albumy' ? 'active' : ''}>Albumy
+                    </li>
+                    <li onClick={() => setActiveTab('playlisty')}
+                        className={activeTab === 'playlisty' ? 'active' : ''}>Playlisty
+                    </li>
                 </ul>
                 <div className="profile-nav-actions-placeholder"></div>
             </nav>
@@ -76,19 +117,19 @@ function ArtistPage() {
             {/* ===== 3. ZAWARTOŚĆ (ZMIENIONA NA SIATKĘ KART) ===== */}
             <section className="profile-content">
 
-                {/* --- Pokaż "Własne utwory" --- */}
+                {/* --- Pokaż "utworey" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
                     <div className="content-section">
-                        <h2>Własne utwory</h2>
+                        <h2>Utwory</h2>
                         <div className="media-grid">
-                            {publicSongs.length > 0 ? (
-                                publicSongs.map(song => (
+                            {songs.length > 0 ? (
+                                songs.map(song => (
                                     <MediaCard
                                         key={song.id}
                                         linkTo={`/song/${song.id}`}
-                                        imageUrl={song.coverArtUrl || defaultAvatar}
+                                        imageUrl={getImageUrl(song.coverStorageKeyId) || defaultAvatar}
                                         title={song.title}
-                                        subtitle={`${song.year} • Utwór`}
+                                        subtitle={`${getYearFromDate(song.createdAt)} • ${song.genres?.[0] || 'Utwór'}`}
                                     />
                                 ))
                             ) : (
@@ -103,15 +144,14 @@ function ArtistPage() {
                     <div className="content-section">
                         <h2>Albumy</h2>
                         <div className="media-grid">
-                            {publicAlbums.length > 0 ? (
-                                publicAlbums.map(album => (
+                            {albums.length > 0 ? (
+                                albums.map(album => (
                                     <MediaCard
                                         key={album.id}
                                         linkTo={`/album/${album.id}`}
-                                        imageUrl={album.coverArtUrl || defaultAvatar}
+                                        imageUrl={defaultAvatar} // todo jak na backendzie bedzie obsluga image dla albumu to obsluzyc tu
                                         title={album.title}
-                                        subtitle={`${album.year} • Album`}
-                                    />
+                                        subtitle={`${getYearFromDate(album.createdAt)} • Album`} />
                                 ))
                             ) : (
                                 <p className="empty-tab-message">Ten artysta nie udostępnił jeszcze żadnych albumów.</p>
@@ -125,18 +165,18 @@ function ArtistPage() {
                     <div className="content-section">
                         <h2>Playlisty</h2>
                         <div className="media-grid">
-                            {publicPlaylists.length > 0 ? (
-                                publicPlaylists.map(playlist => (
+                            {playlists.length > 0 ? (
+                                playlists.map(playlist => (
                                     <MediaCard
                                         key={playlist.id}
                                         linkTo={`/playlist/${playlist.id}`}
-                                        imageUrl={playlist.coverArtUrl || defaultAvatar}
+                                        imageUrl={defaultAvatar}
                                         title={playlist.title}
                                         subtitle={`• Playlista`}
                                     />
                                 ))
                             ) : (
-                                <p className="empty-tab-message">Ten artysta nie udostępnił jeszcze żadnych playlist.</p>
+                                <p className="empty-tab-message">Brak playlist.</p>
                             )}
                         </div>
                     </div>
