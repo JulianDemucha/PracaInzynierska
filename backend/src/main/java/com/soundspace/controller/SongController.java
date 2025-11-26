@@ -77,10 +77,7 @@ public class SongController {
         }
     }
 
-    //// todo?
-    //// moze zrobic encje storageKey i nowy controller z endpointem ktory wydaje pliki po id_storagekey? rootpath to i tak /data wiec
-    /// poki bylaby walidacja na to ze nikt nie probuje pobrac nic z prywatnego songa, ani samego pliku audio, powinno byc git
-    ///  dzieki temu w jednym endpointcie mozna by bylo pobierac obrazki do wszystkiego
+    // todo do usuniecia, uzywac /api/images/{storageKeyId}
     @GetMapping("/cover/{id}")
     public ResponseEntity<Resource> getCoverImageBySongId(@PathVariable Long id) {
         Song song = songCoreService.getSongById(id);
