@@ -2,6 +2,8 @@ package com.soundspace.service;
 
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
+import com.soundspace.dto.request.AlbumSongUploadRequest;
+import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.entity.StorageKey;
@@ -44,6 +46,7 @@ public class SongUploadService {
     private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tylko .m4a
     private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
 
+    /// typowy upload piosenki poza albumem (singiel)
     @Transactional
     public SongDto upload(SongUploadRequest request, AppUser appUser) {
         MultipartFile audioFile = request.getAudioFile();
@@ -51,45 +54,21 @@ public class SongUploadService {
 
         Path tmpAudioPath = null;
         Path tmpCoverPath = null;
-
-        String audioStorageKey;
-        String coverStorageKey;
-
-        StorageKey audioStorageKeyEntity;
-        StorageKey coverStorageKeyEntity;
+        StorageKey audioStorageKeyEntity = null;
+        StorageKey coverStorageKeyEntity = null;
 
         try {
             // walidacja audio i zapis do temp file
             tmpAudioPath = validateSongFileAndSaveToTemp(audioFile);
-            String audioFileMimeType = detectAndValidateAudioFileMimeType(tmpAudioPath);
-            long audioFileSize = Files.size(tmpAudioPath);
 
             // docelowy zapis audio
-            audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), TARGET_AUDIO_EXTENSION, SONGS_TARGET_DIRECTORY);
-            log.info("Zapisano plik: audioStorageKey={}", audioStorageKey);
+            audioStorageKeyEntity = validateAndSaveAudioFile(tmpAudioPath, appUser);
 
-            // StorageKey dla audio
-            audioStorageKeyEntity = new StorageKey();
-            audioStorageKeyEntity.setKey(audioStorageKey);
-            audioStorageKeyEntity.setMimeType(audioFileMimeType);
-            audioStorageKeyEntity.setSizeBytes(audioFileSize);
-            audioStorageKeyEntity = storageKeyRepository.save(audioStorageKeyEntity);
-
-            // resize i convert cover image i zapis do temp file
+            // resize i convert okladki i zapis do temp file
             tmpCoverPath = processCoverAndSaveToTemp(coverFile);
-            String coverFileMimeType = tika.detect(tmpCoverPath.toFile());
-            long coverFileSize = Files.size(tmpCoverPath);
 
-            // docelowy zapis cove
-            coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
-            log.info("Zapisano plik: coverStorageKey={}", coverStorageKey);
-
-            // StorageKey dla cover
-            coverStorageKeyEntity = new StorageKey();
-            coverStorageKeyEntity.setKey(coverStorageKey);
-            coverStorageKeyEntity.setMimeType(coverFileMimeType);
-            coverStorageKeyEntity.setSizeBytes(coverFileSize);
-            coverStorageKeyEntity = storageKeyRepository.save(coverStorageKeyEntity);
+            // docelowy zapis okladki
+            coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, appUser);
 
             Song s = validateAndBuildSong(
                     request,
@@ -98,62 +77,62 @@ public class SongUploadService {
                     coverStorageKeyEntity
             );
 
-            try {
-                Song saved = songRepository.save(s);
-                return SongDto.toDto(saved);
-            } catch (Exception e) {
-                /// cleanup: usuwanie plików ze storage i rekordy storage_keys - jesli zapisywanie sie nie powiodlo
+            Song saved = songRepository.save(s);
+            return SongDto.toDto(saved);
 
-                log.error("Błąd w trakcie zapisu piosenki do bazy danych", e);
-                try {
-                    if (audioStorageKey != null) storage.delete(audioStorageKey);
-
-                } catch (Exception ex) {
-                    log.warn("Błąd usuwania pliku audio po nieudanym zapisie piosenki", ex);
-                }
-
-                try {
-                    if (coverStorageKey != null) storage.delete(coverStorageKey);
-
-                } catch (Exception ex) {
-                    log.warn("Błąd usuwania pliku cover po nieudanym zapisie piosenki", ex);
-                }
-
-                try {
-                    storageKeyRepository.delete(audioStorageKeyEntity);
-
-                } catch (Exception ex) {
-                    log.warn("Błąd usuwania rekordu storageKey audio po nieudanym zapisie piosenki", ex);
-                }
-
-                try {
-                    storageKeyRepository.delete(coverStorageKeyEntity);
-
-                } catch (Exception ex) {
-                    log.warn("Błąd usuwania rekordu storageKey cover po nieudanym zapisie piosenki", ex);
-                }
-
-                throw e;
-            }
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Błąd I/O podczas uploadu pliku", e);
-            throw new SongUploadException("Błąd I/O podczas uploadu pliku", e);
+
+            rollbackStorage(audioStorageKeyEntity);
+            rollbackStorage(coverStorageKeyEntity);
+
+            if (e instanceof IOException) {
+                throw new SongUploadException("Błąd I/O podczas uploadu pliku", e);
+            }
+            throw (RuntimeException) e;
 
         } finally {
-            try {
-                if (tmpAudioPath != null) Files.deleteIfExists(tmpAudioPath);
+            tryDeleteTempFile(tmpAudioPath);
+            tryDeleteTempFile(tmpCoverPath);
+        }
+    }
 
-            } catch (IOException e) {
-                log.warn("Nie udało się usunąć pliku tymczasowego audio", e);
+    /// upload piosenki z perspektywy albumu
+    @Transactional
+    public SongDto upload(AlbumSongUploadRequest request, AppUser appUser) {
+        MultipartFile audioFile = request.getAudioFile();
+
+        Path tmpAudioPath = null;
+        StorageKey audioStorageKeyEntity = null;
+
+        try {
+            // walidacja audio i zapis do temp file
+            tmpAudioPath = validateSongFileAndSaveToTemp(audioFile);
+
+            // docelowy zapis audio
+            audioStorageKeyEntity = validateAndSaveAudioFile(tmpAudioPath, appUser);
+
+            Song s = validateAndBuildSong(
+                    request,
+                    appUser,
+                    audioStorageKeyEntity
+            );
+
+            Song saved = songRepository.save(s);
+            return SongDto.toDto(saved);
+
+        } catch (Exception e) {
+            log.error("Błąd I/O podczas uploadu pliku", e);
+
+            rollbackStorage(audioStorageKeyEntity);
+            if (e instanceof IOException) {
+                throw new SongUploadException("Błąd I/O podczas uploadu pliku", e);
             }
 
-            try {
-                if (tmpCoverPath != null) Files.deleteIfExists(tmpCoverPath);
+            throw (RuntimeException) e;
 
-            } catch (IOException e) {
-                log.warn("Nie udało się usunąć pliku tymczasowego cover", e);
-            }
+        } finally {
+            tryDeleteTempFile(tmpAudioPath);
         }
     }
 
@@ -181,10 +160,33 @@ public class SongUploadService {
         s.setTitle(title);
         s.setAuthor(appUser);
         s.setGenres(validatedGenreList);
-        s.setAlbum(albumService.findById(request.getAlbumId()).orElse(null));
+        s.setAlbum(null);
         s.setAudioStorageKey(audioStorageKeyEntity);
         s.setCoverStorageKey(coverStorageKeyEntity);
         s.setPubliclyVisible(request.getPubliclyVisible());
+        s.setCreatedAt(Instant.now());
+        return s;
+    }
+
+    private Song validateAndBuildSong(AlbumSongUploadRequest request, AppUser appUser,
+                                      StorageKey audioStorageKeyEntity)
+            throws IllegalArgumentException {
+        Album album = albumService.findById(request.getAlbumId()).orElseThrow();
+
+        String title = request.getTitle();
+
+        if (title == null || title.isBlank() || title.length() > 32) {
+            throw new IllegalArgumentException("Nieprawidłowy tytuł");
+        }
+
+        Song s = new Song();
+        s.setTitle(title);
+        s.setAuthor(appUser);
+        s.setGenres(album.getGenres());
+        s.setAlbum(album);
+        s.setAudioStorageKey(audioStorageKeyEntity);
+        s.setCoverStorageKey(album.getCoverStorageKey());
+        s.setPubliclyVisible(album.getPubliclyVisible());
         s.setCreatedAt(Instant.now());
         return s;
     }
@@ -227,4 +229,67 @@ public class SongUploadService {
         }
         return detected;
     }
+
+    private StorageKey validateAndSaveAudioFile(Path tmpAudioPath, AppUser appUser) throws IOException {
+        // walidacja audio i zapis do temp file
+        String audioFileMimeType = detectAndValidateAudioFileMimeType(tmpAudioPath);
+        long audioFileSize = Files.size(tmpAudioPath);
+
+        // docelowy zapis audio
+        String audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), TARGET_AUDIO_EXTENSION, SONGS_TARGET_DIRECTORY);
+        log.info("Zapisano plik: audioStorageKey={}", audioStorageKey);
+
+        // StorageKey dla audio
+        StorageKey audioStorageKeyEntity = new StorageKey();
+        audioStorageKeyEntity.setKey(audioStorageKey);
+        audioStorageKeyEntity.setMimeType(audioFileMimeType);
+        audioStorageKeyEntity.setSizeBytes(audioFileSize);
+        audioStorageKeyEntity = storageKeyRepository.save(audioStorageKeyEntity);
+        return audioStorageKeyEntity;
+    }
+
+    private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
+        // resize i convert cover image i zapis do temp file
+        String coverFileMimeType = tika.detect(tmpCoverPath.toFile());
+        long coverFileSize = Files.size(tmpCoverPath);
+
+        // docelowy zapis cove
+        String coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
+        log.info("Zapisano plik: coverStorageKey={}", coverStorageKey);
+
+        // StorageKey dla cover
+        StorageKey coverStorageKeyEntity = new StorageKey();
+        coverStorageKeyEntity.setKey(coverStorageKey);
+        coverStorageKeyEntity.setMimeType(coverFileMimeType);
+        coverStorageKeyEntity.setSizeBytes(coverFileSize);
+        coverStorageKeyEntity = storageKeyRepository.save(coverStorageKeyEntity);
+        return coverStorageKeyEntity;
+    }
+
+    private void rollbackStorage(StorageKey... keys) {
+        for (StorageKey keyEntity : keys) {
+            if (keyEntity == null) continue;
+            try {
+                storage.delete(keyEntity.getKey());
+            } catch (Exception ex) {
+                log.warn("Nie udało się usunąć pliku ze storage podczas rollbacku: {}", keyEntity.getKey(), ex);
+            }
+            try {
+                storageKeyRepository.delete(keyEntity);
+            } catch (Exception ex) {
+                log.warn("Nie udało się usunąć wpisu StorageKey podczas rollbacku", ex);
+            }
+        }
+    }
+
+    private void tryDeleteTempFile(Path tmpPath) {
+        try {
+            if (tmpPath != null) Files.deleteIfExists(tmpPath);
+
+        } catch (IOException e) {
+            log.warn("Nie udało się usunąć pliku tymczasowego", e);
+        }
+    }
+
+
 }

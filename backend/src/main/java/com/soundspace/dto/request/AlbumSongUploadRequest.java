@@ -1,5 +1,6 @@
 package com.soundspace.dto.request;
 
+import com.soundspace.entity.Album;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,21 +14,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SongUploadRequest {
-
+public class AlbumSongUploadRequest {
     @NotNull(message = "Plik audio (m4a) jest wymagany")
     private MultipartFile audioFile;
-
-    @NotNull(message = "Plik okładki jest wymagany")
-    private MultipartFile coverFile;
 
     @NotBlank
     @Size(max = 32)
     private String title;
 
-    @Size(max = 3)
-    private List<String> genre;
+    private Long albumId;
 
-    private Boolean publiclyVisible = false;
 }
 
