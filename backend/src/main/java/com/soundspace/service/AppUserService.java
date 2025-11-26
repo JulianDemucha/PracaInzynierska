@@ -27,14 +27,18 @@ public class AppUserService {
     private final AppUserMapper appUserMapper;
     private final PasswordEncoder passwordEncoder;
 
-    public ResponseEntity<AppUserDto> getAuthenticatedUser(Authentication authentication) {
+    public AppUserDto getAppUser(Long userId) {
+        return repo.findById(userId).map(appUserMapper::toDto).orElseThrow();
+    }
+
+    public AppUserDto getAuthenticatedUser(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
         AppUser user = repo.findByEmail(userDetails.getUsername()) // getUsername zwraca email
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User from token has NOT been found in the database: " + userDetails.getUsername() //email
                 ));
-        return ResponseEntity.ok(appUserMapper.toDto(user));
+        return appUserMapper.toDto(user);
     }
 
     @Transactional

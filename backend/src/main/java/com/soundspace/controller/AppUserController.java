@@ -15,13 +15,17 @@ import org.springframework.web.bind.annotation.*;
 public class AppUserController {
     private final AppUserService appUserService;
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<AppUserDto> getAppUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(appUserService.getAppUser(userId));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<AppUserDto> getAuthenticatedUser(Authentication authentication) {
         if (authentication == null) {
             return ResponseEntity.status(401).build();
         }
-        //getAuthenticatedPlayer returns ResponseEntity<PlayerDto>
-        return appUserService.getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(appUserService.getAuthenticatedUser(authentication));
     }
 
     @PutMapping("/me")
@@ -32,6 +36,7 @@ public class AppUserController {
         //updatePlayer returns ResponseEntity<?>
         return appUserService.updateUser(playerUpdateRequest, authentication);
     }
+
 
     // todo: zrobic w serwisie logike i po stronie klienta tez
 //    @DeleteMapping("/me")
