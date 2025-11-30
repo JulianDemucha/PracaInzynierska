@@ -94,12 +94,8 @@ function PlayerBar() {
         }
     };
 
-    // Logika wyciągania danych artysty
-    const artistObj = currentSong?.artist;
-    // Jeśli artist jest obiektem, bierzemy .name, jeśli stringiem to bierzemy go bezpośrednio, fallback do "SoundSpace"
-    const artistName = (typeof artistObj === 'string' ? artistObj : artistObj?.name) || "SoundSpace";
-    // ID potrzebne do linkowania (tylko jeśli artist jest obiektem)
-    const artistId = typeof artistObj === 'object' ? artistObj?.id : null;
+    const artistName = (currentSong?.authorUsername) || "SoundSpace";
+    const artistId = currentSong?.authorId;
     const artistLink = artistId ? `/artist/${artistId}` : '#';
 
     const playerMenuOptions = [
