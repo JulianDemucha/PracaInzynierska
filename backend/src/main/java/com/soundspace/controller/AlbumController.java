@@ -86,5 +86,10 @@ public class AlbumController {
         return (userDetails != null) ? userDetails.getUsername() : null;
     }
 
+    @GetMapping
+    public ResponseEntity<List<AlbumDto>> getAllAlbums() {
+        return ResponseEntity.ok(albumService.getAllAlbums());
+    }
+
 
 }

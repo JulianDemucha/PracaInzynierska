@@ -237,4 +237,11 @@ public class AlbumService {
         }
     }
 
+    public List<AlbumDto> getAllAlbums() {
+        return albumRepository.findAllWithDetails()
+                .stream()
+                .map(AlbumDto::toDto)
+                .toList();
+    }
+
 }
