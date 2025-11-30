@@ -4,6 +4,8 @@ import homepage from '../../assets/images/homepage.png'
 import searchIcon from "../../assets/images/searchicon.png"
 import './TopBar.css'
 import {useAuth} from "../../context/useAuth.js";
+import {getImageUrl} from "../../services/imageService.js";
+import defaultAvatar from "../../assets/images/default-avatar.png";
 function TopBar() {
     const { currentUser, openModal } = useAuth();
     return (
@@ -22,7 +24,7 @@ function TopBar() {
                 {currentUser ? (
                     <Link to="/profile">
                         <img
-                            src={currentUser.avatar}
+                            src={getImageUrl(currentUser.avatarStorageKeyId) || defaultAvatar}
                             alt="Mój profil"
                             className="topbar-avatar"
                         />

@@ -12,7 +12,8 @@ import MediaCard from '../components/cards/MediaCard.jsx';
 
 // Serwisy
 import { getUserSongs, getCoverUrl } from '../services/songService.js';
-import { getUserAlbums, getAlbumCoverUrl } from '../services/albumService.js'; // <--- NOWY IMPORT
+import { getUserAlbums, getAlbumCoverUrl } from '../services/albumService.js';
+import {getImageUrl} from "../services/imageService.js"; // <--- NOWY IMPORT
 
 // --- DANE TESTOWE (Tylko Playlisty i Komentarze zostały jako mock) ---
 const mockOtherContent = {
@@ -73,7 +74,7 @@ function ProfilePage() {
             {/* ===== NAGŁÓWEK ===== */}
             <header className="profile-header">
                 <img
-                    src={currentUser?.avatar || defaultAvatar}
+                    src={getImageUrl(currentUser.avatarStorageKeyId)|| defaultAvatar }
                     alt="Awatar użytkownika"
                     className="profile-avatar"
                 />
