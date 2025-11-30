@@ -237,6 +237,8 @@ public class AlbumService {
         }
     }
 
+    // todo switch to PAGINATION
+    @Transactional(readOnly = true)
     public List<AlbumDto> getAllAlbums() {
         return albumRepository.findAllWithDetails()
                 .stream()
