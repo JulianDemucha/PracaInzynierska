@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import {useAuth} from "../../context/useAuth.js";
+import { useAuth } from "../../context/useAuth.js";
 import './Sidebar.css';
 
-function Sidebar({ onUploadClick, onCreateAlbumClick }) {
+// Importy Modali
+import AddSongModal from '../song/AddSongModal.jsx';
+import CreateAlbumModal from '../album/CreateAlbumModal.jsx';
+
+function Sidebar() {
     const { currentUser, logout } = useAuth();
+
+    // Stany widoczności modali
+    const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
+    const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
 
     const [playlists, setPlaylists] = useState([
         { id: 1, name: "Do samochodu" },
@@ -24,7 +32,6 @@ function Sidebar({ onUploadClick, onCreateAlbumClick }) {
         { id: 2, name: "Siłownia Pump" },
         { id: 1, name: "Do samochodu" },
         { id: 2, name: "Siłownia Pump" },
-
     ]);
 
     return (
@@ -46,9 +53,9 @@ function Sidebar({ onUploadClick, onCreateAlbumClick }) {
                 <nav className="nav-section">
                     <p className="section-title">PLAYLISTY</p>
                     <div className="playlists-list">
-                        {playlists.map(playlist => (
+                        {playlists.map((playlist, index) => (
                             <NavLink
-                                key={playlist.id}
+                                key={`${playlist.id}-${index}`} // Poprawiono klucz dla powtarzających się ID
                                 to={`/playlist/${playlist.id}`}
                                 className="nav-link playlist-link"
                             >
@@ -65,7 +72,7 @@ function Sidebar({ onUploadClick, onCreateAlbumClick }) {
                     {/* PRZYCISK: DODAJ UTWÓR */}
                     <button
                         className="upload-btn-large"
-                        onClick={onUploadClick}
+                        onClick={() => setIsAddSongModalOpen(true)}
                         disabled={!currentUser}
                         title={!currentUser ? "Zaloguj się, aby dodać utwór" : ""}
                     >
@@ -75,7 +82,7 @@ function Sidebar({ onUploadClick, onCreateAlbumClick }) {
                     {/* PRZYCISK: WYDAJ ALBUM */}
                     <button
                         className="upload-btn-large album-btn"
-                        onClick={onCreateAlbumClick}
+                        onClick={() => setIsCreateAlbumModalOpen(true)}
                         disabled={!currentUser}
                         title={!currentUser ? "Zaloguj się, aby stworzyć album" : ""}
                     >
@@ -105,6 +112,18 @@ function Sidebar({ onUploadClick, onCreateAlbumClick }) {
                     </div>
                 )}
             </div>
+
+            {/* MODALE */}
+            <AddSongModal
+                isOpen={isAddSongModalOpen}
+                onClose={() => setIsAddSongModalOpen(false)}
+            />
+            <CreateAlbumModal
+                isOpen={isCreateAlbumModalOpen}
+                onClose={() => {
+                    setIsCreateAlbumModalOpen(false);
+                }}
+            />
         </aside>
     );
 }
