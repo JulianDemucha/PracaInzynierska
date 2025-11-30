@@ -1,13 +1,10 @@
 package com.soundspace.controller;
 import com.soundspace.dto.SongDto;
-import com.soundspace.entity.Song;
 import com.soundspace.dto.request.SongUploadRequest;
-import com.soundspace.entity.StorageKey;
 import com.soundspace.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,7 +30,6 @@ public class SongController {
     private final AppUserService appUserService;
     private final SongStreamingService songStreamingService;
     private final SongCoreService songCoreService;
-    private final ImageService imageService;
 
     @GetMapping("/{id}")
     public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long id) {
@@ -76,33 +72,9 @@ public class SongController {
         }
     }
 
-    // todo do usuniecia, uzywac /api/images/{storageKeyId}
-    @GetMapping("/cover/{id}")
-    public ResponseEntity<Resource> getCoverImageBySongId(@PathVariable Long id) {
-        Song song = songCoreService.getSongById(id);
-
-        StorageKey coverStorageKey = song.getCoverStorageKey();
-        Resource resource = imageService.loadImageResource(coverStorageKey.getKey());
-        String contentType = coverStorageKey.getMimeType();
-
-        MediaType mediaType;
-        try {
-            mediaType = MediaType.parseMediaType(contentType);
-        } catch (InvalidMediaTypeException e) {
-            mediaType = MediaType.IMAGE_JPEG;
-        }
-
-        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
-                .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                .header(HttpHeaders.CACHE_CONTROL, "max-age=43200, public"); // cache 12h
-                //// !!! po zmianie obrazka przez 12h w cache dalej bedzie stary !!!
-
-        return builder.body(resource);
-    }
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long id
-            , @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long id,
+                                                          @AuthenticationPrincipal UserDetails userDetails) {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
         return ResponseEntity.ok(songCoreService.getSongsByUserId(id, email));
     }
@@ -114,6 +86,7 @@ public class SongController {
         songCoreService.deleteSongById(id, email);
         return ResponseEntity.noContent().build(); //402
     }
+
     @GetMapping("/genre/{genreName}")
     public ResponseEntity<List<SongDto>> getSongsByGenre(@PathVariable String genreName) {
         return ResponseEntity.ok(songCoreService.getSongsByGenre(genreName));
