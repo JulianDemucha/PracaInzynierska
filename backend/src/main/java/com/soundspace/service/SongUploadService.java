@@ -137,6 +137,7 @@ public class SongUploadService {
         }
     }
 
+    // wersja dla singla
     private Song validateAndBuildSong(SongUploadRequest request, AppUser appUser,
                                       StorageKey audioStorageKeyEntity, StorageKey coverStorageKeyEntity)
             throws IllegalArgumentException {
@@ -169,6 +170,7 @@ public class SongUploadService {
         return s;
     }
 
+    // wersja dla albumu
     private Song validateAndBuildSong(Long albumId, AlbumSongUploadRequest request, AppUser appUser,
                                       StorageKey audioStorageKeyEntity)
             throws IllegalArgumentException {
@@ -183,7 +185,7 @@ public class SongUploadService {
         Song s = new Song();
         s.setTitle(title);
         s.setAuthor(appUser);
-        s.setGenres(album.getGenres());
+        s.setGenres(new ArrayList<>(album.getGenres()));
         s.setAlbum(album);
         s.setAudioStorageKey(audioStorageKeyEntity);
         s.setCoverStorageKey(album.getCoverStorageKey());

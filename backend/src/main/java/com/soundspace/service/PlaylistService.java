@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 public class PlaylistService {
     private final PlaylistRepository playlistRepository;
 
-    // tu jakies query bedzie trzeba zrobic do tego z joinem zalezy co chcemy
-//    public List<Playlist> getAllPlaylists() {
+    // wip - tu bedzie sie mapowalo w playlistdto i zwracalo jakos
+//    public List<PlaylistDto> getAllPlaylists() {
 //        return playlistRepository.findAllByOrderByIdAsc();
 //    }
 

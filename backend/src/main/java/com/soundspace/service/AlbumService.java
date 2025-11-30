@@ -1,29 +1,50 @@
 package com.soundspace.service;
 import com.soundspace.dto.AlbumDto;
+import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
+import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
+import com.soundspace.entity.StorageKey;
 import com.soundspace.enums.Genre;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.AlbumNotFoundException;
+import com.soundspace.exception.StorageException;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
+import com.soundspace.repository.StorageKeyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AlbumService {
     private final AlbumRepository albumRepository;
     private final AppUserService appUserService;
     private final SongCoreService songCoreService;
     private final SongRepository songRepository;
+    private final StorageService storageService;
+    private final ImageService imageService;
+    private final StorageKeyRepository storageKeyRepository;
+
+    private static final String COVERS_TARGET_DIRECTORY = "albums/covers";
+    private static final String TARGET_COVER_EXTENSION = "jpg";
+    private static final int COVER_WIDTH = 1200;
+    private static final int COVER_HEIGHT = 1200;
+    private static final double COVER_QUALITY = 0.85;
 
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
@@ -53,7 +74,7 @@ public class AlbumService {
                 .toList());
 
         // jeżeli requestujący user nie jest tym samym co user w request'cie - remove niepubliczne utwory
-        if (userId.equals(appUserService.getUserByEmail(userEmail).getId()))
+        if (!userId.equals(appUserService.getUserByEmail(userEmail).getId()))
             albums.removeIf(album -> !album.publiclyVisible());
 
         return albums;
@@ -69,28 +90,54 @@ public class AlbumService {
                 .toList();
     }
 
+    @Transactional
     public AlbumDto createAlbum(CreateAlbumRequest request, String userEmail) {
-        // jeżeli requestujący user nie jest tym samym co user w request'cie - throw
-        if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
-                .equals(request.getAuthorId()))
-            throw new AccessDeniedException("Brak uprawnień");
+
+        AppUser author = appUserService.getUserByEmail(userEmail);
 
 
-        if (request.getTitle() == null || request.getTitle().isBlank())
-            throw new IllegalArgumentException("Tytuł nie moze byc pusty");
+        Path tmpCoverPath = null;
+        StorageKey coverStorageKeyEntity = null;
 
-        if (request.getDescription() == null || request.getDescription().isBlank())
-            request.setDescription(request.getTitle());
+        try{
+            MultipartFile coverFile = request.getCoverFile();
+            if(coverFile == null || coverFile.isEmpty()){
+                throw new IllegalArgumentException("Plik okładki jest wymagany");
+            }
 
-        Album album = Album.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .author(appUserService.getUserById(request.getAuthorId()))
-                .publiclyVisible(request.isPubliclyVisible())
-                .createdAt(Instant.now())
-                .build();
-        album = albumRepository.save(album);
-        return AlbumDto.toDto(album);
+            tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+
+            coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, author);
+
+            List<Genre> validatedGenres = parseGenres(request.getGenre());
+
+            Album album = Album.builder()
+                    .title(request.getTitle())
+                    .description(request.getDescription())
+                    .author(appUserService.getUserById(author.getId()))
+                    .publiclyVisible(request.isPubliclyVisible())
+                    .createdAt(Instant.now())
+                    .coverStorageKey(coverStorageKeyEntity)
+                    .genres(validatedGenres)
+                    .build();
+            album = albumRepository.save(album);
+            return AlbumDto.toDto(album);
+
+        } catch (Exception e) {
+            log.error("Błąd podczas tworzenia albumu", e);
+
+            rollbackStorage(coverStorageKeyEntity);
+
+            if (e instanceof IOException) {
+                throw new StorageException("Błąd I/O podczas przetwarzania okładki albumu", e);
+            }
+            throw (RuntimeException) e;
+
+        } finally {
+            tryDeleteTempFile(tmpCoverPath);
+        }
+
+
     }
 
     @Transactional
@@ -115,6 +162,79 @@ public class AlbumService {
 
         songRepository.deleteSongsByAlbumId(albumId);
         albumRepository.delete(album);
+    }
+
+    private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
+        ProcessedImage processedCover =
+                imageService.resizeImageAndConvert(coverFile, COVER_WIDTH, COVER_HEIGHT, TARGET_COVER_EXTENSION, COVER_QUALITY);
+
+        Path tmpCoverPath = Files.createTempFile("album-cover-", "." + TARGET_COVER_EXTENSION);
+        Files.write(tmpCoverPath, processedCover.bytes());
+        return tmpCoverPath;
+    }
+
+    private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
+        long coverFileSize = Files.size(tmpCoverPath);
+        // Pobieramy typ MIME (zakładamy image/jpeg po konwersji, ale można użyć Tiki dla pewności)
+        String mimeType = "image/" + TARGET_COVER_EXTENSION;
+
+        // Zapis fizyczny do storage
+        String coverStorageKeyString = storageService.saveFromPath(
+                tmpCoverPath,
+                appUser.getId(),
+                TARGET_COVER_EXTENSION,
+                COVERS_TARGET_DIRECTORY
+        );
+        log.info("Zapisano okładkę albumu: key={}", coverStorageKeyString);
+
+        // Zapis metadanych StorageKey
+        StorageKey storageKeyEntity = new StorageKey();
+        storageKeyEntity.setKey(coverStorageKeyString);
+        storageKeyEntity.setMimeType(mimeType);
+        storageKeyEntity.setSizeBytes(coverFileSize);
+
+        return storageKeyRepository.save(storageKeyEntity);
+    }
+
+    private List<Genre> parseGenres(List<String> genreStrings) {
+        List<Genre> validatedGenreList = new ArrayList<>();
+        if (genreStrings == null) return validatedGenreList;
+
+        try {
+            for (String genre : genreStrings)
+                if (genre != null && !genre.isBlank())
+                    validatedGenreList.add(Genre.valueOf(genre.toUpperCase().trim()));
+
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Nieprawidłowy gatunek (genre) w liście");
+        }
+        return validatedGenreList;
+    }
+
+    private void rollbackStorage(StorageKey keyEntity) {
+        if (keyEntity == null) return;
+        cleanUpStorageKey(keyEntity);
+    }
+
+    private void cleanUpStorageKey(StorageKey keyEntity) {
+        try {
+            storageService.delete(keyEntity.getKey());
+        } catch (Exception ex) {
+            log.warn("Nie udało się usunąć pliku ze storage: {}", keyEntity.getKey(), ex);
+        }
+        try {
+            storageKeyRepository.delete(keyEntity);
+        } catch (Exception ex) {
+            log.warn("Nie udało się usunąć wpisu StorageKey", ex);
+        }
+    }
+
+    private void tryDeleteTempFile(Path tmpPath) {
+        try {
+            if (tmpPath != null) Files.deleteIfExists(tmpPath);
+        } catch (IOException e) {
+            log.warn("Nie udało się usunąć pliku tymczasowego", e);
+        }
     }
 
 }

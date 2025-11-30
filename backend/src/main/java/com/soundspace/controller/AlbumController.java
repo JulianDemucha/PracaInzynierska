@@ -28,8 +28,8 @@ public class AlbumController {
     private final SongUploadService songUploadService;
     private final AppUserService appUserService;
 
-    @PostMapping("/create")
-    public ResponseEntity<AlbumDto> createAlbum(@RequestBody CreateAlbumRequest createAlbumRequest,
+    @PostMapping(value = "/create", consumes = "multipart/form-data")
+    public ResponseEntity<AlbumDto> createAlbum(@ModelAttribute @Valid CreateAlbumRequest createAlbumRequest,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
         AlbumDto albumDto = albumService.createAlbum(createAlbumRequest, extractUserEmail(userDetails));
         return ResponseEntity.created(URI.create("/api/albums/" + albumDto.id())).body(albumDto);
@@ -49,7 +49,7 @@ public class AlbumController {
         return ResponseEntity.ok(albumService.getAlbumById(albumId, extractUserEmail(userDetails)));
     }
 
-    @PostMapping("/{albumId}/add/")
+    @PostMapping("/{albumId}/add")
     public ResponseEntity<SongDto> addSongToAlbum(@PathVariable Long albumId,
                                                   @ModelAttribute @Valid AlbumSongUploadRequest request,
                                                   @AuthenticationPrincipal UserDetails userDetails) {

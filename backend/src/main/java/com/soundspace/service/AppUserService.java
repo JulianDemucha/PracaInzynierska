@@ -205,6 +205,7 @@ public class AppUserService {
         return appUserRepository.findById(id).orElseThrow();
     }
 
+    //todo zaimplementowac usuwanie wszystkich songow i albumow itp wszystko co nalezy do usera
     public void deleteUser(String requesterEmail) {
         AppUser appUser = getUserByEmail(requesterEmail);
 
