@@ -3,14 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import './SongPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
-// ZMIANA: Usunięto getCoverUrl, dodano getImageUrl z nowego serwisu
 import { getSongById, deleteSong } from '../services/songService.js';
 import { getImageUrl } from '../services/imageService.js';
 
 import defaultAvatar from '../assets/images/default-avatar.png';
-// ZMIANA: Używamy defaultAvatar jako defaultCover, jeśli importy są takie same
 import defaultCover from '../assets/images/default-avatar.png';
-
 import playIcon from '../assets/images/play.png';
 import pauseIcon from '../assets/images/pause.png';
 import heartIconOff from '../assets/images/favorites.png';
@@ -58,13 +55,10 @@ function SongPage() {
                 setLoading(true);
                 const data = await getSongById(id);
 
-                // ZMIANA: Użycie getImageUrl z coverStorageKeyId
                 const mappedSong = {
                     ...data,
                     artist: { id: data.authorId, name: data.authorUsername },
-                    // Tutaj podstawiamy nowy mechanizm obrazków:
                     coverArtUrl: getImageUrl(data.coverStorageKeyId),
-                    duration: "3:00", // Placeholder, jeśli backend nie zwraca czasu
                     comments: []
                 };
 
@@ -171,13 +165,18 @@ function SongPage() {
                     <div className="song-meta">
                         <Link to={`/artist/${song.artist.id}`} className="song-artist">{song.artist.name}</Link>
                         <span>•</span>
-                        <span className="song-duration">{song.duration}</span>
-                        <span>•</span>
                         <span className="song-date">{new Date(song.createdAt).getFullYear()}</span>
                     </div>
                     <div className="genre-tags">
+                        {/* ZMIANA: Użycie Link do nawigacji po gatunkach */}
                         {song.genres && song.genres.map(genre => (
-                            <span key={genre} className="genre-pill">{genre}</span>
+                            <Link
+                                key={genre}
+                                to={`/genre/${genre}`}
+                                className="genre-pill"
+                            >
+                                {genre}
+                            </Link>
                         ))}
                     </div>
                     {!song.publiclyVisible && (
