@@ -221,7 +221,6 @@ function CreateAlbumModal({isOpen, onClose}) {
             return;
         }
         onClose();
-        window.location.reload()
     };
 
     return (
