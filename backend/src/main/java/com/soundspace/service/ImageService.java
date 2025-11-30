@@ -127,7 +127,7 @@ public class ImageService {
         Resource resource = storageService.loadAsResource(storageKey.getKey());
 
         String storageKeyStr = storageKey.getKey();
-        if ( !(storageKeyStr.startsWith("songs/covers") || storageKeyStr.startsWith("users/avatars")) )
+        if (!storageKeyStr.endsWith(".jpg") || !(storageKeyStr.startsWith("songs/covers") || storageKeyStr.startsWith("users/avatars") || storageKeyStr.startsWith("placeholders")))
             throw new InvalidStorageLocationException(storageKeyStr);
 
         return resource;
