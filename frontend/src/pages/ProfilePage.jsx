@@ -219,7 +219,6 @@ function ProfilePage() {
                 isOpen={isCreateAlbumModalOpen}
                 onClose={() => {
                     setIsCreateAlbumModalOpen(false);
-                    window.location.reload();
                 }}
             />
         </div>
