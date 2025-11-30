@@ -2,13 +2,10 @@ import api from "../context/axiosClient";
 
 export const createAlbum = async (albumData) => {
     const response = await api.post('/albums/create', albumData, {
-        headers: { "Content-Type": "application/json" }
-    });
-    return response.data;
-};
-
-export const addSongToAlbum = async (albumId, songId) => {
-    const response = await api.post(`/albums/${albumId}/add/${songId}`);
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    })
     return response.data;
 };
 

@@ -55,6 +55,7 @@ function ProfilePage() {
                     console.error("Błąd pobierania danych profilu:", error);
                 }
             }
+
         };
 
         fetchData();
