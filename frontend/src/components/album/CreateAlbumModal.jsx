@@ -1,7 +1,7 @@
 import React, {useState, useRef, useEffect} from 'react';
 import ReactCrop, {centerCrop, makeAspectCrop} from "react-image-crop";
 import api from "../../context/axiosClient.js";
-import { createAlbum, addSongToAlbum } from '../../services/albumService.js';
+import { createAlbum } from '../../services/albumService.js';
 import { useAuth } from '../../context/useAuth.js';
 import 'react-image-crop/dist/ReactCrop.css';
 import './CreateAlbumModal.css';
@@ -139,16 +139,22 @@ function CreateAlbumModal({isOpen, onClose}) {
 
         try {
             const blob = await getCroppedImg(imgRef.current, crop);
+
+            const formData = new FormData();
+
+            formData.append('coverFile', blob, "cover.jpg");
+
+            formData.append('title', albumTitle);
+            formData.append('description', albumTitle);
+
+            selectedGenres.forEach(g => formData.append('genre', g));
+
+            formData.append('publiclyVisible', isPublic.toString());
+
             setAlbumCoverBlob(blob);
 
-            const albumPayload = {
-                title: albumTitle,
-                description: albumTitle,
-                authorId: currentUser.id,
-                publiclyVisible: isPublic
-            };
+            const albumDto = await createAlbum(formData);
 
-            const albumDto = await createAlbum(albumPayload);
             setCreatedAlbumId(albumDto.id);
             setStep(2);
 
@@ -189,12 +195,9 @@ function CreateAlbumModal({isOpen, onClose}) {
             formData.append('publiclyVisible', isPublic.toString());
             formData.append('albumId', createdAlbumId);
 
-            const songRes = await api.post("/songs/upload", formData, {
+            await api.post(`albums/${createdAlbumId}/add`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-            const songDto = songRes.data;
-
-            await addSongToAlbum(createdAlbumId, songDto.id);
 
             // Reset pól piosenki
             setSongTitle("");
