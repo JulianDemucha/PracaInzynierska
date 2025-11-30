@@ -28,13 +28,13 @@ public class AppUserController {
         return ResponseEntity.ok(appUserService.getAuthenticatedUser(authentication));
     }
 
-    @PostMapping(value = "/me", consumes = "multipart/form-data")
-    public ResponseEntity<?> updatePlayer(
-            @ModelAttribute @Valid AppUserUpdateRequest playerUpdateRequest,
+    @PutMapping(value = "/me", consumes = "multipart/form-data")
+    public ResponseEntity<?> updateUser(
+            @ModelAttribute @Valid AppUserUpdateRequest appUserUpdateRequest,
             Authentication authentication
     ) {
-        //updatePlayer returns ResponseEntity<?>
-        return appUserService.updateUser(playerUpdateRequest, authentication);
+        //updateUser returns ResponseEntity<?>
+        return appUserService.updateUser(appUserUpdateRequest, authentication);
     }
 
 
