@@ -27,6 +27,9 @@ public class SongCoreService {
     private final StorageService storageService;
     private final StorageKeyRepository storageKeyRepository;
 
+    private static final Long DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID = 6767L;
+    private static final Long DEFAULT_AUDIO_STORAGE_KEY_ID = 5000L;
+
     public Song getSongById(Long id) {
         return songRepository.findById(id).orElseThrow(
                 () -> new SongNotFoundException(id)
@@ -91,10 +94,12 @@ public class SongCoreService {
             throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki");
         }
 
+        songRepository.delete(song);
+
         // storageService moze rzucic IOException lub StorageException
         try {
             StorageKey audioKey = song.getAudioStorageKey();
-            if (audioKey != null && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
+            if (audioKey != null && audioKey.getId() != 5000L && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
                 try {
                     storageService.delete(audioKey.getKey());
                 } catch (Exception ex) {
@@ -110,7 +115,7 @@ public class SongCoreService {
             }
 
             StorageKey coverKey = song.getCoverStorageKey();
-            if (coverKey != null && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (coverKey != null && coverKey.getId() != 6767L && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
                 } catch (Exception ex) {
@@ -124,7 +129,7 @@ public class SongCoreService {
                 }
             }
 
-            songRepository.delete(song);
+
 
         } catch (AccessDeniedException e) {
             log.info(e.getMessage());
