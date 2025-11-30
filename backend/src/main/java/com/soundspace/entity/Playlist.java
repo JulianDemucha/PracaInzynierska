@@ -43,5 +43,14 @@ public class Playlist {
             orphanRemoval = true
     )
     @OrderBy("position ASC")
-    private List<PlaylistSong> playlistSongs = new ArrayList<>();
+    private List<PlaylistEntry> songs = new ArrayList<>();
+
+    public void addSong(Song song) {
+        PlaylistEntry entry = new PlaylistEntry();
+        entry.setPlaylist(this);
+        entry.setSong(song);
+        entry.setPosition(this.songs.size());
+        this.songs.add(entry);
+    }
+
 }

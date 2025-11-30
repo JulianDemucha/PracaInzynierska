@@ -2,32 +2,30 @@ package com.soundspace.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.Instant;
 
 @Entity
-@Table(name = "playlist_songs")
-@NoArgsConstructor
-public class PlaylistSong {
+@Table(name = "playlist_entries")
+@Getter
+@Setter
+public class PlaylistEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "platlist_id", nullable = false)
+    @JoinColumn(name = "playlist_id", nullable = false)
     private Playlist playlist;
 
-    @Getter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "song_id", nullable = false)
     private Song song;
 
     @Column(nullable = false)
-    private int position;
+    private Integer position; // To pozwoli Ci sortować piosenki
 
-    public PlaylistSong(Playlist playlist, Song song, int position) {
-        this.playlist = playlist;
-        this.song = song;
-    }
+    @Column(name = "added_at")
+    private Instant addedAt = Instant.now();
 }
