@@ -13,7 +13,7 @@ import MediaCard from '../components/cards/MediaCard.jsx';
 // Serwisy
 import { getUserSongs } from '../services/songService.js';
 import { getUserAlbums } from '../services/albumService.js';
-import {getImageUrl} from "../services/imageService.js"; // <--- NOWY IMPORT
+import { getImageUrl } from "../services/imageService.js";
 
 // --- DANE TESTOWE (Tylko Playlisty i Komentarze zostały jako mock) ---
 const mockOtherContent = {
@@ -36,7 +36,7 @@ function ProfilePage() {
 
     // --- STANY DANYCH Z BACKENDU ---
     const [userSongs, setUserSongs] = useState([]);
-    const [userAlbums, setUserAlbums] = useState([]); // <--- NOWY STAN
+    const [userAlbums, setUserAlbums] = useState([]);
 
     // 1. POBIERANIE DANYCH (PIOSENKI I ALBUMY)
     useEffect(() => {
@@ -47,7 +47,7 @@ function ProfilePage() {
                     const songsData = await getUserSongs(currentUser.id);
                     setUserSongs(songsData);
 
-                    // Pobierz albumy (NOWE)
+                    // Pobierz albumy
                     const albumsData = await getUserAlbums(currentUser.id);
                     setUserAlbums(albumsData);
 
@@ -59,6 +59,11 @@ function ProfilePage() {
 
         fetchData();
     }, [currentUser]);
+
+    // Formatowanie daty dołączenia (DD.MM.RRRR)
+    const formattedJoinDate = currentUser?.createdAt
+        ? new Date(currentUser.createdAt).toLocaleDateString('pl-PL')
+        : 'Nieznana data';
 
     if (loading && !currentUser) {
         return (
@@ -74,7 +79,7 @@ function ProfilePage() {
             {/* ===== NAGŁÓWEK ===== */}
             <header className="profile-header">
                 <img
-                    src={getImageUrl(currentUser.avatarStorageKeyId)|| defaultAvatar }
+                    src={getImageUrl(currentUser.avatarStorageKeyId) || defaultAvatar}
                     alt="Awatar użytkownika"
                     className="profile-avatar"
                 />
@@ -82,8 +87,16 @@ function ProfilePage() {
                     <div className="profile-username-wrapper">
                         <h1 className="profile-username">{currentUser?.username || 'Nazwa Użytkownika'}</h1>
                     </div>
-                    <p className="profile-bio">
-                        Dołączył: {new Date().getFullYear()}
+
+                    {/* Wyświetlanie BIO */}
+                    {currentUser?.bio && (
+                        <p className="profile-bio-text" style={{ color: '#b3b3b3', margin: '0.5rem 0', fontSize: '0.95rem', maxWidth: '600px' }}>
+                            {currentUser.bio}
+                        </p>
+                    )}
+
+                    <p className="profile-joined-date" style={{ color: '#aaa', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                        Dołączył: {formattedJoinDate}
                     </p>
                 </div>
             </header>
@@ -138,7 +151,8 @@ function ProfilePage() {
                         </div>
                     </div>
                 )}
-                {/* --- Sekcja Albumy w ProfilePage.jsx --- */}
+
+                {/* --- Sekcja Albumy --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
                         <h2>Albumy</h2>
@@ -147,12 +161,9 @@ function ProfilePage() {
                                 userAlbums.map(album => (
                                     <MediaCard
                                         key={album.id}
-                                        // TUTAJ JEST KLUCZ DO NAWIGACJI:
                                         linkTo={`/album/${album.id}`}
-
-                                        // Tymczasowo domyślny obrazek, skoro nie ruszamy backendu
-                                        imageUrl={defaultAvatar}
-
+                                        // Zakładamy, że album ma coverStorageKeyId, jeśli nie - defaultAvatar
+                                        imageUrl={album.coverStorageKeyId ? getImageUrl(album.coverStorageKeyId) : defaultAvatar}
                                         title={album.title}
                                         subtitle={`${new Date(album.createdAt).getFullYear()} • Album`}
                                     />
