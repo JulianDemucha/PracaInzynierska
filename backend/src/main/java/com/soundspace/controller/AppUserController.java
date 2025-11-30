@@ -23,6 +23,9 @@ public class AppUserController {
 
     @GetMapping("/me")
     public ResponseEntity<AppUserDto> getAuthenticatedUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
         return ResponseEntity.ok(appUserService.getAuthenticatedUser(userDetails));
     }
 
