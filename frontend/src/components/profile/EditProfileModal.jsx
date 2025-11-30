@@ -5,6 +5,7 @@ import './EditProfileModal.css';
 import {useAuth} from "../../context/useAuth.js";
 import defaultAvatar from '../../assets/images/default-avatar.png';
 import api from "../../context/axiosClient.js";
+import {getImageUrl} from "../../services/imageService.js";
 
 function EditProfileModal({isOpen, onClose}) {
     const {currentUser, fetchCurrentUser} = useAuth();
@@ -20,23 +21,46 @@ function EditProfileModal({isOpen, onClose}) {
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
 
-    const [imgSrc, setImgSrc] = useState(currentUser?.avatar || defaultAvatar);
+    const [imgSrc, setImgSrc] = useState("");
     const [crop, setCrop] = useState();
     const [isNewImageSelected, setIsNewImageSelected] = useState(false);
     const imgRef = useRef(null);
 
+    function onImageLoad(e) {
+        const { width, height } = e.currentTarget;
+        const crop = centerCrop(
+            makeAspectCrop(
+                {
+                    unit: '%',
+                    width: 90,
+                },
+                1,
+                width,
+                height
+            ),
+            width,
+            height
+        );
+        setCrop(crop);
+    }
+
     useEffect(() => {
         if (isOpen && currentUser) {
-            setUsername(currentUser.login ?? "");
+            // Wypełnianie danych tekstowych
+            setUsername(currentUser.username ?? currentUser.login ?? "");
             setEmail(currentUser.email ?? "");
             setBio(currentUser.bio ?? "");
             setSex(currentUser.sex ?? "OTHER");
             setPassword("");
             setPasswordConfirm("");
 
-            setImgSrc(currentUser?.avatarUrl ?? defaultAvatar); // przyjmujemy pole avatarUrl w DTO
-            setCrop(centerCrop(makeAspectCrop({unit: '%', width: 90}, 1, 100, 100), 100, 100));
+            const avatarKey = currentUser.avatarStorageKeyId ?? currentUser.avatarId;
+            const currentAvatarUrl = avatarKey ? getImageUrl(avatarKey) : defaultAvatar;
+
+            setImgSrc(currentAvatarUrl);
+
             setIsNewImageSelected(false);
+
             setErrors({});
             setSuccessMessage("");
         }
@@ -48,13 +72,20 @@ function EditProfileModal({isOpen, onClose}) {
 
     const validateEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
+    // --- OBSŁUGA BIO (LIMIT 1000 ZNAKÓW) ---
+    const handleBioChange = (e) => {
+        const val = e.target.value;
+        if (val.length <= 1000) {
+            setBio(val);
+        }
+    };
+
     // --- FUNKCJE DLA OBRAZKA ---
     const getCroppedImg = (image, crop) => {
         const canvas = document.createElement('canvas');
         const scaleX = image.naturalWidth / image.width;
         const scaleY = image.naturalHeight / image.height;
 
-        // zabezpieczenie przed zerowymi wymiarami
         if (!crop || !crop.width || !crop.height) return null;
 
         canvas.width = crop.width;
@@ -92,10 +123,6 @@ function EditProfileModal({isOpen, onClose}) {
         const reader = new FileReader();
         reader.onload = () => {
             setImgSrc(reader.result.toString() || '');
-            setCrop(centerCrop(
-                makeAspectCrop({unit: '%', width: 90}, 1, 100, 100),
-                100, 100
-            ));
             setIsNewImageSelected(true);
         };
         reader.readAsDataURL(file);
@@ -103,6 +130,7 @@ function EditProfileModal({isOpen, onClose}) {
 
     const removeAvatarPreview = () => {
         setImgSrc(defaultAvatar);
+        setIsNewImageSelected(false);
         const input = document.getElementById('avatar-upload');
         if (input) input.value = null;
     };
@@ -113,7 +141,6 @@ function EditProfileModal({isOpen, onClose}) {
         setErrors({});
         setSuccessMessage("");
 
-        // walidacja
         const newErr = {};
         if (!username || username.length < 3 || username.length > 16) newErr.username = "Nazwa użytkownika 3-16 znaków.";
         if (!validateEmail(email)) newErr.email = "Nieprawidłowy email.";
@@ -127,7 +154,6 @@ function EditProfileModal({isOpen, onClose}) {
 
         setLoading(true);
         try {
-            // DTO: { username, email, password, bio, sex, avatarImageFile }
             const formData = new FormData();
 
             formData.append("username", username);
@@ -139,7 +165,6 @@ function EditProfileModal({isOpen, onClose}) {
                 formData.append("password", password);
             }
 
-            // Obsługa zdjęcia
             if (isNewImageSelected && imgRef.current && crop) {
                 const blob = await getCroppedImg(imgRef.current, crop);
                 if (blob) {
@@ -160,10 +185,11 @@ function EditProfileModal({isOpen, onClose}) {
             setPasswordConfirm("");
             setIsNewImageSelected(false);
 
+            onClose();
+
         } catch (err) {
             console.error("Update error:", err);
             const msg = err?.response?.data || err.message || "Błąd podczas zapisu";
-            // Jeśli backend zwraca obiekt błędu, spróbuj go wyświetlić
             setErrors({general: typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg))});
         } finally {
             setLoading(false);
@@ -179,7 +205,6 @@ function EditProfileModal({isOpen, onClose}) {
 
                 <form className="edit-form" onSubmit={handleSave}>
 
-                    {/* ===== KONTENER DLA 2 KOLUMN ===== */}
                     <div className="form-layout-container">
 
                         {/* ===== KOLUMNA LEWA (Zdjęcie i Bio) ===== */}
@@ -203,15 +228,21 @@ function EditProfileModal({isOpen, onClose}) {
                                 </button>
                             </div>
 
-                            {/* Cropper (tak jak w AddSongModal) */}
                             <div className="cropper-container">
-                                <ReactCrop
-                                    crop={crop}
-                                    onChange={c => setCrop(c)}
-                                    aspect={1}
-                                >
-                                    <img ref={imgRef} src={imgSrc || defaultAvatar} alt="Podgląd awatara"/>
-                                </ReactCrop>
+                                {imgSrc && (
+                                    <ReactCrop
+                                        crop={crop}
+                                        onChange={c => setCrop(c)}
+                                        aspect={1}
+                                    >
+                                        <img
+                                            ref={imgRef}
+                                            src={imgSrc}
+                                            alt="Podgląd awatara"
+                                            onLoad={onImageLoad}
+                                        />
+                                    </ReactCrop>
+                                )}
                             </div>
 
                             <label htmlFor="bio">Bio</label>
@@ -219,15 +250,24 @@ function EditProfileModal({isOpen, onClose}) {
                                 id="bio"
                                 rows="4"
                                 value={bio}
-                                onChange={(e) => setBio(e.target.value)}/>
-
+                                onChange={handleBioChange}
+                                maxLength={1000}
+                            />
+                            {/* Licznik znaków */}
+                            <div style={{ textAlign: 'right', fontSize: '0.8rem', color: bio.length >= 1000 ? '#e74c3c' : '#888' }}>
+                                {bio.length}/1000
+                            </div>
                         </div>
 
                         {/* ===== KOLUMNA PRAWA (Dane) ===== */}
                         <div className="form-column-right">
                             <label htmlFor="username">Nazwa użytkownika</label>
-                            <label htmlFor="username">Nazwa użytkownika</label>
-                            <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+                            <input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                            />
                             {errors.username && <div className="field-error">{errors.username}</div>}
 
                             <label htmlFor="email">Zmień e-mail</label>
