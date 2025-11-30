@@ -126,7 +126,7 @@ function ProfilePage() {
                                     <MediaCard
                                         key={song.id}
                                         linkTo={`/song/${song.id}`}
-                                        imageUrl={getCoverUrl(song.id)}
+                                        imageUrl={getImageUrl(song.coverStorageKeyId)}
                                         title={song.title}
                                         subtitle={`${new Date(song.createdAt).getFullYear()} • Utwór`}
                                         data={song}
@@ -151,7 +151,7 @@ function ProfilePage() {
                                         linkTo={`/album/${album.id}`}
 
                                         // Tymczasowo domyślny obrazek, skoro nie ruszamy backendu
-                                        imageUrl={defaultAvatar}
+                                        imageUrl={getImageUrl(album.coverStorageKeyId)}
 
                                         title={album.title}
                                         subtitle={`${new Date(album.createdAt).getFullYear()} • Album`}
