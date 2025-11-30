@@ -22,6 +22,7 @@ function EditProfileModal({isOpen, onClose}) {
 
     const [imgSrc, setImgSrc] = useState(currentUser?.avatar || defaultAvatar);
     const [crop, setCrop] = useState();
+    const [isNewImageSelected, setIsNewImageSelected] = useState(false);
     const imgRef = useRef(null);
 
     useEffect(() => {
@@ -35,6 +36,7 @@ function EditProfileModal({isOpen, onClose}) {
 
             setImgSrc(currentUser?.avatarUrl ?? defaultAvatar); // przyjmujemy pole avatarUrl w DTO
             setCrop(centerCrop(makeAspectCrop({unit: '%', width: 90}, 1, 100, 100), 100, 100));
+            setIsNewImageSelected(false);
             setErrors({});
             setSuccessMessage("");
         }
@@ -47,11 +49,46 @@ function EditProfileModal({isOpen, onClose}) {
     const validateEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
     // --- FUNKCJE DLA OBRAZKA ---
+    const getCroppedImg = (image, crop) => {
+        const canvas = document.createElement('canvas');
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+
+        // zabezpieczenie przed zerowymi wymiarami
+        if (!crop || !crop.width || !crop.height) return null;
+
+        canvas.width = crop.width;
+        canvas.height = crop.height;
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(
+            image,
+            crop.x * scaleX,
+            crop.y * scaleY,
+            crop.width * scaleX,
+            crop.height * scaleY,
+            0,
+            0,
+            crop.width,
+            crop.height
+        );
+
+        return new Promise((resolve, reject) => {
+            canvas.toBlob(blob => {
+                if (!blob) {
+                    console.error('Canvas is empty');
+                    resolve(null);
+                    return;
+                }
+                resolve(blob);
+            }, 'image/jpeg', 0.95);
+        });
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setImgSrc('');
         const reader = new FileReader();
         reader.onload = () => {
             setImgSrc(reader.result.toString() || '');
@@ -59,6 +96,7 @@ function EditProfileModal({isOpen, onClose}) {
                 makeAspectCrop({unit: '%', width: 90}, 1, 100, 100),
                 100, 100
             ));
+            setIsNewImageSelected(true);
         };
         reader.readAsDataURL(file);
     };
@@ -69,63 +107,13 @@ function EditProfileModal({isOpen, onClose}) {
         if (input) input.value = null;
     };
 
-    // todo: zintegrowac z backendem avatarimage
-    // const getCroppedImgBlob = async (imageEl, cropObj) => {
-    //     if (!cropObj || !imageEl) return null;
-    //
-    //     const canvas = document.createElement('canvas');
-    //     const scaleX = imageEl.naturalWidth / imageEl.width;
-    //     const scaleY = imageEl.naturalHeight / imageEl.height;
-    //
-    //     const pixelCrop = {
-    //         x: cropObj.x * scaleX,
-    //         y: cropObj.y * scaleY,
-    //         width: (cropObj.width ?? 0) * scaleX,
-    //         height: (cropObj.height ?? 0) * scaleY,
-    //     };
-    //
-    //     canvas.width = pixelCrop.width;
-    //     canvas.height = pixelCrop.height;
-    //     const ctx = canvas.getContext('2d');
-    //
-    //     ctx.drawImage(
-    //         imageEl,
-    //         pixelCrop.x,
-    //         pixelCrop.y,
-    //         pixelCrop.width,
-    //         pixelCrop.height,
-    //         0,
-    //         0,
-    //         pixelCrop.width,
-    //         pixelCrop.height
-    //     );
-    //
-    //     return await new Promise((resolve) => {
-    //         canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
-    //     });
-    // };
-
-    // const uploadAvatar = async () => {
-    //     if (!imgRef.current || !crop) return null;
-    //     const blob = await getCroppedImgBlob(imgRef.current, crop);
-    //     if (!blob) return null;
-    //
-    //     const fd = new FormData();
-    //     fd.append("avatar", blob, "avatar.jpg");
-    //
-    //
-    //     const res = await api.post("/users/me/avatar", fd, {
-    //         headers: { "Content-Type": "multipart/form-data" },
-    //     });
-    //     return res;
-    // };
 
     const handleSave = async (e) => {
         e.preventDefault();
         setErrors({});
         setSuccessMessage("");
 
-        // podstawowa walidacja
+        // walidacja
         const newErr = {};
         if (!username || username.length < 3 || username.length > 16) newErr.username = "Nazwa użytkownika 3-16 znaków.";
         if (!validateEmail(email)) newErr.email = "Nieprawidłowy email.";
@@ -139,30 +127,43 @@ function EditProfileModal({isOpen, onClose}) {
 
         setLoading(true);
         try {
-            // DTO: { username, email, password, bio, sex }
-            const payload = {
-                username,
-                email,
-                password: password || null,
-                bio,
-                sex
-            };
+            // DTO: { username, email, password, bio, sex, avatarImageFile }
+            const formData = new FormData();
 
-            await api.put("/users/me", payload);
-            // opcjonalnie upload avatara jeśli użytkownik wybrał nowy obraz
-            // const avatarResp = await uploadAvatar(); // odkomentuj jeśli backend obsługuje endpoint
+            formData.append("username", username);
+            formData.append("email", email);
+            formData.append("bio", bio);
+            formData.append("sex", sex);
 
-            // odśwież aktualnego usera w kontekście
+            if (password) {
+                formData.append("password", password);
+            }
+
+            // Obsługa zdjęcia
+            if (isNewImageSelected && imgRef.current && crop) {
+                const blob = await getCroppedImg(imgRef.current, crop);
+                if (blob) {
+                    formData.append("avatarImageFile", blob, "avatar.jpg");
+                }
+            }
+
+            await api.put("/users/me", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
             await fetchCurrentUser();
 
             setSuccessMessage("Profil zaktualizowany pomyślnie.");
             setPassword("");
             setPasswordConfirm("");
-            // zamknij modal po krótkim delay lub natychmiast:
-            // onClose();
+            setIsNewImageSelected(false);
+
         } catch (err) {
+            console.error("Update error:", err);
             const msg = err?.response?.data || err.message || "Błąd podczas zapisu";
-            // spróbuj sparsować message
+            // Jeśli backend zwraca obiekt błędu, spróbuj go wyświetlić
             setErrors({general: typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg))});
         } finally {
             setLoading(false);
