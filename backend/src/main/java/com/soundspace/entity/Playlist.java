@@ -11,6 +11,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "playlists")
+@Getter
 public class Playlist {
 
     @Id
@@ -25,8 +26,7 @@ public class Playlist {
     private AppUser creator;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Visibility visibility;
+    private Boolean publiclyVisible;
 
     @Setter
     @Column(name = "created_at", nullable = false)
@@ -44,6 +44,11 @@ public class Playlist {
     )
     @OrderBy("position ASC")
     private List<PlaylistEntry> songs = new ArrayList<>();
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cover_storage_key_id", nullable = false)
+    private StorageKey coverStorageKey;
 
     public void addSong(Song song) {
         PlaylistEntry entry = new PlaylistEntry();
