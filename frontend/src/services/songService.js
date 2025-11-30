@@ -24,3 +24,13 @@ export const getSongsByGenre = async (genreName) => {
     const response = await api.get(`/songs/genre/${genreName}`);
     return response.data;
 };
+
+export const getAllSongs = async () => {
+    try {
+        const response = await api.get('/songs');
+        return response.data;
+    } catch (error) {
+        console.error("Błąd pobierania wszystkich utworów:", error);
+        return [];
+    }
+};

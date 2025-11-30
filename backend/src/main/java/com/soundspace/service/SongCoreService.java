@@ -150,4 +150,12 @@ public class SongCoreService {
             throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
         }
     }
+
+    @Transactional
+    public List<SongDto> getAllSongs() {
+        return songRepository.findAll()
+                .stream()
+                .map(SongDto::toDto) // Używa Twojej metody statycznej z SongDto
+                .toList(); // lub .collect(Collectors.toList()) w starszych wersjach Javy
+    }
 }

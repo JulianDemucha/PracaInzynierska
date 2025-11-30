@@ -92,4 +92,8 @@ public class SongController {
         return ResponseEntity.ok(songCoreService.getSongsByGenre(genreName));
     }
 
+    @GetMapping
+    public ResponseEntity<List<SongDto>> getAllSongs() {
+        return ResponseEntity.ok(songCoreService.getAllSongs());
+    }
 }
