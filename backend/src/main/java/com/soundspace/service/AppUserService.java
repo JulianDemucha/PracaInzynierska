@@ -1,10 +1,13 @@
 package com.soundspace.service;
+
 import com.soundspace.dto.AppUserDto;
 import com.soundspace.dto.mapper.AppUserMapper;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.StorageKey;
 import com.soundspace.enums.Sex;
+import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.ImageProcessingException;
+import com.soundspace.exception.StorageException;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.dto.request.AppUserUpdateRequest;
 import com.soundspace.repository.StorageKeyRepository;
@@ -14,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,8 +51,7 @@ public class AppUserService {
         return appUserRepository.findById(userId).map(AppUserDto::toDto).orElseThrow();
     }
 
-    public AppUserDto getAuthenticatedUser(Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    public AppUserDto getAuthenticatedUser(UserDetails userDetails) {
 
         AppUser user = appUserRepository.findByEmail(userDetails.getUsername()) // getUsername zwraca email
                 .orElseThrow(() -> new UsernameNotFoundException(
@@ -58,10 +61,8 @@ public class AppUserService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateUser(AppUserUpdateRequest request, Authentication authentication) {
+    public ResponseEntity<?> updateUser(AppUserUpdateRequest request, UserDetails userDetails) {
         try {
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
             // user details subject to email zamiast username -> getUsername() zwraca email
             Optional<AppUser> existingUser = appUserRepository.findByEmail(userDetails.getUsername());
@@ -83,7 +84,7 @@ public class AppUserService {
                 user z nowym dostarczonym loginem juz istnieje
                 */
 
-                if(!updatedUser.getLogin().equals(request.username())) {
+                if (!updatedUser.getLogin().equals(request.username())) {
                     if (appUserRepository.existsByLogin(request.username())) {
                         throw new ResponseStatusException((HttpStatus.CONFLICT),
                                 "Nazwa użytkownika " + request.username() + " jest zajęta");
@@ -111,7 +112,7 @@ public class AppUserService {
                 updatedUser.setPasswordHash(passwordEncoder.encode(request.password()));
             }
 
-            if(request.bio() != null) {
+            if (request.bio() != null) {
                 updatedUser.setBio(request.bio());
             }
 
@@ -216,5 +217,7 @@ public class AppUserService {
     public AppUser getUserById(Long id) {
         return appUserRepository.findById(id).orElseThrow();
     }
+
+
 
 }

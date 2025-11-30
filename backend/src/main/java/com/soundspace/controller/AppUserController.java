@@ -6,7 +6,8 @@ import com.soundspace.service.AppUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,27 +22,22 @@ public class AppUserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AppUserDto> getAuthenticatedUser(Authentication authentication) {
-        if (authentication == null) {
-            return ResponseEntity.status(401).build();
-        }
-        return ResponseEntity.ok(appUserService.getAuthenticatedUser(authentication));
+    public ResponseEntity<AppUserDto> getAuthenticatedUser(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(appUserService.getAuthenticatedUser(userDetails));
     }
 
     @PutMapping(value = "/me", consumes = "multipart/form-data")
     public ResponseEntity<?> updateUser(
             @ModelAttribute @Valid AppUserUpdateRequest appUserUpdateRequest,
-            Authentication authentication
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
         //updateUser returns ResponseEntity<?>
-        return appUserService.updateUser(appUserUpdateRequest, authentication);
+        return appUserService.updateUser(appUserUpdateRequest, userDetails);
     }
 
-
-    // todo: zrobic w serwisie logike i po stronie klienta tez
 //    @DeleteMapping("/me")
-//    public ResponseEntity<?> deleteUser(Authentication authentication) {
-//        //deleteUser returns ResponseEntity<?>
-//        return appUserService.deleteUser(authentication);
+//    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+//        String email = (userDetails != null) ? userDetails.getUsername() : null;
+//        return ResponseEntity.noContent().build();
 //    }
 }
