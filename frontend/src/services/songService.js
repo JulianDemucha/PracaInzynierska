@@ -15,13 +15,6 @@ export const getUserSongs = async (userId) => {
     return response.data;
 };
 
-// todo wywalic to i uzywaj imageService
-// 3. Generowanie linku do okładki
-export const getCoverUrl = (songId) => {
-    if (!songId) return null;
-    return `${API_URL}/songs/cover/${songId}`;
-};
-
 export const deleteSong = async (songId) => {
     const response = await api.delete(`/songs/${songId}`);
     return response.data;

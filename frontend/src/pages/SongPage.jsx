@@ -3,10 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import './SongPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
-import { getSongById, getCoverUrl, deleteSong } from '../services/songService.js';
+// ZMIANA: Usunięto getCoverUrl, dodano getImageUrl z nowego serwisu
+import { getSongById, deleteSong } from '../services/songService.js';
+import { getImageUrl } from '../services/imageService.js';
 
 import defaultAvatar from '../assets/images/default-avatar.png';
+// ZMIANA: Używamy defaultAvatar jako defaultCover, jeśli importy są takie same
 import defaultCover from '../assets/images/default-avatar.png';
+
 import playIcon from '../assets/images/play.png';
 import pauseIcon from '../assets/images/pause.png';
 import heartIconOff from '../assets/images/favorites.png';
@@ -54,11 +58,13 @@ function SongPage() {
                 setLoading(true);
                 const data = await getSongById(id);
 
+                // ZMIANA: Użycie getImageUrl z coverStorageKeyId
                 const mappedSong = {
                     ...data,
-                    artist: {id: data.authorId, name: data.authorUsername},
-                    coverArtUrl: getCoverUrl(data.id),
-                    duration: "3:00",
+                    artist: { id: data.authorId, name: data.authorUsername },
+                    // Tutaj podstawiamy nowy mechanizm obrazków:
+                    coverArtUrl: getImageUrl(data.coverStorageKeyId),
+                    duration: "3:00", // Placeholder, jeśli backend nie zwraca czasu
                     comments: []
                 };
 
@@ -106,7 +112,6 @@ function SongPage() {
         setIsDeleting(true);
         try {
             await deleteSong(song.id);
-            // Po sukcesie wracamy na profil
             navigate('/profile');
         } catch (err) {
             console.error("Błąd usuwania:", err);
@@ -126,13 +131,6 @@ function SongPage() {
         addToQueue(song);
         setIsQueuedAnim(true);
         setTimeout(() => setIsQueuedAnim(false), 1500);
-    };
-
-    const handleCommentLike = (commentId) => {
-        setCommentLikes(prev => ({
-            ...prev,
-            [commentId]: !prev[commentId]
-        }));
     };
 
     // --- 4. EKRANY ŁADOWANIA I BŁĘDU ---
@@ -165,13 +163,12 @@ function SongPage() {
                     src={song.coverArtUrl}
                     alt={song.title}
                     className="song-cover-art"
-                    onError={(e) => {e.target.src = defaultCover}}
+                    onError={(e) => { e.target.src = defaultCover }}
                 />
                 <div className="song-details">
                     <span className="song-type">Singiel</span>
                     <h1>{song.title}</h1>
                     <div className="song-meta">
-                        {/* Uwaga: Backend SongDto nie ma ID autora, tylko login. Link może nie działać idealnie, dopóki nie zmienisz routingu na /artist/username */}
                         <Link to={`/artist/${song.artist.id}`} className="song-artist">{song.artist.name}</Link>
                         <span>•</span>
                         <span className="song-duration">{song.duration}</span>
@@ -183,10 +180,9 @@ function SongPage() {
                             <span key={genre} className="genre-pill">{genre}</span>
                         ))}
                     </div>
-                    {/* Status widoczności (tylko dla właściciela widoczne, ale tu pokazujemy info) */}
                     {!song.publiclyVisible && (
-                        <div style={{marginTop: '10px'}}>
-                            <span style={{border: '1px solid #666', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', color: '#aaa'}}>Prywatny</span>
+                        <div style={{ marginTop: '10px' }}>
+                            <span style={{ border: '1px solid #666', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', color: '#aaa' }}>Prywatny</span>
                         </div>
                     )}
                 </div>
@@ -227,11 +223,9 @@ function SongPage() {
                 )}
             </section>
 
-            {/* ===== SEKCJA KOMENTARZY (Placeholder, bo backend tego jeszcze nie ma) ===== */}
+            {/* ===== SEKCJA KOMENTARZY ===== */}
             <section className="comments-section">
                 <h2>Komentarze</h2>
-
-                {/* Ponieważ na razie comments to pusta tablica, zawsze wyświetli się empty-message */}
                 {song.comments.length === 0 ? (
                     <p className="empty-message">Brak komentarzy. Bądź pierwszy!</p>
                 ) : (

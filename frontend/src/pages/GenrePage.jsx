@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './GenrePage.css';
 import MediaCard from '../components/cards/MediaCard.jsx';
-import { getSongsByGenre, getCoverUrl } from '../services/songService';
+import { getSongsByGenre } from '../services/songService';
+import {getImageUrl} from "../services/imageService.js";
 
 // Limit elementów wyświetlanych w stanie zwiniętym
 const MAX_ITEMS_PER_SECTION = 7;
@@ -119,7 +120,7 @@ function GenrePage() {
                                     // Jeśli nie, zmień 'item.artist' na odpowiednie pole.
                                     subtitle={item.artist || "Nieznany artysta"}
                                     // Używamy helpera z serwisu do generowania URL okładki
-                                    imageUrl={getCoverUrl(item.id)}
+                                    imageUrl={getImageUrl(item.coverStorageKeyId)}
                                     linkTo={`/song/${item.id}`}
                                 />
                             ))}

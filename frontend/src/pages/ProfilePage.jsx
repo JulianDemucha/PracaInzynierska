@@ -11,8 +11,8 @@ import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 import MediaCard from '../components/cards/MediaCard.jsx';
 
 // Serwisy
-import { getUserSongs, getCoverUrl } from '../services/songService.js';
-import { getUserAlbums, getAlbumCoverUrl } from '../services/albumService.js';
+import { getUserSongs } from '../services/songService.js';
+import { getUserAlbums } from '../services/albumService.js';
 import {getImageUrl} from "../services/imageService.js"; // <--- NOWY IMPORT
 
 // --- DANE TESTOWE (Tylko Playlisty i Komentarze zostały jako mock) ---
@@ -151,7 +151,7 @@ function ProfilePage() {
                                         linkTo={`/album/${album.id}`}
 
                                         // Tymczasowo domyślny obrazek, skoro nie ruszamy backendu
-                                        imageUrl={getImageUrl(album.coverStorageKeyId)}
+                                        imageUrl={defaultAvatar}
 
                                         title={album.title}
                                         subtitle={`${new Date(album.createdAt).getFullYear()} • Album`}
