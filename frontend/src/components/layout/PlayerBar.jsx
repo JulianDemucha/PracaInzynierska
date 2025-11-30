@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './PlayerBar.css';
 import '../../index.css';
 import '../common/ContextMenu.css';
@@ -32,6 +32,7 @@ function formatTime(seconds) {
 }
 
 function PlayerBar() {
+    const navigate = useNavigate();
     const {
         currentSong,
         isPlaying,
@@ -40,6 +41,7 @@ function PlayerBar() {
         playSong,
         pause,
         queue,
+        removeFromQueue,
         favorites,
         toggleFavorite,
         currentTime,
@@ -61,7 +63,9 @@ function PlayerBar() {
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (queuePopupRef.current && !queuePopupRef.current.contains(event.target)) {
-                setIsQueueVisible(false);
+                if (!event.target.closest('.queue-button')) {
+                    setIsQueueVisible(false);
+                }
             }
         };
         if (isQueueVisible) {
@@ -83,14 +87,27 @@ function PlayerBar() {
         return <img src={soundIcon} alt="Sound" />;
     };
 
-    const handleRemoveFromQueue = (songId) => {
-        console.log("Usunięto piosenkę o ID:", songId);
+    const handleRemoveFromQueue = (index, e) => {
+        e.stopPropagation();
+        if (removeFromQueue) {
+            removeFromQueue(index);
+        }
     };
+
+    // Logika wyciągania danych artysty
+    const artistObj = currentSong?.artist;
+    // Jeśli artist jest obiektem, bierzemy .name, jeśli stringiem to bierzemy go bezpośrednio, fallback do "SoundSpace"
+    const artistName = (typeof artistObj === 'string' ? artistObj : artistObj?.name) || "SoundSpace";
+    // ID potrzebne do linkowania (tylko jeśli artist jest obiektem)
+    const artistId = typeof artistObj === 'object' ? artistObj?.id : null;
+    const artistLink = artistId ? `/artist/${artistId}` : '#';
 
     const playerMenuOptions = [
         {
             label: "Dodaj do polubionych",
-            onClick: () => console.log("Dodano do polubionych")
+            onClick: () => {
+                if (currentSong) toggleFavorite(currentSong.id);
+            }
         },
         {
             label: "Dodaj do kolejki",
@@ -98,11 +115,16 @@ function PlayerBar() {
         },
         {
             label: "Przejdź do artysty",
-            onClick: () => console.log("Przechodzę do artysty")
+            onClick: () => {
+                if (artistId) {
+                    navigate(artistLink);
+                } else {
+                    console.log("Brak ID artysty lub artysta nieznany");
+                }
+            }
         }
     ];
 
-    // --- 4. ZAKTUALIZOWANA FUNKCJA PLAY/PAUSE ---
     const handlePlayPauseClick = () => {
         if (!currentSong) return;
         if (isPlaying) {
@@ -120,8 +142,9 @@ function PlayerBar() {
     };
 
     const handleVolumeChange = (e) => {
-        setVolumePercent(e.target.value); // value 0..100
+        setVolumePercent(e.target.value);
     };
+
     const isCurrentSongFavorite = currentSong && favorites ? !!favorites[currentSong.id] : false;
 
     const handleFavoriteClick = () => {
@@ -131,9 +154,11 @@ function PlayerBar() {
     };
 
     const songTitle = currentSong?.title || "Wybierz utwór";
-    const artistName = (currentSong?.artist && (currentSong.artist.name || currentSong.artist)) || "SoundSpace";
-    const artistLink = `/artist/${currentSong?.artist?.id || ''}`;
     const coverArt = currentSong?.coverArtUrl || albumArtPlaceholder;
+
+    // --- OBLICZANIE PROCENTÓW DLA SUWAKÓW ---
+    const progressPercent = duration ? (currentTime / duration) * 100 : 0;
+    const volumePercent = uiVolumePercent;
 
     return (
         <footer className="player-bar">
@@ -143,7 +168,9 @@ function PlayerBar() {
                 <img src={coverArt} alt="Okładka albumu" className="player-album-art" />
                 <div className="player-song-details">
                     <span className="player-song-title">{songTitle}</span>
-                    <Link to={artistLink} className="player-artist-name">{artistName}</Link>
+                    <Link to={artistLink} className="player-artist-name">
+                        {artistName}
+                    </Link>
                 </div>
                 <button
                     className={`control-button favorite-button ${isCurrentSongFavorite ? 'active' : ''}`}
@@ -182,8 +209,7 @@ function PlayerBar() {
                         <img src={nextIcon} alt="Następny" />
                     </button>
 
-                    {/* Pasek postępu (na razie statyczny) */}
-
+                    {/* Pasek postępu */}
                     <div className="progress-bar-container">
                         <span className="time-current">{formatTime(currentTime)}</span>
                         <input
@@ -191,8 +217,12 @@ function PlayerBar() {
                             className="progress-bar"
                             min="0"
                             max="100"
-                            value={duration ? Math.round((currentTime / duration) * 100) : 0}
+                            step="0.1"
+                            value={progressPercent}
                             onChange={handleSeekChange}
+                            style={{
+                                background: `linear-gradient(to right, #8A2BE2 ${progressPercent}%, #4d4d4d ${progressPercent}%)`
+                            }}
                         />
                         <span className="time-duration">{formatTime(duration)}</span>
                     </div>
@@ -239,6 +269,8 @@ function PlayerBar() {
                 <div className="volume-icon" onClick={() => toggleMute()}>
                     {getVolumeIcon()}
                 </div>
+
+                {/* Suwak głośności */}
                 <input
                     type="range"
                     className="volume-slider"
@@ -246,8 +278,12 @@ function PlayerBar() {
                     max="100"
                     value={uiVolumePercent}
                     onChange={handleVolumeChange}
+                    style={{
+                        background: `linear-gradient(to right, #8A2BE2 ${volumePercent}%, #4d4d4d ${volumePercent}%)`
+                    }}
                 />
             </div>
+
             {isQueueVisible && (
                 <div className="queue-popup custom-scrollbar" ref={queuePopupRef}>
                     <h3 className="queue-title">Kolejka odtwarzania</h3>
@@ -257,11 +293,13 @@ function PlayerBar() {
                                 <li key={`${song.id}-${index}`} className="queue-item">
                                     <div className="queue-song-details">
                                         <span className="queue-song-title">{song.title}</span>
-                                        <span className="queue-artist-name">{song.artist?.name || song.artist}</span>
+                                        <span className="queue-artist-name">
+                                            {song.artist?.name || (typeof song.artist === 'string' ? song.artist : "Nieznany")}
+                                        </span>
                                     </div>
                                     <button
                                         className="queue-remove-button"
-                                        onClick={() => handleRemoveFromQueue(song.id)}
+                                        onClick={(e) => handleRemoveFromQueue(index, e)}
                                     >
                                         <img src={deleteIcon} alt="Delete" />
                                     </button>
