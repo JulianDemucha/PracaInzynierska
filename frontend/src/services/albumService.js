@@ -32,3 +32,13 @@ export const deleteAlbum = async (albumId) => {
     const response = await api.delete(`/albums/${albumId}`);
     return response.data;
 };
+
+export const getAllAlbums = async () => {
+    try {
+        const response = await api.get('/albums');
+        return response.data;
+    } catch (error) {
+        console.error("Błąd pobierania wszystkich albumów:", error);
+        return [];
+    }
+};
