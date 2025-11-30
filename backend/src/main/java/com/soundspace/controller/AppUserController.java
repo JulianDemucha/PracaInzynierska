@@ -34,11 +34,10 @@ public class AppUserController {
         return ResponseEntity.ok(appUserService.updateUser(appUserUpdateRequest, userDetails));
     }
 
-    /// wip
-//    @DeleteMapping("/me")
-//    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
-//        String email = (userDetails != null) ? userDetails.getUsername() : null;
-//        appUserService.deleteUser(email);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = (userDetails != null) ? userDetails.getUsername() : null;
+        appUserService.deleteUser(email);
+        return ResponseEntity.noContent().build();
+    }
 }

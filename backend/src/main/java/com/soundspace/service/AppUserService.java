@@ -205,5 +205,36 @@ public class AppUserService {
         return appUserRepository.findById(id).orElseThrow();
     }
 
+    public void deleteUser(String requesterEmail) {
+        AppUser appUser = getUserByEmail(requesterEmail);
+
+        // storageService moze rzucic IOException lub StorageException
+        try {
+            StorageKey avatarStorageKey = appUser.getAvatarStorageKey();
+            if (avatarStorageKey != null && avatarStorageKey.getKey() != null && !avatarStorageKey.getKey().isBlank()) {
+                try {
+                    storageService.delete(avatarStorageKey.getKey());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć pliku avatara z storage: {}", avatarStorageKey.getKey(), ex);
+                    throw ex;
+                }
+
+                try {
+                    storageKeyRepository.deleteById(avatarStorageKey.getId());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć rekordu storage_keys (avatar) id={}: {}", avatarStorageKey.getId(), ex.getMessage());
+                }
+            }
+
+            appUserRepository.delete(appUser);
+
+        } catch (AccessDeniedException e) {
+            log.info(e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.info("Błąd podczas usuwania pliku/storage: {}", e.getMessage());
+            throw new StorageException(e.getMessage());
+        }
+    }
 
 }
