@@ -1,38 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from "../../context/useAuth.js";
 import './Sidebar.css';
+
+import { getUserAlbums } from '../../services/albumService.js';
 
 // Importy Modali
 import AddSongModal from '../song/AddSongModal.jsx';
 import CreateAlbumModal from '../album/CreateAlbumModal.jsx';
 
+const MOCK_PLAYLISTS = [
+    { id: 101, name: "Do samochodu" },
+    { id: 102, name: "Siłownia Pump" },
+    { id: 103, name: "Sad Vibes 2024" },
+];
+
 function Sidebar() {
     const { currentUser, logout } = useAuth();
+
+    const [userAlbums, setUserAlbums] = useState([]);
+    const [userPlaylists, setUserPlaylists] = useState(MOCK_PLAYLISTS);
 
     // Stany widoczności modali
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
 
-    const [playlists, setPlaylists] = useState([
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 3, name: "Sad Vibes 2024" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-        { id: 1, name: "Do samochodu" },
-        { id: 2, name: "Siłownia Pump" },
-    ]);
+    // POBIERANIE DANYCH UŻYTKOWNIKA
+    useEffect(() => {
+        const fetchUserCollections = async () => {
+            if (currentUser?.id) {
+                try {
+                    const albumsData = await getUserAlbums(currentUser.id);
+                    setUserAlbums(albumsData);
+
+                    // TODO: fetchowanie playlist
+                    // const playlistsData = await getUserPlaylists(currentUser.id);
+                    // setUserPlaylists(playlistsData);
+
+                } catch (error) {
+                    console.error("Błąd pobierania kolekcji użytkownika:", error);
+                    setUserAlbums([]);
+                }
+            } else {
+                setUserAlbums([]);
+                setUserPlaylists(MOCK_PLAYLISTS);
+            }
+        };
+
+        fetchUserCollections();
+    }, [currentUser]);
+
+    const allCollections = [
+        ...userPlaylists,
+        ...userAlbums.map(album => ({
+            id: album.id,
+            name: album.title,
+            type: 'album'
+        }))
+    ];
+
 
     return (
         <aside className="sidebar">
@@ -44,24 +70,30 @@ function Sidebar() {
                     <NavLink to="/favorites" className="nav-link">
                         Polubione
                     </NavLink>
-                    <NavLink to="/my-songs" className="nav-link">
+                    <NavLink to={`/artist/${currentUser?.id}`} className="nav-link">
                         Moje Utwory
                     </NavLink>
                 </nav>
 
-                {/* 2. SEKCJA: PLAYLISTY */}
+                {/* 2. SEKCJA: PLAYLISTY I ALBUMY TWORCY */}
                 <nav className="nav-section">
-                    <p className="section-title">PLAYLISTY</p>
+                    <p className="section-title">PLAYLISTY I ALBUMY</p>
                     <div className="playlists-list">
-                        {playlists.map((playlist, index) => (
+                        {allCollections.map((item, index) => (
                             <NavLink
-                                key={`${playlist.id}-${index}`} // Poprawiono klucz dla powtarzających się ID
-                                to={`/playlist/${playlist.id}`}
+                                key={`${item.type || 'playlist'}-${item.id}`}
+                                to={item.type === 'album' ? `/album/${item.id}` : `/playlist/${item.id}`}
                                 className="nav-link playlist-link"
                             >
-                                # {playlist.name}
+                                # {item.name}
                             </NavLink>
                         ))}
+                        {allCollections.length === 0 && currentUser && (
+                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>Brak kolekcji.</span>
+                        )}
+                        {allCollections.length === 0 && !currentUser && (
+                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>Zaloguj się, by zobaczyć kolekcje.</span>
+                        )}
                     </div>
                 </nav>
             </div>
@@ -122,6 +154,13 @@ function Sidebar() {
                 isOpen={isCreateAlbumModalOpen}
                 onClose={() => {
                     setIsCreateAlbumModalOpen(false);
+                    if (currentUser?.id) {
+                        const fetchData = async () => {
+                            const albumsData = await getUserAlbums(currentUser.id);
+                            setUserAlbums(albumsData);
+                        };
+                        fetchData();
+                    }
                 }}
             />
         </aside>
