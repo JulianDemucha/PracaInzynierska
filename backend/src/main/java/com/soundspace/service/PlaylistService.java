@@ -116,7 +116,7 @@ public class PlaylistService {
             throw new AccessDeniedException("Brak uprawnień do edycji playlisty");
         }
 
-        if(playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId).orElse(null) != null)
+        if(playlistEntryRepository.existsBySongIdAndPlaylistId(songId, playlistId))
             throw new IllegalArgumentException("Piosenka już istnieje w albumie");
 
         // rzuci wyjatek jak piosenka nie istnieje, wiec nie potrzeba ponownej walidacji
