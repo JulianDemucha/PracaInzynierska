@@ -27,7 +27,7 @@ public class SongCoreService {
     private final StorageService storageService;
     private final StorageKeyRepository storageKeyRepository;
 
-    private static final Long DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID = 6767L;
+    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
     private static final Long DEFAULT_AUDIO_STORAGE_KEY_ID = 5000L;
 
     public Song getSongById(Long id) {
@@ -99,7 +99,7 @@ public class SongCoreService {
         // storageService moze rzucic IOException lub StorageException
         try {
             StorageKey audioKey = song.getAudioStorageKey();
-            if (audioKey != null && audioKey.getId() != 5000L && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
+            if (audioKey != null && !audioKey.getId().equals(DEFAULT_AUDIO_STORAGE_KEY_ID) && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
                 try {
                     storageService.delete(audioKey.getKey());
                 } catch (Exception ex) {
@@ -110,12 +110,12 @@ public class SongCoreService {
                 try {
                     storageKeyRepository.deleteById(audioKey.getId());
                 } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć rekordu storage_keys (audio) id={}: {}", audioKey.getId(), ex.getMessage());
+                    log.warn("Nie udało się usunąć rekordu storage_keys (song audio) id={}: {}", audioKey.getId(), ex.getMessage());
                 }
             }
 
             StorageKey coverKey = song.getCoverStorageKey();
-            if (coverKey != null && coverKey.getId() != 6767L && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
                 } catch (Exception ex) {
@@ -125,7 +125,7 @@ public class SongCoreService {
                 try {
                     storageKeyRepository.deleteById(coverKey.getId());
                 } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć rekordu storage_keys (cover) id={}: {}", coverKey.getId(), ex.getMessage());
+                    log.warn("Nie udało się usunąć rekordu storage_keys (song cover) id={}: {}", coverKey.getId(), ex.getMessage());
                 }
             }
 
@@ -139,6 +139,7 @@ public class SongCoreService {
             throw new StorageException(e.getMessage());
         }
     }
+
     public List<SongDto> getSongsByGenre(String genreName) {
         try {
             Genre genre = Genre.valueOf(genreName.toUpperCase().trim());

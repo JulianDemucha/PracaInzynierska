@@ -1,6 +1,7 @@
 package com.soundspace.service;
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.ProcessedImage;
+import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
@@ -45,6 +46,8 @@ public class AlbumService {
     private static final int COVER_WIDTH = 1200;
     private static final int COVER_HEIGHT = 1200;
     private static final double COVER_QUALITY = 0.85;
+
+    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
 
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
@@ -160,7 +163,36 @@ public class AlbumService {
                 .equals(album.getAuthor().getId()))
             throw new AccessDeniedException("Brak uprawnień");
 
-        songRepository.deleteSongsByAlbumId(albumId);
+        List<SongProjection> albumSongs = songRepository.findSongsByAlbumNative(albumId);
+        for(SongProjection song : albumSongs){
+            songCoreService.deleteSongById(song.getId(), userEmail);
+        }
+
+        try {
+            StorageKey coverKey = album.getCoverStorageKey();
+            if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+                try {
+                    storageService.delete(coverKey.getKey());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć pliku cover z storage: {}", coverKey.getKey(), ex);
+                    throw ex;
+                }
+                try {
+                    storageKeyRepository.deleteById(coverKey.getId());
+                } catch (Exception ex) {
+                    log.warn("Nie udało się usunąć rekordu storage_keys (album cover) id={}: {}", coverKey.getId(), ex.getMessage());
+                }
+            }
+
+
+        } catch (AccessDeniedException e) {
+            log.info(e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.info("Błąd podczas usuwania pliku/storage: {}", e.getMessage());
+            throw new StorageException(e.getMessage());
+        }
+
         albumRepository.delete(album);
     }
 
