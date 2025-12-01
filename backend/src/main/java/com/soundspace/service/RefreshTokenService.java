@@ -8,9 +8,11 @@ import com.soundspace.dto.RefreshTokenCookieDto;
 import com.soundspace.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -82,7 +84,7 @@ public class RefreshTokenService {
     public RefreshToken getRefreshTokenByToken(String token){
         return refreshTokenRepository.findByTokenHash(
                 DigestUtils.sha256Hex(token)
-        ).orElseThrow();
+        ).orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid Refresh Token"));
     }
 
     @Transactional
