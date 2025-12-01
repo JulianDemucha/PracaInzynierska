@@ -12,17 +12,16 @@ import { getImageUrl } from '../services/imageService.js';
 
 import ContextMenu from '../components/common/ContextMenu.jsx';
 
-// --- PLACEHOLDERY DLA OBRAZKÓW ---
-const defaultCover = "https://via.placeholder.com/300?text=Default";
-const binIcon = "https://img.icons8.com/ios/50/ffffff/trash.png";
-const playIcon = "https://img.icons8.com/ios-filled/50/ffffff/play--v1.png";
-const pauseIcon = "https://img.icons8.com/ios-filled/50/ffffff/pause--v1.png";
-const heartIconOff = "https://img.icons8.com/ios/50/ffffff/like--v1.png";
-const heartIconOn = "https://img.icons8.com/ios-filled/50/1db954/like--v1.png";
-const likeIcon = "https://img.icons8.com/ios/50/ffffff/thumbs-up.png";
-const likeIconOn = "https://img.icons8.com/ios-filled/50/ffffff/thumbs-up.png";
-const dislikeIcon = "https://img.icons8.com/ios/50/ffffff/thumbs-down.png";
-const dislikeIconOn = "https://img.icons8.com/ios-filled/50/ffffff/thumbs-down.png";
+import binIcon from '../assets/images/bin.png';
+import defaultCover from '../assets/images/default-avatar.png';
+import playIcon from '../assets/images/play.png';
+import pauseIcon from '../assets/images/pause.png';
+import heartIconOff from '../assets/images/favorites.png';
+import heartIconOn from '../assets/images/favoritesOn.png';
+import likeIcon from '../assets/images/like.png';
+import likeIconOn from '../assets/images/likeOn.png';
+import dislikeIcon from '../assets/images/disLike.png';
+import dislikeIconOn from '../assets/images/disLikeOn.png';
 
 // Pomocnicza funkcja formatowania czasu
 function formatTime(seconds) {
@@ -91,11 +90,7 @@ function CollectionPage() {
     // OBLICZANIE UNIKALNYCH GATUNKÓW Z PIOSENEK
     const albumGenres = useMemo(() => {
         if (!songs || songs.length === 0) return [];
-
-        // Zbieramy wszystkie gatunki ze wszystkich piosenek w jedną tablicę
         const allGenres = songs.flatMap(song => song.genres || []);
-
-        // Usuwamy duplikaty używając Set
         return [...new Set(allGenres)];
     }, [songs]);
 
@@ -169,7 +164,6 @@ function CollectionPage() {
                         <span className="song-duration">{songs.length} utworów</span>
                     </div>
 
-                    {/* ZMIANA: Zamiast opisu wyświetlamy gatunki */}
                     <div className="genre-tags">
                         {albumGenres.length > 0 ? (
                             albumGenres.map(genre => (
@@ -182,12 +176,27 @@ function CollectionPage() {
                                 </Link>
                             ))
                         ) : (
-                            // Opcjonalnie: Jeśli brak gatunków, można wyświetlić opis jako fallback
                             collection.description && (
                                 <p style={{color:'#aaa', fontSize:'0.9rem', margin: 0}}>{collection.description}</p>
                             )
                         )}
                     </div>
+
+                    {/* --- NOWOŚĆ: Kafelek "Prywatny" (taki sam jak w SongPage) --- */}
+                    {!collection.publiclyVisible && (
+                        <div style={{ marginTop: '10px' }}>
+                            <span style={{
+                                border: '1px solid #666',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                color: '#aaa',
+                                textTransform: 'uppercase'
+                            }}>
+                                Prywatny
+                            </span>
+                        </div>
+                    )}
 
                 </div>
             </header>

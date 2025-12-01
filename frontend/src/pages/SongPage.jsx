@@ -181,7 +181,12 @@ function SongPage() {
                     </div>
                     {!song.publiclyVisible && (
                         <div style={{ marginTop: '10px' }}>
-                            <span style={{ border: '1px solid #666', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', color: '#aaa' }}>Prywatny</span>
+                            <span style={{ border: '1px solid #666',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                color: '#aaa',
+                                textTransform: 'uppercase' }}>Prywatny</span>
                         </div>
                     )}
                 </div>
