@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class Song {
     @JoinColumn(name = "album_id")
     private Album album;
 
+    @BatchSize(size = 50)
     @Size(max = 3)
     @ElementCollection(targetClass = Genre.class)
     @Enumerated(EnumType.STRING)

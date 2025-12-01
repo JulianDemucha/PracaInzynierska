@@ -4,7 +4,6 @@ import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -50,9 +49,16 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """, nativeQuery = true)
     List<SongProjection> findSongsByAlbumNative(@Param("albumId") Long albumId);
 
-    @Modifying
-    @Query("DELETE FROM Song s WHERE s.album.id = :albumId")
-    void deleteSongsByAlbumId(@Param("albumId") Long albumId);
+
+    @Query(value = """
+            SELECT DISTINCT s FROM Song s
+            LEFT JOIN FETCH s.author
+            LEFT JOIN FETCH s.coverStorageKey
+            LEFT JOIN FETCH s.audioStorageKey
+            LEFT JOIN FETCH s.album
+            WHERE s.publiclyVisible = true
+            """)
+    List<Song> findAllWithDetails();
 
     @Query("SELECT s FROM Song s JOIN s.genres g WHERE g = :genre")
     List<Song> findAllByGenre(@Param("genre") Genre genre);
