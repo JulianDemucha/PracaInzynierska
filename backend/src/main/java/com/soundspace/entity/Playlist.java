@@ -12,6 +12,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "playlists")
 @Getter
+@Setter
 public class Playlist {
 
     @Id

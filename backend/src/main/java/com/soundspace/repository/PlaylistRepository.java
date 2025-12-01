@@ -10,5 +10,5 @@ public interface PlaylistRepository extends Repository<Playlist, Long> {
     List<Playlist> findAllByOrderByIdAsc();
     Playlist findById(long id);
 
-    void save(Playlist playlist);
+    Playlist save(Playlist playlist);
 }
