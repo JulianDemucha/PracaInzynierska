@@ -1,6 +1,7 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.PlaylistDto;
+import com.soundspace.dto.PlaylistSongViewDto;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.request.CreatePlaylistRequest;
 import com.soundspace.entity.*;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 
     /*
     todo:
@@ -53,6 +55,11 @@ public class PlaylistService {
 //    public List<PlaylistDto> getAllPlaylists() {
 //        return playlistRepository.findAllByOrderByIdAsc();
 //    }
+
+    public List<PlaylistSongViewDto> getPlaylistSongs(Long playlistId) {
+        return playlistEntryRepository.findAllSongsInPlaylist(playlistId)
+                .stream().map(PlaylistSongViewDto::toDto).toList();
+    }
 
     @Transactional
     public PlaylistDto createPlaylist(CreatePlaylistRequest request, String userEmail) {
