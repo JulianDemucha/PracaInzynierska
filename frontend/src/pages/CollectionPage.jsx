@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import './CollectionPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
@@ -6,24 +6,31 @@ import { useAuth } from '../context/useAuth.js';
 import {
     getAlbumById,
     getSongsByAlbumId,
-    getAlbumCoverUrl,
     deleteAlbum
 } from '../services/albumService.js';
-import binIcon from '../assets/images/bin.png';
-
-// import { getCoverUrl } from '../services/songService.js'; // Helper do okładki piosenki (jeśli potrzebny)
-
-import defaultCover from '../assets/images/default-avatar.png';
-import playIcon from '../assets/images/play.png';
-import pauseIcon from '../assets/images/pause.png';
-import heartIconOff from '../assets/images/favorites.png';
-import heartIconOn from '../assets/images/favoritesOn.png';
-import likeIcon from '../assets/images/like.png';
-import likeIconOn from '../assets/images/likeOn.png';
-import dislikeIcon from '../assets/images/disLike.png';
-import dislikeIconOn from '../assets/images/disLikeOn.png';
+import { getImageUrl } from '../services/imageService.js';
 
 import ContextMenu from '../components/common/ContextMenu.jsx';
+
+// --- PLACEHOLDERY DLA OBRAZKÓW ---
+const defaultCover = "https://via.placeholder.com/300?text=Default";
+const binIcon = "https://img.icons8.com/ios/50/ffffff/trash.png";
+const playIcon = "https://img.icons8.com/ios-filled/50/ffffff/play--v1.png";
+const pauseIcon = "https://img.icons8.com/ios-filled/50/ffffff/pause--v1.png";
+const heartIconOff = "https://img.icons8.com/ios/50/ffffff/like--v1.png";
+const heartIconOn = "https://img.icons8.com/ios-filled/50/1db954/like--v1.png";
+const likeIcon = "https://img.icons8.com/ios/50/ffffff/thumbs-up.png";
+const likeIconOn = "https://img.icons8.com/ios-filled/50/ffffff/thumbs-up.png";
+const dislikeIcon = "https://img.icons8.com/ios/50/ffffff/thumbs-down.png";
+const dislikeIconOn = "https://img.icons8.com/ios-filled/50/ffffff/thumbs-down.png";
+
+// Pomocnicza funkcja formatowania czasu
+function formatTime(seconds) {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 function CollectionPage() {
     const { id } = useParams();
@@ -59,15 +66,12 @@ function CollectionPage() {
                     getSongsByAlbumId(id)
                 ]);
 
-                // Backend w SongDto zwraca authorUsername, ale nie obiekt artist.
-                // Musimy to zmapować, żeby pasowało do playera i widoku.
+                // Mapujemy piosenki
                 const mappedSongs = songsData.map(s => ({
                     ...s,
-                    // Mapujemy strukturę dla Playera
                     artist: { id: s.authorId, name: s.authorUsername || "Nieznany" },
-                    coverArtUrl: getAlbumCoverUrl(id), // Piosenki z albumu mają okładkę albumu!
-                    // Jeśli chcesz, żeby piosenka miała własną okładkę (z uploadu), użyj: getCoverUrl(s.id)
-                    duration: "3:00" // Backend na razie nie zwraca czasu, dajemy placeholder
+                    coverArtUrl: getImageUrl(albumData.coverStorageKeyId),
+                    duration: s.duration || 0
                 }));
 
                 setCollection(albumData);
@@ -84,13 +88,24 @@ function CollectionPage() {
         fetchData();
     }, [id]);
 
+    // OBLICZANIE UNIKALNYCH GATUNKÓW Z PIOSENEK
+    const albumGenres = useMemo(() => {
+        if (!songs || songs.length === 0) return [];
+
+        // Zbieramy wszystkie gatunki ze wszystkich piosenek w jedną tablicę
+        const allGenres = songs.flatMap(song => song.genres || []);
+
+        // Usuwamy duplikaty używając Set
+        return [...new Set(allGenres)];
+    }, [songs]);
+
     const handleDeleteClick = () => setIsDeleteModalOpen(true);
 
     const confirmDelete = async () => {
         setIsDeleting(true);
         try {
             await deleteAlbum(collection.id);
-            navigate('/profile'); // Wracamy na profil po usunięciu
+            navigate('/profile');
         } catch (err) {
             console.error("Błąd usuwania albumu:", err);
             alert("Nie udało się usunąć albumu.");
@@ -112,7 +127,6 @@ function CollectionPage() {
         if (currentSong?.id === firstSong.id) {
             if (isPlaying) pause(); else playSong(firstSong);
         } else {
-            // Gramy pierwszą, a reszta idzie do kolejki contextu
             playSong(firstSong, songs);
         }
     };
@@ -121,7 +135,7 @@ function CollectionPage() {
         if (currentSong?.id === song.id) {
             if (isPlaying) pause(); else playSong(song);
         } else {
-            playSong(song, songs); // Puszczamy piosenkę, a reszta albumu jako kontekst
+            playSong(song, songs);
         }
     };
 
@@ -137,7 +151,7 @@ function CollectionPage() {
             {/* --- NAGŁÓWEK --- */}
             <header className="song-header">
                 <img
-                    src={getAlbumCoverUrl(collection.id)}
+                    src={getImageUrl(collection.coverStorageKeyId)}
                     alt={collection.title}
                     className="song-cover-art"
                     onError={(e) => {e.target.src = defaultCover}}
@@ -146,7 +160,6 @@ function CollectionPage() {
                     <span className="song-type">ALBUM</span>
                     <h1>{collection.title}</h1>
                     <div className="song-meta">
-                        {/* Link do autora - backend zwraca authorId w DTO albumu */}
                         <Link to={`/artist/${collection.authorId}`} className="song-artist">
                             {collection.authorName}
                         </Link>
@@ -155,7 +168,27 @@ function CollectionPage() {
                         <span>•</span>
                         <span className="song-duration">{songs.length} utworów</span>
                     </div>
-                    <p style={{color:'#aaa', marginTop:'10px', fontSize:'0.9rem'}}>{collection.description}</p>
+
+                    {/* ZMIANA: Zamiast opisu wyświetlamy gatunki */}
+                    <div className="genre-tags">
+                        {albumGenres.length > 0 ? (
+                            albumGenres.map(genre => (
+                                <Link
+                                    key={genre}
+                                    to={`/genre/${genre}`}
+                                    className="genre-pill"
+                                >
+                                    {genre}
+                                </Link>
+                            ))
+                        ) : (
+                            // Opcjonalnie: Jeśli brak gatunków, można wyświetlić opis jako fallback
+                            collection.description && (
+                                <p style={{color:'#aaa', fontSize:'0.9rem', margin: 0}}>{collection.description}</p>
+                            )
+                        )}
+                    </div>
+
                 </div>
             </header>
 
@@ -182,6 +215,7 @@ function CollectionPage() {
                     <span className="song-header-title">TYTUŁ</span>
                     <span className="song-header-actions"></span>
                     <span className="song-header-duration">CZAS</span>
+                    <span style={{width:'40px'}}></span>
                 </div>
 
                 <ul className="song-list">
@@ -229,7 +263,7 @@ function CollectionPage() {
                                     </button>
                                 </div>
 
-                                <span className="song-item-duration">{song.duration}</span>
+                                <span className="song-item-duration">{formatTime(song.duration)}</span>
                                 <div className="song-context-menu-wrapper">
                                     <ContextMenu options={songMenuOptions} />
                                 </div>

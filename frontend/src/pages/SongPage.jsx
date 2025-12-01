@@ -160,7 +160,7 @@ function SongPage() {
                     onError={(e) => { e.target.src = defaultCover }}
                 />
                 <div className="song-details">
-                    <span className="song-type">Singiel</span>
+                    <span className="song-type">Utwór</span>
                     <h1>{song.title}</h1>
                     <div className="song-meta">
                         <Link to={`/artist/${song.artist.id}`} className="song-artist">{song.artist.name}</Link>
