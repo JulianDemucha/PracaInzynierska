@@ -37,18 +37,40 @@ public interface PlaylistEntryRepository extends Repository<PlaylistEntry, Long>
             """, nativeQuery = true)
     List<PlaylistSongProjection> findAllSongsInPlaylist(@Param("playlistId") Long playlistId);
 
-    @Modifying
-    @Query(value = """
-        UPDATE playlist_entries pe
-        SET position = pe.position - 1
-        FROM playlist_entries ref
-        WHERE pe.playlist_id = ref.playlist_id
-          AND ref.song_id = :songId
-          AND pe.position > ref.position
-        """, nativeQuery = true)
-    void decrementPositionsForSongRemoval(@Param("songId") Long songId);
 
+    // usuwa piosenke ze wszystkich playlsit w ktorych ta piosenka jest
     @Modifying
     @Query("DELETE FROM PlaylistEntry pe WHERE pe.song.id = :songId")
     void deleteAllBySongId(@Param("songId") Long songId);
+
+    ////////////////////////////// BULK DELETE USERA //////////////////////////////
+
+    // zwraca liste potrzebna do wywolania renumberPlaylists
+    @Query("""
+        SELECT DISTINCT pe.playlist.id
+        FROM PlaylistEntry pe
+        WHERE pe.song.author.id = :userId
+          AND pe.playlist.creator.id != :userId
+    """)
+    List<Long> findPlaylistIdsToRepair(@Param("userId") Long userId);
+
+    // - usuwa kazda piosenke danego usera ze wszystkich playlsit w ktorych ta piosenka jest
+    // - usuwa tez wszystkie piosenki z jego playlist
+    @Modifying
+    @Query("DELETE FROM PlaylistEntry pe WHERE pe.song.author.id = :userId OR pe.playlist.creator.id = :userId")
+    void deleteEntriesBySongAuthorId(@Param("userId") Long userId);
+
+    // renumber playlist z ktorych usunieto piosenki i maja dziury cn
+    @Modifying
+    @Query(value = """
+        UPDATE playlist_entries pe
+        SET position = new_ranking.rn - 1
+        FROM (
+            SELECT id, ROW_NUMBER() OVER (PARTITION BY playlist_id ORDER BY position ASC) as rn
+            FROM playlist_entries
+            WHERE playlist_id IN :playlistIds
+        ) new_ranking
+        WHERE pe.id = new_ranking.id
+    """, nativeQuery = true)
+    void renumberPlaylists(@Param("playlistIds") List<Long> playlistIds);
 }

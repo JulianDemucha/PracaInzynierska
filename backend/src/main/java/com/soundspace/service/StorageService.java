@@ -4,16 +4,20 @@ import com.soundspace.entity.StorageKey;
 import com.soundspace.exception.StorageException;
 import com.soundspace.exception.StorageFileNotFoundException;
 import com.soundspace.repository.StorageKeyRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class StorageService {
 
     private final Path rootPath;
@@ -83,6 +87,34 @@ public class StorageService {
                 () -> new StorageFileNotFoundException("Nie znaleziono pliku o storageKeyId: " + storageKeyId)
         );
 
+    }
+
+    public void deleteAllUserFiles(Long userId) {
+        // lokalizacje w ktorych znajduja sie foldery do usuniecia
+        List<String> userDirectories = List.of(
+                "users/avatars",
+                "albums/covers",
+                "playlists/covers",
+                "songs/covers",
+                "songs/audio"
+        );
+
+        for (String dir : userDirectories) {
+            try {
+                // np data/users/avatars/{id usera}
+                Path userDir = rootPath.resolve(dir).resolve(String.valueOf(userId)).normalize();
+
+                // FileSystemUtils.deleteRecursively usuwa folder razem z zawartością (rm -rf)
+
+                boolean deleted = FileSystemUtils.deleteRecursively(userDir);
+
+                if (deleted) {
+                     log.debug("Usunięto folder: {}", userDir);
+                }
+            } catch (IOException e) {
+                log.warn("Nie udało się usunąć folderu usera: {}", dir, e);
+            }
+        }
     }
 
 }

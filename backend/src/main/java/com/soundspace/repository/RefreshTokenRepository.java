@@ -1,6 +1,5 @@
 package com.soundspace.repository;
 
-import com.soundspace.entity.AppUser;
 import com.soundspace.entity.RefreshToken;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,5 +18,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Query("delete from RefreshToken t where t.revoked = true and t.revokedAt < :cutoff")
     int deleteRevokedBeforeCutoff(@Param("cutoff") Instant cutoff);
 
-    void deleteAllByAppUserId(Long appUserId);
+    @Modifying
+    @Query("DELETE FROM RefreshToken t WHERE t.appUser.id = :appUserId")
+    void deleteAllByAppUserId(@Param("appUserId") Long appUserId);
 }

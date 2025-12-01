@@ -4,6 +4,7 @@ import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -62,4 +63,10 @@ public interface SongRepository extends JpaRepository<Song, Long> {
 
     @Query("SELECT s FROM Song s JOIN s.genres g WHERE g = :genre")
     List<Song> findAllByGenre(@Param("genre") Genre genre);
+
+    /// bulk delete wszystkich songow nalezacych do usera - do bulk delete calego usera.
+    /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow piosenek
+    @Modifying
+    @Query("DELETE FROM Song s WHERE s.author.id = :userId")
+    void deleteAllByAuthorId(@Param("userId") Long userId);
 }

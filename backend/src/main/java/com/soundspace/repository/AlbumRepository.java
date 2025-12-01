@@ -2,6 +2,7 @@ package com.soundspace.repository;
 
 import com.soundspace.entity.Album;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,4 +27,11 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             WHERE a.publiclyVisible = true
             """)
     List<Album> findAllWithDetails();
+
+    /// bulk delete wszystkich albumow nalezacych do usera - do bulk delete calego usera.
+    /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow albumow, ani piosenek,
+    /// ktore na te albumy wskazuja
+    @Modifying
+    @Query("DELETE FROM Album a WHERE a.author.id = :userId")
+    void deleteAllByAuthorId(@Param("userId") Long userId);
 }

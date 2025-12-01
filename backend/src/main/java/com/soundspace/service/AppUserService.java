@@ -1,19 +1,16 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.AppUserDto;
-import com.soundspace.dto.projection.SongProjection;
-import com.soundspace.entity.Album;
-import com.soundspace.entity.AppUser;
-import com.soundspace.entity.StorageKey;
+import com.soundspace.entity.*;
 import com.soundspace.enums.Sex;
-import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
 import com.soundspace.repository.*;
 import com.soundspace.dto.request.AppUserUpdateRequest;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +25,7 @@ import java.nio.file.Path;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AppUserService {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -44,30 +42,8 @@ public class AppUserService {
     private static final double AVATAR_QUALITY = 0.80;
     private final AlbumRepository albumRepository;
     private final SongRepository songRepository;
-    private final AlbumService albumService;
-    private final SongCoreService songCoreService;
-
-    public AppUserService(AppUserRepository appUserRepository,
-                          PasswordEncoder passwordEncoder,
-                          StorageService storageService,
-                          ImageService imageService,
-                          StorageKeyRepository storageKeyRepository,
-                          AlbumRepository albumRepository,
-                          SongRepository songRepository,
-                          @Lazy AlbumService albumService,
-                          @Lazy SongCoreService songCoreService,
-                          RefreshTokenRepository refreshTokenRepository) {
-        this.appUserRepository = appUserRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.storageService = storageService;
-        this.imageService = imageService;
-        this.storageKeyRepository = storageKeyRepository;
-        this.albumRepository = albumRepository;
-        this.songRepository = songRepository;
-        this.albumService = albumService;
-        this.songCoreService = songCoreService;
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
+    private final PlaylistEntryRepository playlistEntryRepository;
+    private final PlaylistRepository playlistRepository;
 
     public AppUserDto getAppUser(Long userId) {
         return appUserRepository.findById(userId).map(AppUserDto::toDto).orElseThrow();
@@ -233,48 +209,55 @@ public class AppUserService {
         return appUserRepository.findById(id).orElseThrow();
     }
 
+    // BULK DELETE -> 13 zapytań do bazy (jedno leci na komentarze, ktore prawdopodobnie zostana calkiem usuniete)
     @Transactional
     public void deleteUser(String requesterEmail) {
         AppUser appUser = getUserByEmail(requesterEmail);
         Long appUserId = appUser.getId();
+
+
+        /// usuniecie wszystkich istniejacych w bazie refreshTokenow usera
         refreshTokenRepository.deleteAllByAppUserId(appUserId);
-        List<Album> userAlbums = albumRepository.findAllByAuthorId(appUserId);
-        for (Album album : userAlbums) {
-            albumService.deleteAlbum(album.getId(), requesterEmail);
-        }
 
-        List<SongProjection> userSongs = songRepository.findSongsByUserNative(appUserId);
-        for (SongProjection song : userSongs) {
-            songCoreService.deleteSongById(song.getId(), requesterEmail);
-        }
+
+        /// usunięcie piosenek usera ze wszystkich playlist, usunięcie wszystkich piosenek z playlist usera i usunięcie playlist usera
+
+        // zapisanie playlist do naprawienia po usunieciu piosenek usera (beda dziury w pozycjach)
+        List<Long> playlistsToRepair = playlistEntryRepository.findPlaylistIdsToRepair(appUserId);
+
+        // usuniecie songow usera ze wszystkich playlist w ktorych sa jak i wszystkie piosenki z jego wlasnych playlist
+        playlistEntryRepository.deleteEntriesBySongAuthorId(appUserId);
+
+        // naprawa playlist po usunieciu songow
+        playlistEntryRepository.renumberPlaylists(playlistsToRepair);
+
+        // usunięcie wszystkich playlist usera
+        playlistRepository.deleteAllByCreatorId(appUserId);
+
+
+        /// usunięcie wszystkich piosenek i następnie albumów usera
+
+        // usuniecie wszystkich songow usera
+        songRepository.deleteAllByAuthorId(appUserId);
+
+        // usuniecie wszystkich albumow usera
+        albumRepository.deleteAllByAuthorId(appUserId);
+
+
+        /// usuniecie samego usera
         appUserRepository.delete(appUser);
+        appUserRepository.flush();
+        SecurityContextHolder.clearContext(); // wyczyszczenie kontekstu jic
 
-        // storageService moze rzucic IOException lub StorageException
-        try {
-            StorageKey avatarStorageKey = appUser.getAvatarStorageKey();
-            if (avatarStorageKey != null && avatarStorageKey.getKey() != null && !avatarStorageKey.getKey().isBlank() && !avatarStorageKey.getId().equals(DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID)) {
-                try {
-                    storageService.delete(avatarStorageKey.getKey());
-                } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć pliku avatara z storage: {}", avatarStorageKey.getKey(), ex);
-                    throw ex;
-                }
+        /// usunięcie kluczy do plików i na samym końcu samych plików powiązanych z userem []
 
-                try {
-                    storageKeyRepository.deleteById(avatarStorageKey.getId());
-                } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć rekordu storage_keys (avatar) id={}: {}", avatarStorageKey.getId(), ex.getMessage());
-                }
-            }
+        // usuniecie wszystkich storageKeys powiazanych z userem
+        storageKeyRepository.deleteAllByUserId(appUserId);
 
+        // usuniecie wszystkich plikow powiazanych bezposrednio z userem (pliki piosenek, okladki albumow, piosenek, playlist itp.)
+        storageService.deleteAllUserFiles(appUserId);
+        /// ]
 
-        } catch (AccessDeniedException e) {
-            log.info(e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.info("Błąd podczas usuwania pliku/storage: {}", e.getMessage());
-            throw new StorageException(e.getMessage());
-        }
     }
 
 }
