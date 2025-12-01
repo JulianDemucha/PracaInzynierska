@@ -8,11 +8,8 @@ import com.soundspace.entity.StorageKey;
 import com.soundspace.enums.Sex;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
-import com.soundspace.repository.AlbumRepository;
-import com.soundspace.repository.AppUserRepository;
+import com.soundspace.repository.*;
 import com.soundspace.dto.request.AppUserUpdateRequest;
-import com.soundspace.repository.SongRepository;
-import com.soundspace.repository.StorageKeyRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -37,6 +34,7 @@ public class AppUserService {
     private final StorageService storageService;
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private static final Long DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID = 6767L;
     private static final String AVATARS_TARGET_DIRECTORY = "users/avatars";
@@ -57,7 +55,8 @@ public class AppUserService {
                           AlbumRepository albumRepository,
                           SongRepository songRepository,
                           @Lazy AlbumService albumService,
-                          @Lazy SongCoreService songCoreService) {
+                          @Lazy SongCoreService songCoreService,
+                          RefreshTokenRepository refreshTokenRepository) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.storageService = storageService;
@@ -67,6 +66,7 @@ public class AppUserService {
         this.songRepository = songRepository;
         this.albumService = albumService;
         this.songCoreService = songCoreService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public AppUserDto getAppUser(Long userId) {
@@ -233,10 +233,11 @@ public class AppUserService {
         return appUserRepository.findById(id).orElseThrow();
     }
 
+    @Transactional
     public void deleteUser(String requesterEmail) {
         AppUser appUser = getUserByEmail(requesterEmail);
         Long appUserId = appUser.getId();
-
+        refreshTokenRepository.deleteAllByAppUserId(appUserId);
         List<Album> userAlbums = albumRepository.findAllByAuthorId(appUserId);
         for (Album album : userAlbums) {
             albumService.deleteAlbum(album.getId(), requesterEmail);
@@ -246,11 +247,12 @@ public class AppUserService {
         for (SongProjection song : userSongs) {
             songCoreService.deleteSongById(song.getId(), requesterEmail);
         }
+        appUserRepository.delete(appUser);
 
         // storageService moze rzucic IOException lub StorageException
         try {
             StorageKey avatarStorageKey = appUser.getAvatarStorageKey();
-            if (avatarStorageKey != null && avatarStorageKey.getKey() != null && !avatarStorageKey.getKey().isBlank()) {
+            if (avatarStorageKey != null && avatarStorageKey.getKey() != null && !avatarStorageKey.getKey().isBlank() && !avatarStorageKey.getId().equals(DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID)) {
                 try {
                     storageService.delete(avatarStorageKey.getKey());
                 } catch (Exception ex) {
@@ -265,7 +267,6 @@ public class AppUserService {
                 }
             }
 
-            appUserRepository.delete(appUser);
 
         } catch (AccessDeniedException e) {
             log.info(e.getMessage());
