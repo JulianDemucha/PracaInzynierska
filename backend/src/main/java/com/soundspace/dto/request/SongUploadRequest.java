@@ -25,9 +25,10 @@ public class SongUploadRequest {
     @Size(max = 32)
     private String title;
 
-    @Size(max = 3)
+    @Size(min = 1, max = 3)
     private List<String> genre;
 
+    @NotNull(message = "Widoczność musi być określona")
     private Boolean publiclyVisible = false;
 }
 
