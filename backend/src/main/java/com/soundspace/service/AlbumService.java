@@ -149,8 +149,12 @@ public class AlbumService {
                 () -> new AlbumNotFoundException(albumId));
 
         Song song = songCoreService.getSongById(songId);
+
+        if (song.getCoverStorageKey() != null) {
+            song.setCoverStorageKey(null);
+            songRepository.save(song);
+        }
         songCoreService.deleteSongById(songId, userEmail);
-        album.getSongs().remove(song); // nie potrzeba save, bo lista nie ma odniesienia w tabeli album
     }
 
     @Transactional
