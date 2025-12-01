@@ -24,10 +24,6 @@ export const getSongsByAlbumId = async (albumId) => {
     return response.data;
 };
 
-export const getAlbumCoverUrl = (albumId) => {
-    if (!albumId) return null;
-    return `http://localhost:8080/api/albums/cover/${albumId}`;
-};
 export const deleteAlbum = async (albumId) => {
     const response = await api.delete(`/albums/${albumId}`);
     return response.data;
@@ -51,4 +47,18 @@ export const getAlbumsByGenre = async (genreName) => {
         console.error(`Błąd pobierania albumów z gatunku ${genreName}:`, error);
         return [];
     }
+};
+
+export const addSongToAlbum = async (albumId, songData) => {
+    const response = await api.post(`/albums/${albumId}/add`, songData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return response.data;
+};
+
+export const removeSongFromAlbum = async (albumId, songId) => {
+    const response = await api.delete(`/albums/${albumId}/remove/${songId}`);
+    return response.data;
 };

@@ -368,3 +368,37 @@
 .cancel-btn:hover {
     background-color: #333;
 }
+
+/* Grupa przycisków właściciela przesunięta na prawo */
+.owner-controls {
+    margin-left: auto; /* To pcha elementy na prawą krawędź */
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-right: 10px; /* Lekki odstęp od krawędzi lub menu */
+}
+
+/* Styl dla okrągłego przycisku "+" */
+.add-song-circle-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #b3b3b3;
+    background: transparent;
+    color: #b3b3b3;
+    font-size: 24px;
+    line-height: 1; /* Centrowanie pionowe plusa */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding-bottom: 4px; /* Drobna korekta optyczna dla znaku + */
+}
+
+.add-song-circle-btn:hover {
+    border-color: white;
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
