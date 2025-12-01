@@ -154,9 +154,9 @@ public class SongCoreService {
 
     @Transactional
     public List<SongDto> getAllSongs() {
-        return songRepository.findAll()
+        return songRepository.findAllWithDetails()
                 .stream()
-                .map(SongDto::toDto) // Używa Twojej metody statycznej z SongDto
-                .toList(); // lub .collect(Collectors.toList()) w starszych wersjach Javy
+                .map(SongDto::toDto)
+                .toList();
     }
 }
