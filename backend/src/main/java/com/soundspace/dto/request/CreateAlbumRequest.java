@@ -11,14 +11,20 @@ import java.util.List;
 @Data
 public class CreateAlbumRequest {
     @NotBlank(message = "Tytuł jest wymagany")
-    @Size(max = 64, message = "Tytuł jest za długi")
+    @Size(min = 2,max = 64, message = "Tytuł jest za długi")
     private String title;
 
     @NotBlank
     @NotNull
+    @Size(min = 1, max = 64)
     private String description;
+
+    @NotNull(message = "Widoczność musi być określona")
     private boolean publiclyVisible;
+
+    @Size(min=1, max = 3)
     private List<String> genre;
+
     @NotNull(message = "Plik okładki jest wymagany")
     private MultipartFile coverFile;
 }
