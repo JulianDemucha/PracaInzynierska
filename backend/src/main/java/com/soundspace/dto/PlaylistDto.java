@@ -1,10 +1,6 @@
 package com.soundspace.dto;
 
 import com.soundspace.entity.Playlist;
-import com.soundspace.entity.PlaylistEntry;
-import com.soundspace.entity.Song;
-
-import java.util.List;
 
 public record PlaylistDto(
         Long id,
@@ -13,7 +9,7 @@ public record PlaylistDto(
         String creatorUsername,
         Boolean publiclyVisible,
         String createdAt,
-//        String updatedAt,
+        String updatedAt,
         Long coverStorageKeyId,
         int songsCount
 ) {
@@ -27,7 +23,7 @@ public record PlaylistDto(
                 playlist.getCreator().getLogin(),
                 playlist.getPubliclyVisible(),
                 playlist.getCreatedAt().toString(),
-//                playlist.getUpdatedAt().toString(),
+                playlist.getUpdatedAt().toString(),
                 playlist.getCoverStorageKey().getId(),
                 songsCount
         );

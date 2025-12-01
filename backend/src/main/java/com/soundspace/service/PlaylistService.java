@@ -3,11 +3,12 @@ package com.soundspace.service;
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.request.CreatePlaylistRequest;
-import com.soundspace.entity.AppUser;
-import com.soundspace.entity.Playlist;
-import com.soundspace.entity.StorageKey;
+import com.soundspace.entity.*;
+import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
+import com.soundspace.repository.PlaylistEntryRepository;
 import com.soundspace.repository.PlaylistRepository;
+import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,12 +39,15 @@ public class PlaylistService {
     private final StorageService storageService;
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
+    private final SongCoreService songCoreService;
 
     private static final String COVERS_TARGET_DIRECTORY = "playlists/covers";
     private static final String TARGET_COVER_EXTENSION = "jpg";
     private static final int COVER_WIDTH = 1200;
     private static final int COVER_HEIGHT = 1200;
     private static final double COVER_QUALITY = 0.85;
+    private final SongRepository songRepository;
+    private final PlaylistEntryRepository playlistEntryRepository;
 
     // wip - tu bedzie sie mapowalo w playlistdto i zwracalo jakos
 //    public List<PlaylistDto> getAllPlaylists() {
@@ -100,6 +104,60 @@ public class PlaylistService {
         }
     }
 
+    @Transactional
+    public PlaylistDto addSongToPlaylist(Long playlistId, Long songId, String userEmail) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new RuntimeException("Nie znaleziono playlisty o id: " + playlistId));
+        // todo zrobic custom exception jakis
+
+        AppUser requestingUser = appUserService.getUserByEmail(userEmail);
+
+        if (!playlist.getCreator().getId().equals(requestingUser.getId())) {
+            throw new AccessDeniedException("Brak uprawnień do edycji playlisty");
+        }
+
+        if(playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId).orElse(null) != null)
+            throw new IllegalArgumentException("Piosenka już istnieje w albumie");
+
+        // rzuci wyjatek jak piosenka nie istnieje, wiec nie potrzeba ponownej walidacji
+        Song song = songCoreService.getSongById(songId);
+
+
+        // jezeli song nie jest publiczny i:
+        // - requestujacy nie jest jej autorem -> brak dostepu
+        // - requestujacy jest jej autorem i album jest publiczny -> zmiana prywatnosci songa na publiczny
+        if(!song.getPubliclyVisible()) {
+
+            if(!requestingUser.getId().equals(song.getAuthor().getId())) {
+                throw new AccessDeniedException("Brak uprawnień do piosenki");
+
+            } else if (playlist.getPubliclyVisible()){
+                song.setPubliclyVisible(true);
+                songRepository.save(song);
+                log.info("Zmieniono prywatnosc piosenki (id: {}) na publiczny po dodaniu do publicznej playlisty (id: {})",
+                        song.getId(), playlist.getId());
+            }
+
+        }
+
+        playlist.addSong(song); // CascadeType.ALL, wiec przy zapisie playlisty PlaylistEntry tez sie zapisze
+
+        playlist.setUpdatedAt(Instant.now());
+
+        // zapis elegancji pzdr
+        Playlist savedPlaylist = playlistRepository.save(playlist);
+
+        log.info("Dodano piosenkę id={} do playlisty id={} (nowa pozycja: {})",
+                song.getId(), playlist.getId(), savedPlaylist.getSongs().size() - 1);
+
+        return PlaylistDto.toDto(savedPlaylist);
+    }
+
+
+    /////////////////////////////////////** HELPERY *//////////////////////////////////////
+
+
+    // resize i convert
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
         ProcessedImage processedCover = imageService.resizeImageAndConvert(
                 coverFile,
@@ -114,7 +172,7 @@ public class PlaylistService {
         return tmpCoverPath;
     }
 
-    // resize convert i zapis pliku z temp file, utworzenie i zapisanie opdpowiadajacej plikowi encji StorageKey
+    //  zapis pliku z temp file, utworzenie i zapisanie opdpowiadajacej plikowi encji StorageKey
     private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
         long coverFileSize = Files.size(tmpCoverPath);
         String mimeType = "image/" + TARGET_COVER_EXTENSION;
