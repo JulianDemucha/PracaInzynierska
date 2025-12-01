@@ -2,6 +2,7 @@ package com.soundspace.repository;
 
 import com.soundspace.dto.projection.PlaylistSongProjection;
 import com.soundspace.entity.PlaylistEntry;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
@@ -35,4 +36,19 @@ public interface PlaylistEntryRepository extends Repository<PlaylistEntry, Long>
             ORDER BY pe.position ASC
             """, nativeQuery = true)
     List<PlaylistSongProjection> findAllSongsInPlaylist(@Param("playlistId") Long playlistId);
+
+    @Modifying
+    @Query(value = """
+        UPDATE playlist_entries pe
+        SET position = pe.position - 1
+        FROM playlist_entries ref
+        WHERE pe.playlist_id = ref.playlist_id
+          AND ref.song_id = :songId
+          AND pe.position > ref.position
+        """, nativeQuery = true)
+    void decrementPositionsForSongRemoval(@Param("songId") Long songId);
+
+    @Modifying
+    @Query("DELETE FROM PlaylistEntry pe WHERE pe.song.id = :songId")
+    void deleteAllBySongId(@Param("songId") Long songId);
 }
