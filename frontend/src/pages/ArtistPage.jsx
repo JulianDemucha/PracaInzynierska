@@ -72,7 +72,7 @@ function ArtistPage() {
 
             <header className="profile-header">
                 <img
-                    // Używamy helpera do pobrania zdjęcia (obsługuje storageId i stare avatarId)
+                    // Używamy helpera do pobrania zdjęcia
                     src={getImageUrl(artist.avatarStorageKeyId ?? artist.avatarId)}
                     alt="Awatar artysty"
                     className="profile-avatar"
@@ -141,6 +141,8 @@ function ArtistPage() {
                                         imageUrl={getImageUrl(song.coverStorageKeyId)}
                                         title={song.title}
                                         subtitle={`${getYearFromDate(song.createdAt)} • Utwór`}
+                                        // NAPRAWA: Dodano prop data={song}, aby przycisk Play się pojawił
+                                        data={song}
                                     />
                                 ))
                             ) : (
