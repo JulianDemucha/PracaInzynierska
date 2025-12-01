@@ -2,28 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './GenrePage.css';
 import MediaCard from '../components/cards/MediaCard.jsx';
-import { getSongsByGenre } from '../services/songService';
-import {getImageUrl} from "../services/imageService.js";
+import { getSongsByGenre } from '../services/songService.js';
+import { getAlbumsByGenre } from '../services/albumService.js';
+import { getImageUrl } from "../services/imageService.js";
+import defaultAvatar from '../assets/images/default-avatar.png';
+import { useAuth } from "../context/useAuth.js"; // 1. Importujemy kontekst autoryzacji
 
-// Limit elementów wyświetlanych w stanie zwiniętym
 const MAX_ITEMS_PER_SECTION = 7;
 
 function GenrePage() {
     const { genreName } = useParams();
     const navigate = useNavigate();
+    const { currentUser } = useAuth(); // 2. Pobieramy aktualnego użytkownika
     const [activeTab, setActiveTab] = useState('wszystko');
 
     // --- STANY DANYCH ---
     const [genreSongs, setGenreSongs] = useState([]);
-
-    const genreAlbums = [];
-    const genrePlaylists = [];
+    const [genreAlbums, setGenreAlbums] = useState([]);
+    const [genrePlaylists, setGenrePlaylists] = useState([]);
 
     // --- STANY UI ---
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // --- STANY DO KONTROLI ZWIJANIA/ROZWIJANIA ---
     const [showAllSongs, setShowAllSongs] = useState(false);
     const [showAllAlbums, setShowAllAlbums] = useState(false);
     const [showAllPlaylists, setShowAllPlaylists] = useState(false);
@@ -34,9 +35,22 @@ function GenrePage() {
             setLoading(true);
             setError(null);
             try {
-                // Pobieramy utwory po gatunku
-                const songsData = await getSongsByGenre(genreName);
-                setGenreSongs(songsData);
+                const [songsData, albumsData] = await Promise.all([
+                    getSongsByGenre(genreName),
+                    getAlbumsByGenre(genreName)
+                ]);
+
+
+                const filteredSongs = songsData.filter(song =>
+                    song.publiclyVisible || (currentUser && currentUser.id === song.authorId)
+                );
+
+                const filteredAlbums = albumsData.filter(album =>
+                    album.publiclyVisible || (currentUser && currentUser.id === album.authorId)
+                );
+
+                setGenreSongs(filteredSongs);
+                setGenreAlbums(filteredAlbums);
 
             } catch (err) {
                 console.error("Błąd podczas pobierania muzyki:", err);
@@ -49,32 +63,27 @@ function GenrePage() {
         if (genreName) {
             fetchData();
         }
-    }, [genreName]);
+    }, [genreName, currentUser]);
 
     const formattedGenreTitle = genreName.replace('_', ' ').toUpperCase();
-
-    // Sprawdzamy czy cokolwiek jest w kategoriach
     const isEmpty = genreSongs.length === 0 && genreAlbums.length === 0 && genrePlaylists.length === 0;
 
-    // --- RENDEROWANIE STANU ŁADOWANIA ---
     if (loading) {
         return (
             <div className="genre-page loading-state">
                 <div style={{ padding: '50px', textAlign: 'center', color: 'white' }}>
-                    <h2>Ładowanie utworów...</h2>
+                    <h2>Ładowanie...</h2>
                 </div>
             </div>
         );
     }
 
-    // --- MODAL (PUSTY STAN) ---
     if (!loading && isEmpty) {
         return (
             <div className="genre-page empty-state">
                 <div className="empty-modal">
-                    <div className="modal-icon">⚠️</div>
                     <h2>Ups! Pusto tutaj.</h2>
-                    <p>Nie znaleźliśmy muzyki z gatunku <strong>{formattedGenreTitle}</strong>.</p>
+                    <p>Nie znaleźliśmy dostępnej muzyki z gatunku <strong>{formattedGenreTitle}</strong>.</p>
                     <button className="modal-button" onClick={() => navigate('/')}>Wróć na stronę główną</button>
                 </div>
             </div>
@@ -83,19 +92,16 @@ function GenrePage() {
 
     return (
         <div className="genre-page">
-            {/* Nagłówek */}
             <header className="genre-header">
                 <div className="genre-banner" style={{backgroundColor: stringToColor(genreName)}}>
                     <h1>{formattedGenreTitle}</h1>
                 </div>
                 <div className="genre-info">
                     <h2>Przeglądaj {formattedGenreTitle}</h2>
-                    {/* Sumujemy długości wszystkich tablic */}
                     <p>Znaleziono: {genreSongs.length + genreAlbums.length + genrePlaylists.length} pozycji</p>
                 </div>
             </header>
 
-            {/* NAWIGACJA */}
             <nav className="genre-nav">
                 <ul className="genre-tabs">
                     <li onClick={() => setActiveTab('wszystko')} className={activeTab === 'wszystko' ? 'active' : ''}>Wszystko</li>
@@ -116,28 +122,22 @@ function GenrePage() {
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
-                                    // Zakładam, że w bazie masz pole 'artist' lub 'author'.
-                                    // Jeśli nie, zmień 'item.artist' na odpowiednie pole.
-                                    subtitle={item.artist || "Nieznany artysta"}
-                                    // Używamy helpera z serwisu do generowania URL okładki
+                                    subtitle={item.authorUsername || "Nieznany artysta"}
                                     imageUrl={getImageUrl(item.coverStorageKeyId)}
                                     linkTo={`/song/${item.id}`}
+                                    data={item}
                                 />
                             ))}
                         </div>
-                        {/* Przycisk "Pokaż więcej" */}
                         {genreSongs.length > MAX_ITEMS_PER_SECTION && (
-                            <button
-                                className="show-more-button"
-                                onClick={() => setShowAllSongs(!showAllSongs)}
-                            >
+                            <button className="show-more-button" onClick={() => setShowAllSongs(!showAllSongs)}>
                                 {showAllSongs ? 'Zwiń' : 'Pokaż więcej'}
                             </button>
                         )}
                     </div>
                 )}
 
-                {/* --- SEKCJA ALBUMÓW (Obecnie pusta, czeka na backend) --- */}
+                {/* --- SEKCJA ALBUMÓW --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && genreAlbums.length > 0 && (
                     <div className="content-section">
                         <h2>Albumy</h2>
@@ -146,24 +146,21 @@ function GenrePage() {
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
-                                    subtitle={item.artist}
-                                    imageUrl={item.coverUrl} // Tutaj logika będzie zależeć od endpointu albumów
+                                    subtitle={`Album • ${item.authorName || "Artysta"}`}
+                                    imageUrl={getImageUrl(item.coverStorageKeyId)}
                                     linkTo={`/album/${item.id}`}
                                 />
                             ))}
                         </div>
                         {genreAlbums.length > MAX_ITEMS_PER_SECTION && (
-                            <button
-                                className="show-more-button"
-                                onClick={() => setShowAllAlbums(!showAllAlbums)}
-                            >
+                            <button className="show-more-button" onClick={() => setShowAllAlbums(!showAllAlbums)}>
                                 {showAllAlbums ? 'Zwiń' : 'Pokaż więcej'}
                             </button>
                         )}
                     </div>
                 )}
 
-                {/* --- SEKCJA PLAYLIST (Obecnie pusta, czeka na backend) --- */}
+                {/* --- SEKCJA PLAYLIST --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && genrePlaylists.length > 0 && (
                     <div className="content-section">
                         <h2>Playlisty</h2>
@@ -173,19 +170,11 @@ function GenrePage() {
                                     key={item.id}
                                     title={item.title}
                                     subtitle={item.description || "Playlista"}
-                                    imageUrl={item.coverUrl}
+                                    imageUrl={defaultAvatar}
                                     linkTo={`/playlist/${item.id}`}
                                 />
                             ))}
                         </div>
-                        {genrePlaylists.length > MAX_ITEMS_PER_SECTION && (
-                            <button
-                                className="show-more-button"
-                                onClick={() => setShowAllPlaylists(!showAllPlaylists)}
-                            >
-                                {showAllPlaylists ? 'Zwiń' : 'Pokaż więcej'}
-                            </button>
-                        )}
                     </div>
                 )}
             </section>
@@ -193,9 +182,8 @@ function GenrePage() {
     );
 }
 
-// Funkcja pomocnicza do generowania koloru
 function stringToColor(str) {
-    if(!str) return '#555';
+    if(!str) return '#8A2BE2';
     let hash = 0;
     for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
     let color = '#';

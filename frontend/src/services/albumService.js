@@ -42,3 +42,13 @@ export const getAllAlbums = async () => {
         return [];
     }
 };
+export const getAlbumsByGenre = async (genreName) => {
+    try {
+        // Używamy nowego endpointu backendowego
+        const response = await api.get(`/albums/genre/${genreName}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Błąd pobierania albumów z gatunku ${genreName}:`, error);
+        return [];
+    }
+};
