@@ -1,17 +1,21 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.AppUserDto;
+import com.soundspace.dto.projection.SongProjection;
+import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.StorageKey;
 import com.soundspace.enums.Sex;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
+import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.dto.request.AppUserUpdateRequest;
+import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,13 +23,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AppUserService {
     private final AppUserRepository appUserRepository;
@@ -40,6 +44,30 @@ public class AppUserService {
     private static final int AVATAR_WIDTH = 600;
     private static final int AVATAR_HEIGHT = 600;
     private static final double AVATAR_QUALITY = 0.80;
+    private final AlbumRepository albumRepository;
+    private final SongRepository songRepository;
+    private final AlbumService albumService;
+    private final SongCoreService songCoreService;
+
+    public AppUserService(AppUserRepository appUserRepository,
+                          PasswordEncoder passwordEncoder,
+                          StorageService storageService,
+                          ImageService imageService,
+                          StorageKeyRepository storageKeyRepository,
+                          AlbumRepository albumRepository,
+                          SongRepository songRepository,
+                          @Lazy AlbumService albumService,
+                          @Lazy SongCoreService songCoreService) {
+        this.appUserRepository = appUserRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.storageService = storageService;
+        this.imageService = imageService;
+        this.storageKeyRepository = storageKeyRepository;
+        this.albumRepository = albumRepository;
+        this.songRepository = songRepository;
+        this.albumService = albumService;
+        this.songCoreService = songCoreService;
+    }
 
     public AppUserDto getAppUser(Long userId) {
         return appUserRepository.findById(userId).map(AppUserDto::toDto).orElseThrow();
@@ -205,9 +233,19 @@ public class AppUserService {
         return appUserRepository.findById(id).orElseThrow();
     }
 
-    //todo zaimplementowac usuwanie wszystkich songow i albumow itp wszystko co nalezy do usera
     public void deleteUser(String requesterEmail) {
         AppUser appUser = getUserByEmail(requesterEmail);
+        Long appUserId = appUser.getId();
+
+        List<Album> userAlbums = albumRepository.findAllByAuthorId(appUserId);
+        for (Album album : userAlbums) {
+            albumService.deleteAlbum(album.getId(), requesterEmail);
+        }
+
+        List<SongProjection> userSongs = songRepository.findSongsByUserNative(appUserId);
+        for (SongProjection song : userSongs) {
+            songCoreService.deleteSongById(song.getId(), requesterEmail);
+        }
 
         // storageService moze rzucic IOException lub StorageException
         try {
