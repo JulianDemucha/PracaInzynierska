@@ -1,6 +1,8 @@
 .profile-page {
     color: white;
     padding-bottom: 5rem;
+    min-height: 100vh;
+    background-color: #121212;
 }
 
 /* ===== 1. NAGŁÓWEK ===== */
@@ -9,38 +11,36 @@
     align-items: center;
     gap: 2rem;
     padding: 3rem 2rem;
-    background: linear-gradient(to bottom, #53346D, #121212 80%);
+    background: linear-gradient(to bottom, #53346D, #121212 95%);
 }
 
 .profile-avatar {
-    width: 100px;
-    height: 100px;
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    background-color: #333;
 }
 
 .profile-info {
     display: flex;
     flex-direction: column;
-}
-
-.profile-type {
-    font-size: 0.9rem;
-    font-weight: bold;
-    text-transform: uppercase;
+    justify-content: center;
 }
 
 .profile-username-wrapper {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 0.5rem 0;
+    margin-bottom: 0.5rem;
 }
 
 .profile-username {
-    font-size: 3rem;
+    font-size: 4rem;
+    font-weight: 900;
     margin: 0;
+    line-height: 1;
 }
 
 .verified-badge {
@@ -50,8 +50,24 @@
 
 .profile-bio {
     font-size: 1rem;
+    color: #e0e0e0;
+    margin: 1rem 0;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+/* Nowe style dla metadanych (data, płeć) */
+.profile-meta-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
     color: #b3b3b3;
-    margin: 0.5rem 0 0 0;
+    margin-top: 0.5rem;
+}
+
+.meta-separator {
+    font-size: 0.5rem; /* Mała kropka */
 }
 
 /* ===== 2. NAWIGACJA (ZAKŁADKI) ===== */
@@ -59,12 +75,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid black;
+    border-bottom: 1px solid #333;
     padding: 0 2rem;
-    background-color: #121212;
+    background-color: #121212; /* Sticky header background */
     position: sticky;
     top: 0;
-    z-index: 5;
+    z-index: 10;
 }
 
 .profile-nav-actions-placeholder {
@@ -76,16 +92,19 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .profile-tabs li {
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 0.9rem;
+    font-weight: 700;
     color: #b3b3b3;
-    padding: 1.5rem 0;
+    padding: 1rem 0;
     cursor: pointer;
     border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-bottom-color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .profile-tabs li:hover {
@@ -94,29 +113,30 @@
 
 .profile-tabs li.active {
     color: white;
-    border-bottom-color: #8A2BE2;
+    border-bottom-color: #1db954; /* Zielony akcent */
 }
 
 /* ===== 3. ZAWARTOŚĆ (LISTY) ===== */
 .profile-content {
-    padding: 1rem 2rem;
+    padding: 2rem 2rem;
 }
 
 .content-section {
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
 }
 
 .content-section h2 {
     font-size: 1.5rem;
-    border-bottom: 1px solid #404040;
-    padding-bottom: 8px;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #fff;
 }
 
 /* STYL DLA SIATKI KART */
 .media-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1.5rem;
+    gap: 24px;
 }
 
 /* Wiadomość, gdy artysta nic nie ma */
@@ -124,4 +144,35 @@
     color: #b3b3b3;
     font-style: italic;
     padding: 1rem 0;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+
+    .profile-avatar {
+        width: 140px;
+        height: 140px;
+    }
+
+    .profile-username {
+        font-size: 2.5rem;
+    }
+
+    .profile-meta-details {
+        justify-content: center;
+    }
+
+    .profile-nav {
+        overflow-x: auto;
+        padding: 0 1rem;
+    }
+
+    .profile-tabs {
+        gap: 1.5rem;
+    }
 }
