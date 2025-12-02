@@ -125,7 +125,8 @@ public class ImageService {
                 storageKeyStr.startsWith("songs/covers") ||
                 storageKeyStr.startsWith("users/avatars") ||
                 storageKeyStr.startsWith("albums/covers") ||
-                storageKeyStr.startsWith("placeholders")
+                storageKeyStr.startsWith("placeholders") ||
+                storageKeyStr.startsWith("playlists/covers")
                 )
 
         )
