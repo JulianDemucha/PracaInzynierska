@@ -57,4 +57,10 @@ public class PlaylistController {
         playlistService.removeSong(playlistId, songId, userDetails);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/user/{appUserId}")
+    public ResponseEntity<List<PlaylistDto>> getAllUserPlaylists(@PathVariable Long appUserId,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.getAllByUserId(appUserId, userDetails));
+    }
 }

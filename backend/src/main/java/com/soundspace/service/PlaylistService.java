@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 
     /*
     todo:
@@ -55,6 +56,18 @@ public class PlaylistService {
 //    public List<PlaylistDto> getAllPlaylists() {
 //        return playlistRepository.findAllByOrderByIdAsc();
 //    }
+
+    public List<PlaylistDto> getAllByUserId(Long userId, UserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
+        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
+
+        List<Playlist> playlists = playlistRepository.getAllByCreatorId(userId);
+        if (!userId.equals(requestingUserId)) {
+            playlists.removeIf(playlist -> !playlist.getPubliclyVisible());
+        }
+        return playlists.stream().map(PlaylistDto::toDto).toList();
+    }
 
     public PlaylistDto getById(Long playlistId, UserDetails userDetails) {
 
@@ -214,6 +227,7 @@ public class PlaylistService {
 
     }
 
+    @Transactional
     public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
         validateUserPermissionForPlaylist(playlist, userDetails);
