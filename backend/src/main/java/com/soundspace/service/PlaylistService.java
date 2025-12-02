@@ -23,14 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
-
-    /*
-    todo:
-        - usuniecie playlisty (razem z jej piosenkami) (! uwzglednic position !)
-        - usuwanie piosenki z playlisty
-        - zmiana pozycji piosenki na playlistcie
-     */
 
 @Service
 @AllArgsConstructor
@@ -57,6 +49,7 @@ public class PlaylistService {
 //        return playlistRepository.findAllByOrderByIdAsc();
 //    }
 
+    @Transactional(readOnly = true)
     public List<PlaylistDto> getAllByUserId(Long userId, UserDetails userDetails) {
         String userEmail = userDetails.getUsername();
         if (userEmail == null) throw new AccessDeniedException("User is not logged in");
@@ -233,6 +226,19 @@ public class PlaylistService {
         validateUserPermissionForPlaylist(playlist, userDetails);
         playlistEntryRepository.deleteBySongIdAndPlaylistId(songId, playlistId);
         playlistEntryRepository.renumberPlaylist(playlistId);
+    }
+
+    @Transactional
+    public PlaylistSongViewDto changeSongPosition(Long playlistId, Long songId,
+                                                  Integer position,
+                                                  UserDetails userDetails) {
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+        validateUserPermissionForPlaylist(playlist, userDetails);
+
+        PlaylistEntry playlistEntry = playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId);
+
+        playlistEntryRepository.updateSongPosition(playlistId, songId, playlistEntry.getPosition(), position);
+        return PlaylistSongViewDto.toDto(playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId));
     }
 
     /// //////////////////////////////////** HELPERY *//////////////////////////////////////

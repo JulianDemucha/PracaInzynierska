@@ -67,4 +67,12 @@ public class PlaylistController {
                                                                  @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(playlistService.getAllByUserId(appUserId, userDetails));
     }
+
+    @PutMapping("/{playlistId}/changeSongPosition/{songId}/{newPosition}")
+    public ResponseEntity<PlaylistSongViewDto> changeSongPosition(@PathVariable Long playlistId,
+                                                                  @PathVariable Long songId,
+                                                                  @PathVariable Integer newPosition,
+                                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.changeSongPosition(playlistId, songId, newPosition, userDetails));
+    }
 }
