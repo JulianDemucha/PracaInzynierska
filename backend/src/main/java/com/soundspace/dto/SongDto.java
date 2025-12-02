@@ -1,5 +1,6 @@
 package com.soundspace.dto;
 
+import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
@@ -33,6 +34,20 @@ public record SongDto(
                 song.getPubliclyVisible() != null && song.getPubliclyVisible(),
                 song.getCreatedAt().toString(),
                 song.getCoverStorageKey().getId()
+        );
+    }
+
+    public static SongDto toDto(SongProjection p) {
+        return new SongDto(
+                p.getId(),
+                p.getTitle(),
+                p.getAuthorId(),
+                p.getAuthorUsername(),
+                p.getAlbumId(),
+                p.getGenres(),
+                p.getPubliclyVisible(),
+                p.getCreatedAt() == null ? null : p.getCreatedAt().toString(),
+                p.getCoverStorageKeyId()
         );
     }
 

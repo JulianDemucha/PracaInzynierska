@@ -6,7 +6,6 @@ import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.service.AlbumService;
 import com.soundspace.service.AppUserService;
-import com.soundspace.service.SongCoreService;
 import com.soundspace.service.SongUploadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ import java.util.List;
 public class AlbumController {
 
     private final AlbumService albumService;
-    private final SongCoreService songCoreService;
     private final SongUploadService songUploadService;
     private final AppUserService appUserService;
 
@@ -68,7 +66,7 @@ public class AlbumController {
     @GetMapping("/{albumId}/songs")
     public ResponseEntity<List<SongDto>> getSongsByAlbumId(@PathVariable Long albumId,
                                                            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(songCoreService.getSongsByAlbumId(albumId, extractUserEmail(userDetails)));
+        return ResponseEntity.ok(albumService.getSongs(albumId, extractUserEmail(userDetails)));
     }
 
     @GetMapping("/user/{userId}")

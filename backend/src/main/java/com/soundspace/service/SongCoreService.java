@@ -54,36 +54,10 @@ public class SongCoreService {
         return songs;
     }
 
-    public List<SongDto> getSongsByAlbumId(Long albumId, String userEmail) {
-        List<SongProjection> songsProjection = songRepository.findSongsByAlbumNative(albumId);
-        Album album = albumRepository.getAlbumById(albumId);
-        if (album == null) throw new AlbumNotFoundException(albumId);
-
-        // jezeli album jest prywatny i requestujacy user nie jest autorem albumu - throw
-        if (!album.getPubliclyVisible() && !appUserService.getUserByEmail(userEmail).getId()
-                .equals(album.getAuthor().getId()))
-            throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
-
-        return getSongsFromSongProjection(songsProjection);
-    }
-
     private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
         return songsProjection.stream()
-                .map(p -> new SongDto(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getAuthorId(),
-                        p.getAuthorUsername(),
-                        p.getAlbumId(),
-                        p.getGenres(),
-                        p.getPubliclyVisible(),
-                        p.getCreatedAt() == null ? null : p.getCreatedAt().toString(),
-                        p.getCoverStorageKeyId() // Long
-                ))
-                .collect(java.util.stream.Collectors.toList());
+                .map(SongDto::toDto).toList();
     }
-
-
 
     @Transactional
     public void deleteSongById(Long id, String requesterEmail) {
