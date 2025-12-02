@@ -12,6 +12,7 @@ import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.exception.StorageException;
 import com.soundspace.repository.AlbumRepository;
+import com.soundspace.repository.PlaylistRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class AlbumService {
     private static final double COVER_QUALITY = 0.85;
 
     private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
+    private final PlaylistRepository playlistRepository;
 
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
@@ -171,10 +173,11 @@ public class AlbumService {
         for(SongProjection song : albumSongs){
             songCoreService.deleteSongById(song.getId(), userEmail);
         }
+        StorageKey coverKey = album.getCoverStorageKey();
+        albumRepository.delete(album);
+        albumRepository.flush();
 
         try {
-            albumRepository.delete(album);
-            StorageKey coverKey = album.getCoverStorageKey();
             if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
