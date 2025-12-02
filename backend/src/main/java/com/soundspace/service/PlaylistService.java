@@ -26,9 +26,7 @@ import java.util.List;
 
     /*
     todo:
-        - dodanie playlisty
         - usuniecie playlisty (razem z jej piosenkami) (! uwzglednic position !)
-        - dodawanie istniejacej piosenki do playlisty
         - usuwanie piosenki z playlisty
         - zmiana pozycji piosenki na playlistcie
      */
@@ -57,16 +55,27 @@ public class PlaylistService {
 //        return playlistRepository.findAllByOrderByIdAsc();
 //    }
 
-    public List<PlaylistSongViewDto> getPlaylistSongs(Long playlistId, UserDetails userDetails) {
+    public PlaylistDto getPlaylistById(Long playlistId, UserDetails userDetails) {
+
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+        validateUserPermissionForPlaylist(playlist, userDetails);
+
+        return PlaylistDto.toDto(playlist);
+    }
+
+    private void validateUserPermissionForPlaylist(Playlist playlist, UserDetails userDetails) {
         String userEmail = userDetails.getUsername();
         if (userEmail == null) throw new AccessDeniedException("User is not logged in");
-
-        // walidacja permisji
         Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
-        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+
         if (requestingUserId.equals(playlist.getCreator().getId()) && !playlist.getPubliclyVisible()) {
             throw new AccessDeniedException("Access denied");
         }
+    }
+
+    public List<PlaylistSongViewDto> getPlaylistSongs(Long playlistId, UserDetails userDetails) {
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+        validateUserPermissionForPlaylist(playlist, userDetails);
 
         return playlistEntryRepository.findAllSongsInPlaylist(playlistId)
                 .stream().map(PlaylistSongViewDto::toDto).toList();
