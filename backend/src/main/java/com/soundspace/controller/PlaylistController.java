@@ -21,25 +21,32 @@ public class PlaylistController {
     @GetMapping("/{playlistId}")
     public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable Long playlistId,
                                                    @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.getPlaylistById(playlistId, userDetails));
+        return ResponseEntity.ok(playlistService.getById(playlistId, userDetails));
     }
 
     @PostMapping("/create")
     public ResponseEntity<PlaylistDto> createPlaylist(@ModelAttribute CreatePlaylistRequest request,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.createPlaylist(request, userDetails));
+        return ResponseEntity.ok(playlistService.create(request, userDetails));
     }
 
     @PostMapping("/{playlistId}/add/{songId}")
     public ResponseEntity<PlaylistSongViewDto> addSongToPlaylist(@PathVariable Long playlistId,
                                                                  @PathVariable Long songId,
                                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.addSongToPlaylist(playlistId, songId, userDetails));
+        return ResponseEntity.ok(playlistService.addSong(playlistId, songId, userDetails));
     }
 
     @GetMapping("/{playlistId}/songs")
     public ResponseEntity<List<PlaylistSongViewDto>> getPlaylistSongs(@PathVariable Long playlistId,
                                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.getPlaylistSongs(playlistId, userDetails));
+        return ResponseEntity.ok(playlistService.getSongs(playlistId, userDetails));
+    }
+
+    @DeleteMapping("/{playlistId}")
+    public ResponseEntity<Void> delete(@PathVariable Long playlistId,
+                                       @AuthenticationPrincipal UserDetails userDetails) {
+        playlistService.delete(playlistId, userDetails);
+        return ResponseEntity.noContent().build();
     }
 }

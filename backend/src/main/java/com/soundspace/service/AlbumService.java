@@ -173,6 +173,7 @@ public class AlbumService {
         }
 
         try {
+            albumRepository.delete(album);
             StorageKey coverKey = album.getCoverStorageKey();
             if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
@@ -197,7 +198,6 @@ public class AlbumService {
             throw new StorageException(e.getMessage());
         }
 
-        albumRepository.delete(album);
     }
 
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {

@@ -2,16 +2,14 @@ package com.soundspace.repository;
 
 import com.soundspace.dto.projection.PlaylistSongProjection;
 import com.soundspace.entity.PlaylistEntry;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface PlaylistEntryRepository extends Repository<PlaylistEntry, Long> {
-
-    PlaylistEntry save(PlaylistEntry playlistEntry);
+public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Long> {
 
     boolean existsBySongIdAndPlaylistId(Long songId, Long playlistId);
 
@@ -42,6 +40,11 @@ public interface PlaylistEntryRepository extends Repository<PlaylistEntry, Long>
     @Modifying
     @Query("DELETE FROM PlaylistEntry pe WHERE pe.song.id = :songId")
     void deleteAllBySongId(@Param("songId") Long songId);
+
+    // usuwa wszystkie piosenki z danej playlisty
+    @Modifying
+    @Query("DELETE FROM PlaylistEntry pe WHERE pe.playlist.id = :playlistId")
+    void deleteAllByPlaylistId(@Param("playlistId") Long playlistId);
 
     ////////////////////////////// BULK DELETE USERA //////////////////////////////
 

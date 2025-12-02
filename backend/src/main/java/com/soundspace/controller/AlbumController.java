@@ -81,14 +81,14 @@ public class AlbumController {
     public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName) {
         return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName));
     }
-
-    private String extractUserEmail(UserDetails userDetails) {
-        return (userDetails != null) ? userDetails.getUsername() : null;
-    }
-
     @GetMapping
     public ResponseEntity<List<AlbumDto>> getAllAlbums() {
         return ResponseEntity.ok(albumService.getAllAlbums());
+    }
+
+
+    private String extractUserEmail(UserDetails userDetails) {
+        return (userDetails != null) ? userDetails.getUsername() : null;
     }
 
 

@@ -131,6 +131,60 @@ public class AppUserService {
 
     }
 
+    // BULK DELETE -> 13 zapytań do bazy (jedno leci na komentarze, ktore prawdopodobnie zostana calkiem usuniete)
+    @Transactional
+    public void deleteUser(String requesterEmail) {
+        AppUser appUser = getUserByEmail(requesterEmail);
+        Long appUserId = appUser.getId();
+
+
+        /// usuniecie wszystkich istniejacych w bazie refreshTokenow usera
+        refreshTokenRepository.deleteAllByAppUserId(appUserId);
+
+
+        /// usunięcie piosenek usera ze wszystkich playlist, usunięcie wszystkich piosenek z playlist usera i usunięcie playlist usera
+
+        // zapisanie playlist do naprawienia po usunieciu piosenek usera (beda dziury w pozycjach)
+        List<Long> playlistsToRepair = playlistEntryRepository.findPlaylistIdsToRepair(appUserId);
+
+        // usuniecie songow usera ze wszystkich playlist w ktorych sa jak i wszystkie piosenki z jego wlasnych playlist
+        playlistEntryRepository.deleteEntriesBySongAuthorId(appUserId);
+
+        // naprawa playlist po usunieciu songow
+        playlistEntryRepository.renumberPlaylists(playlistsToRepair);
+
+        // usunięcie wszystkich playlist usera
+        playlistRepository.deleteAllByCreatorId(appUserId);
+
+
+        /// usunięcie wszystkich piosenek i następnie albumów usera
+
+        // usuniecie wszystkich songow usera
+        songRepository.deleteAllByAuthorId(appUserId);
+
+        // usuniecie wszystkich albumow usera
+        albumRepository.deleteAllByAuthorId(appUserId);
+
+
+        /// usuniecie samego usera
+        appUserRepository.delete(appUser);
+        appUserRepository.flush();
+        SecurityContextHolder.clearContext(); // wyczyszczenie kontekstu jic
+
+        /// usunięcie kluczy do plików i na samym końcu samych plików powiązanych z userem []
+
+        // usuniecie wszystkich storageKeys powiazanych z userem
+        storageKeyRepository.deleteAllByUserId(appUserId);
+
+        // usuniecie wszystkich plikow powiazanych bezposrednio z userem (pliki piosenek, okladki albumow, piosenek, playlist itp.)
+        storageService.deleteAllUserFiles(appUserId);
+        /// ]
+
+    }
+
+
+    ///////////////////////////// HELPERS /////////////////////////////
+
     private AppUser processAndSaveNewAvatar(MultipartFile avatar, AppUser updatedUser) {
         Path tmpAvatar = null;
         StorageKey previous = updatedUser.getAvatarStorageKey(); // może być placeholder
@@ -209,55 +263,6 @@ public class AppUserService {
         return appUserRepository.findById(id).orElseThrow();
     }
 
-    // BULK DELETE -> 13 zapytań do bazy (jedno leci na komentarze, ktore prawdopodobnie zostana calkiem usuniete)
-    @Transactional
-    public void deleteUser(String requesterEmail) {
-        AppUser appUser = getUserByEmail(requesterEmail);
-        Long appUserId = appUser.getId();
 
-
-        /// usuniecie wszystkich istniejacych w bazie refreshTokenow usera
-        refreshTokenRepository.deleteAllByAppUserId(appUserId);
-
-
-        /// usunięcie piosenek usera ze wszystkich playlist, usunięcie wszystkich piosenek z playlist usera i usunięcie playlist usera
-
-        // zapisanie playlist do naprawienia po usunieciu piosenek usera (beda dziury w pozycjach)
-        List<Long> playlistsToRepair = playlistEntryRepository.findPlaylistIdsToRepair(appUserId);
-
-        // usuniecie songow usera ze wszystkich playlist w ktorych sa jak i wszystkie piosenki z jego wlasnych playlist
-        playlistEntryRepository.deleteEntriesBySongAuthorId(appUserId);
-
-        // naprawa playlist po usunieciu songow
-        playlistEntryRepository.renumberPlaylists(playlistsToRepair);
-
-        // usunięcie wszystkich playlist usera
-        playlistRepository.deleteAllByCreatorId(appUserId);
-
-
-        /// usunięcie wszystkich piosenek i następnie albumów usera
-
-        // usuniecie wszystkich songow usera
-        songRepository.deleteAllByAuthorId(appUserId);
-
-        // usuniecie wszystkich albumow usera
-        albumRepository.deleteAllByAuthorId(appUserId);
-
-
-        /// usuniecie samego usera
-        appUserRepository.delete(appUser);
-        appUserRepository.flush();
-        SecurityContextHolder.clearContext(); // wyczyszczenie kontekstu jic
-
-        /// usunięcie kluczy do plików i na samym końcu samych plików powiązanych z userem []
-
-        // usuniecie wszystkich storageKeys powiazanych z userem
-        storageKeyRepository.deleteAllByUserId(appUserId);
-
-        // usuniecie wszystkich plikow powiazanych bezposrednio z userem (pliki piosenek, okladki albumow, piosenek, playlist itp.)
-        storageService.deleteAllUserFiles(appUserId);
-        /// ]
-
-    }
 
 }
