@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 public record CreatePlaylistRequest(
         @NotBlank(message = "Nazwa playlisty nie może być pusta")
         @Size(min = 1, max = 50, message = "Nazwa playlisty musi mieć od 1 do 50 znaków")
-        String name,
+        String title,
 
         @NotNull(message = "Widoczność musi być określona")
         Boolean publiclyVisible,

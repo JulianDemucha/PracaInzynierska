@@ -13,6 +13,7 @@ import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,7 +63,10 @@ public class PlaylistService {
     }
 
     @Transactional
-    public PlaylistDto createPlaylist(CreatePlaylistRequest request, String userEmail) {
+    public PlaylistDto createPlaylist(CreatePlaylistRequest request, UserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
+        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+
         AppUser creator = appUserService.getUserByEmail(userEmail);
 
         Path tmpCoverPath = null;
@@ -81,7 +85,7 @@ public class PlaylistService {
             coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, creator);
 
             Playlist playlist = new Playlist();
-            playlist.setName(request.name());
+            playlist.setName(request.title());
             playlist.setCreator(creator);
             playlist.setPubliclyVisible(request.publiclyVisible());
             playlist.setCreatedAt(Instant.now());

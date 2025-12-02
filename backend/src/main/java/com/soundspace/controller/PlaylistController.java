@@ -1,0 +1,23 @@
+package com.soundspace.controller;
+
+import com.soundspace.dto.PlaylistDto;
+import com.soundspace.dto.request.CreatePlaylistRequest;
+import com.soundspace.service.PlaylistService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/playlists")
+@RequiredArgsConstructor
+public class PlaylistController {
+    private final PlaylistService playlistService;
+
+    @PostMapping("/create")
+    public ResponseEntity<PlaylistDto> createPlaylist(@ModelAttribute CreatePlaylistRequest request,
+                                                      @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.createPlaylist(request, userDetails));
+    }
+}
