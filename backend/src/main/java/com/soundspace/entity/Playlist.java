@@ -51,12 +51,13 @@ public class Playlist {
     @JoinColumn(name = "cover_storage_key_id", nullable = false)
     private StorageKey coverStorageKey;
 
-    public void addSong(Song song) {
+    public PlaylistEntry addSong(Song song) {
         PlaylistEntry entry = new PlaylistEntry();
         entry.setPlaylist(this);
         entry.setSong(song);
         entry.setPosition(this.songs.size());
         this.songs.add(entry);
+        return entry;
     }
 
 }

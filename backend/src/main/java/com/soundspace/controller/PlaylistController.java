@@ -1,6 +1,7 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.PlaylistDto;
+import com.soundspace.dto.PlaylistSongViewDto;
 import com.soundspace.dto.request.CreatePlaylistRequest;
 import com.soundspace.service.PlaylistService;
 import lombok.RequiredArgsConstructor;
@@ -19,5 +20,12 @@ public class PlaylistController {
     public ResponseEntity<PlaylistDto> createPlaylist(@ModelAttribute CreatePlaylistRequest request,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(playlistService.createPlaylist(request, userDetails));
+    }
+
+    @PostMapping("/{playlistId}/add/{songId}")
+    public ResponseEntity<PlaylistSongViewDto> addSongToPlaylist(@PathVariable Long playlistId,
+                                                                 @PathVariable Long songId,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.addSongToPlaylist(playlistId, songId, userDetails));
     }
 }

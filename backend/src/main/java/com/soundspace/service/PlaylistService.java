@@ -116,7 +116,11 @@ public class PlaylistService {
     }
 
     @Transactional
-    public PlaylistDto addSongToPlaylist(Long playlistId, Long songId, String userEmail) {
+    public PlaylistSongViewDto addSongToPlaylist(Long playlistId, Long songId, UserDetails userDetails) {
+
+        String userEmail = userDetails.getUsername();
+        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("Nie znaleziono playlisty o id: " + playlistId));
         // todo zrobic custom exception jakis
@@ -151,7 +155,7 @@ public class PlaylistService {
 
         }
 
-        playlist.addSong(song); // CascadeType.ALL, wiec przy zapisie playlisty PlaylistEntry tez sie zapisze
+        PlaylistEntry addedSong = playlist.addSong(song); // CascadeType.ALL, wiec przy zapisie playlisty PlaylistEntry tez sie zapisze
 
         playlist.setUpdatedAt(Instant.now());
 
@@ -161,7 +165,7 @@ public class PlaylistService {
         log.info("Dodano piosenkę id={} do playlisty id={} (nowa pozycja: {})",
                 song.getId(), playlist.getId(), savedPlaylist.getSongs().size() - 1);
 
-        return PlaylistDto.toDto(savedPlaylist);
+        return PlaylistSongViewDto.toDto(addedSong);
     }
 
 
