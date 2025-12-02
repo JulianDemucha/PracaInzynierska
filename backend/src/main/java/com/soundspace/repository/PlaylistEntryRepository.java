@@ -1,6 +1,7 @@
 package com.soundspace.repository;
 
 import com.soundspace.dto.projection.PlaylistSongProjection;
+import com.soundspace.entity.Playlist;
 import com.soundspace.entity.PlaylistEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Long> {
 
@@ -76,4 +78,6 @@ public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Lo
         WHERE pe.id = new_ranking.id
     """, nativeQuery = true)
     void renumberPlaylists(@Param("playlistIds") List<Long> playlistIds);
+
+    Optional<PlaylistEntry> findBySongId(Long songId);
 }

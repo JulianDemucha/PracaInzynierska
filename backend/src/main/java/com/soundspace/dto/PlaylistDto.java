@@ -4,7 +4,7 @@ import com.soundspace.entity.Playlist;
 
 public record PlaylistDto(
         Long id,
-        String name,
+        String title,
         Long creatorId,
         String creatorUsername,
         Boolean publiclyVisible,

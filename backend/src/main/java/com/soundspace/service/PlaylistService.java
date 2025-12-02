@@ -188,7 +188,7 @@ public class PlaylistService {
         StorageKey coverKey = playlist.getCoverStorageKey();
         playlistRepository.delete(playlist);
         playlistRepository.flush();
-        
+
         try {
             if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
@@ -214,6 +214,11 @@ public class PlaylistService {
 
     }
 
+    public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+        validateUserPermissionForPlaylist(playlist, userDetails);
+        PlaylistEntry playlistSongEntry playlistEntryRepository.findBySongId(songId);
+    }
 
     /// //////////////////////////////////** HELPERY *//////////////////////////////////////
 
