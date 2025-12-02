@@ -185,9 +185,11 @@ public class PlaylistService {
 
         playlistEntryRepository.deleteAllByPlaylistId(playlistId);
 
+        StorageKey coverKey = playlist.getCoverStorageKey();
+        playlistRepository.delete(playlist);
+        playlistRepository.flush();
+        
         try {
-            playlistRepository.delete(playlist);
-            StorageKey coverKey = playlist.getCoverStorageKey();
             if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
