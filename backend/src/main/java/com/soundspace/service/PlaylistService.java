@@ -217,7 +217,7 @@ public class PlaylistService {
     public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
         validateUserPermissionForPlaylist(playlist, userDetails);
-        PlaylistEntry playlistSongEntry playlistEntryRepository.findBySongId(songId);
+        PlaylistEntry playlistSongEntry = playlistEntryRepository.findBySongId(songId).orElseThrow();
     }
 
     /// //////////////////////////////////** HELPERY *//////////////////////////////////////
