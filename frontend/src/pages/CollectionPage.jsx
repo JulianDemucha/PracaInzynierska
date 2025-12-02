@@ -25,7 +25,7 @@ import likeIcon from '../assets/images/like.png';
 import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
-// Jeśli masz ikonę plusa, zaimportuj ją, np.: import plusIcon from '../assets/images/plus.png';
+import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 
 function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
@@ -53,6 +53,9 @@ function CollectionPage() {
 
     // NOWY STAN: Modal dodawania piosenek
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
+
+    const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+    const [songToAddToPlaylist, setSongToAddToPlaylist] = useState(null);
 
     const {
         currentSong, isPlaying, playSong, pause, addToQueue,
@@ -265,6 +268,11 @@ function CollectionPage() {
                         const songMenuOptions = [
                             { label: isSongLiked ? "Usuń z polubionych" : "Dodaj do polubionych", onClick: () => toggleFavorite(song.id) },
                             { label: "Dodaj do kolejki", onClick: () => addToQueue(song) },
+                            { label: "Dodaj do playlisty", onClick: () => {
+                                    setSongToAddToPlaylist(song);
+                                    setIsPlaylistModalOpen(true);
+                                }
+                            },
                             { label: "Przejdź do artysty", onClick: () => navigate(`/artist/${song.artist.id}`) }
                         ];
 
@@ -341,8 +349,15 @@ function CollectionPage() {
             <CreateAlbumModal
                 isOpen={isAddSongModalOpen}
                 onClose={() => setIsAddSongModalOpen(false)}
-                existingAlbumId={collection?.id} // Przekazujemy ID, aby modal wiedział, że edytujemy
-                onAlbumUpdate={fetchData} // Po zamknięciu odświeżamy listę
+                existingAlbumId={collection?.id}
+                onAlbumUpdate={fetchData}
+            />
+
+            {/* === NOWY MODAL PLAYLISTY === */}
+            <AddToPlaylistModal
+                isOpen={isPlaylistModalOpen}
+                onClose={() => setIsPlaylistModalOpen(false)}
+                songToAdd={songToAddToPlaylist}
             />
         </div>
     );

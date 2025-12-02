@@ -5,6 +5,7 @@ import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
 import { getSongById, deleteSong } from '../services/songService.js';
 import { getImageUrl } from '../services/imageService.js';
+import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 
 import defaultAvatar from '../assets/images/default-avatar.png';
 import defaultCover from '../assets/images/default-avatar.png';
@@ -19,6 +20,7 @@ import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
 import binIcon from '../assets/images/bin.png';
+import plusIcon from '../assets/images/plus.png';
 
 function SongPage() {
     const { id } = useParams();
@@ -37,6 +39,8 @@ function SongPage() {
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
 
     const {
         currentSong,
@@ -205,6 +209,9 @@ function SongPage() {
                 <button className={`song-control-button ${isQueuedAnim ? 'active' : ''}`} onClick={handleAddToQueue}>
                     <img src={isQueuedAnim ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
                 </button>
+                <button className="song-control-button" onClick={() => setIsPlaylistModalOpen(true)} title="Dodaj do playlisty" >
+                    <img src={plusIcon} alt="Dodaj do playlisty" />
+                </button>
 
                 <div className="song-rating">
                     <button
@@ -281,6 +288,11 @@ function SongPage() {
                     </div>
                 </div>
             )}
+            <AddToPlaylistModal
+                isOpen={isPlaylistModalOpen}
+                onClose={() => setIsPlaylistModalOpen(false)}
+                songToAdd={song}
+            />
         </div>
     );
 }

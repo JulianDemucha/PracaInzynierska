@@ -1,0 +1,316 @@
+.playlist-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 200;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.playlist-modal-content {
+    background: #0D0D0D;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    color: white;
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #282828;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Zabezpieczenie na małe ekrany */
+    overflow-y: auto;
+    transition: max-width 0.3s ease;
+}
+
+/* Szerszy modal przy tworzeniu, żeby zmieścić cropa */
+.playlist-modal-content.expanded {
+    max-width: 450px;
+}
+
+.playlist-modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.song-preview-text {
+    text-align: center;
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #282828;
+    padding-bottom: 1rem;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px; right: 15px;
+    background: none; border: none;
+    color: #b3b3b3;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+.close-button:hover { color: white; }
+
+/* ... (reszta stylów bez zmian) ... */
+
+/* === LISTA PLAYLIST === */
+.playlist-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* Zmieniamy gap na 0, bo sterujemy marginesami wewnątrz */
+    flex: 1; /* Żeby zajęło dostępną przestrzeń */
+    overflow: hidden; /* Ważne, żeby scroll był tylko wewnątrz listy */
+}
+
+.playlists-scroll-area {
+    /* Lista zajmuje dostępną przestrzeń, ale zostawia miejsce na guzik */
+    flex: 1;
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-right: 5px;
+    margin-bottom: 10px; /* Odstęp od guzika Nowa Playlista */
+}
+.playlists-scroll-area::-webkit-scrollbar { width: 5px; }
+.playlists-scroll-area::-webkit-scrollbar-thumb { background: #404040; border-radius: 3px; }
+
+/* PRZYCISK NOWA PLAYLISTA - teraz na dole */
+.create-new-row {
+    background: transparent;
+    border: 1px solid #404040;
+    color: #8A2BE2;
+    padding: 12px; /* Trochę większy padding */
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+    width: 100%;
+    text-align: left;
+    margin-top: auto; /* Pcha guzik na sam dół kontenera jeśli jest miejsce */
+}
+
+/* ... (reszta stylów bez zmian) ... */
+.create-new-row:hover {
+    background: rgba(138, 43, 226, 0.1);
+    border-color: #8A2BE2;
+}
+.plus-box {
+    width: 30px; height: 30px;
+    border-radius: 4px;
+    border: 2px solid #8A2BE2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+}
+
+.playlist-row {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Większy odstęp między ikoną a tekstem */
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #1a1a1a;
+}
+.playlist-row:hover { background-color: #1A1A1A; }
+
+.playlist-cover-placeholder {
+    width: 48px; height: 48px; /* Nieco większa ikona */
+    background-color: #282828;
+    color: #666;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Nowy kontener na tekst (nazwa + licznik w rzędzie) */
+.playlist-info-row {
+    display: flex;
+    flex-direction: row; /* W jednym rzędzie */
+    align-items: center;
+    justify-content: space-between; /* Rozsuwa nazwę i licznik na boki */
+    width: 100%;
+}
+
+.playlist-name {
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px; /* Ograniczenie szerokości nazwy */
+}
+
+/* Licznik jako "badge" lub szary tekst obok */
+.playlist-count-badge {
+    color: #888;
+    font-size: 0.85rem;
+    background-color: #1a1a1a;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+/* === FORMULARZ TWORZENIA === */
+.create-playlist-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding-top: 10px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #b3b3b3;
+}
+
+.create-playlist-form input[type="text"] {
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #404040;
+    background: #1A1A1A;
+    color: white;
+    font-size: 1rem;
+}
+.create-playlist-form input:focus {
+    outline: none;
+    border-color: #8A2BE2;
+}
+
+/* Przycisk wyboru pliku */
+.file-upload-button-small {
+    background-color: #1A1A1A;
+    border: 1px solid #404040;
+    color: #b3b3b3;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+.file-upload-button-small:hover {
+    border-color: #8A2BE2;
+    color: white;
+}
+
+/* Kontener Croppera */
+.playlist-cropper-container {
+    width: 200px;
+    height: 200px;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #404040;
+    margin: 10px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.playlist-cropper-container .ReactCrop__image {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Radio buttons (Widoczność) */
+.visibility-group .radio-options {
+    display: flex;
+    gap: 15px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border: 1px solid #404040;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: #888;
+}
+
+/* Zostawiamy input widoczny, ale stylujemy label */
+.radio-label input {
+    accent-color: #8A2BE2;
+    cursor: pointer;
+}
+
+.radio-label:hover {
+    border-color: #666;
+    color: white;
+}
+
+.radio-label.selected {
+    background-color: rgba(138, 43, 226, 0.15);
+    border-color: #8A2BE2;
+    color: #8A2BE2;
+    font-weight: bold;
+}
+
+/* Actions */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 0.5rem;
+}
+
+.save-button {
+    flex: 1;
+    background: linear-gradient(to right, #8A2BE2, #6a1b9a);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.save-button:hover { transform: scale(1.02); }
+.save-button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.cancel-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #555;
+    color: #aaa;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.cancel-btn:hover { background: #1A1A1A; color: white; }
+
+/* Błędy */
+.error-border {
+    border: 1px solid #ff4444 !important;
+}
+
+.validation-message {
+    color: #ff4444;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
