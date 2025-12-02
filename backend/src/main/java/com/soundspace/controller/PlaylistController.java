@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -27,14 +28,17 @@ public class PlaylistController {
     @PostMapping("/create")
     public ResponseEntity<PlaylistDto> createPlaylist(@ModelAttribute CreatePlaylistRequest request,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.create(request, userDetails));
+        PlaylistDto createdPlaylist = playlistService.create(request, userDetails);
+        return ResponseEntity.created(URI.create("/api/playlists/"+createdPlaylist.id())).body(createdPlaylist);
     }
 
     @PostMapping("/{playlistId}/add/{songId}")
     public ResponseEntity<PlaylistSongViewDto> addSongToPlaylist(@PathVariable Long playlistId,
                                                                  @PathVariable Long songId,
                                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.addSong(playlistId, songId, userDetails));
+        return ResponseEntity
+                .created(URI.create("/api/playlists/songs"))
+                .body(playlistService.addSong(playlistId, songId, userDetails));
     }
 
     @GetMapping("/{playlistId}/songs")
@@ -62,5 +66,13 @@ public class PlaylistController {
     public ResponseEntity<List<PlaylistDto>> getAllUserPlaylists(@PathVariable Long appUserId,
                                                                  @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(playlistService.getAllByUserId(appUserId, userDetails));
+    }
+
+    @PutMapping("/{playlistId}/changeSongPosition/{songId}/{newPosition}")
+    public ResponseEntity<PlaylistSongViewDto> changeSongPosition(@PathVariable Long playlistId,
+                                                                  @PathVariable Long songId,
+                                                                  @PathVariable Integer newPosition,
+                                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.changeSongPosition(playlistId, songId, newPosition, userDetails));
     }
 }

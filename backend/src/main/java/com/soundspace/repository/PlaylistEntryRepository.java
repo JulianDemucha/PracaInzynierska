@@ -2,6 +2,7 @@ package com.soundspace.repository;
 
 import com.soundspace.dto.projection.PlaylistSongProjection;
 import com.soundspace.entity.PlaylistEntry;
+import com.soundspace.entity.Song;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -93,5 +94,27 @@ public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Lo
             """, nativeQuery = true)
     void renumberPlaylists(@Param("playlistIds") List<Long> playlistIds);
 
-    Optional<PlaylistEntry> findBySongId(Long songId);
+
+    // pobiera piosenki pomiedzy ta zmieniana piosenka a ta ktora zajmuje pozycje na ktora piosenka mza zostac przeniesiona
+    // a pozniej dana pisoenke na docelowa pozycje
+    // reszte piosenek przenosi (-1 lub +1) zaleznie od tego czy nowa pozycja jest nizej czy wyzej o
+    @Modifying
+    @Query(value = """
+        UPDATE playlist_entries
+        SET position = CASE
+            WHEN song_id = :songId THEN :newPos
+            WHEN :oldPos < :newPos THEN position - 1
+            ELSE position + 1
+        END
+        WHERE playlist_id = :playlistId
+          AND position BETWEEN LEAST(:oldPos, :newPos) AND GREATEST(:oldPos, :newPos)
+    """, nativeQuery = true)
+    void updateSongPosition(
+            @Param("playlistId") Long playlistId,
+            @Param("songId") Long songId,
+            @Param("oldPos") Integer oldPos,
+            @Param("newPos") Integer newPos
+    );
+
+    PlaylistEntry findBySongIdAndPlaylistId(Long songId, Long playlistId);
 }
