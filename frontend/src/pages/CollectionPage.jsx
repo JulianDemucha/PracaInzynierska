@@ -1,20 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import './CollectionPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
+import { getImageUrl } from '../services/imageService.js';
+
+// --- SERWISY ALBUMU (STARE) ---
 import {
     getAlbumById,
     getSongsByAlbumId,
     deleteAlbum,
-    removeSongFromAlbum // NOWY IMPORT
+    removeSongFromAlbum
 } from '../services/albumService.js';
-import { getImageUrl } from '../services/imageService.js';
 
-// NOWY IMPORT MODALA
-import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx'; // Sprawdź czy .js czy .jsx u Ciebie
+// --- SERWISY PLAYLISTY (NOWE) ---
+import {
+    getPlaylistById,
+    getPlaylistSongs,
+    deletePlaylist,
+    removeSongFromPlaylist
+} from '../services/playlistService.js';
+
+// --- KOMPONENTY ---
+import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
+import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
+import RemoveFromPlaylistModal from '../components/playlist/RemoveFromPlaylistModal.jsx';
 import ContextMenu from '../components/common/ContextMenu.jsx';
 
+// --- IKONY ---
 import binIcon from '../assets/images/bin.png';
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';
@@ -25,7 +38,6 @@ import likeIcon from '../assets/images/like.png';
 import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
-import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 
 function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
@@ -37,7 +49,11 @@ function formatTime(seconds) {
 function CollectionPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { currentUser } = useAuth();
+
+    // Sprawdzamy czy to playlista na podstawie URL (zakładam, że routing to /playlist/:id)
+    const isPlaylist = location.pathname.includes('/playlist');
 
     // --- STANY ---
     const [collection, setCollection] = useState(null);
@@ -45,17 +61,21 @@ function CollectionPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [isAlbumFavorite, setIsAlbumFavorite] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
 
-    // Modal usuwania całego albumu
+    // Modale
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // NOWY STAN: Modal dodawania piosenek
+    // Modale Albumowe
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
 
-    const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+    // Modale Playlistowe
+    const [isAddToPlaylistModalOpen, setIsAddToPlaylistModalOpen] = useState(false);
     const [songToAddToPlaylist, setSongToAddToPlaylist] = useState(null);
+
+    const [isRemovePlaylistModalOpen, setIsRemovePlaylistModalOpen] = useState(false);
+    const [songToRemoveFromPlaylist, setSongToRemoveFromPlaylist] = useState(null);
 
     const {
         currentSong, isPlaying, playSong, pause, addToQueue,
@@ -63,83 +83,159 @@ function CollectionPage() {
     } = usePlayer();
 
     // --- POBIERANIE DANYCH ---
-    // Wyniosłem funkcję fetchData, aby móc ją wywołać po dodaniu piosenki
     const fetchData = async () => {
         try {
-            // Jeśli to tylko odświeżenie (collection już jest), nie ustawiamy full loading
             if (!collection) setLoading(true);
+            setError(null);
 
-            const [albumData, songsData] = await Promise.all([
-                getAlbumById(id),
-                getSongsByAlbumId(id)
-            ]);
+            let fetchedCollection = null;
+            let fetchedSongs = [];
 
-            const mappedSongs = songsData.map(s => ({
-                ...s,
-                artist: { id: s.authorId, name: s.authorUsername || "Nieznany" },
-                coverArtUrl: getImageUrl(albumData.coverStorageKeyId),
-                duration: s.duration || 0
-            }));
+            if (isPlaylist) {
+                // === TRYB PLAYLISTY ===
 
-            setCollection(albumData);
-            setSongs(mappedSongs);
+                // 1. Pobranie danych playlisty
+                const playlistData = await getPlaylistById(id);
+
+                // Normalizacja danych (playlistData ma inne pola niż albumData)
+                fetchedCollection = {
+                    id: playlistData.id,
+                    title: playlistData.title || playlistData.name || "Bez nazwy", // Obsługa title/name
+                    description: playlistData.description || "",
+                    authorId: playlistData.creatorId, // Backend zwraca creatorId
+                    authorName: playlistData.creatorUsername,
+                    coverStorageKeyId: playlistData.coverStorageKeyId,
+                    createdAt: playlistData.createdAt,
+                    publiclyVisible: playlistData.publiclyVisible,
+                    type: 'PLAYLIST'
+                };
+
+                // 2. Pobranie piosenek playlisty
+                try {
+                    const playlistSongsData = await getPlaylistSongs(id);
+
+                    fetchedSongs = playlistSongsData.map(item => {
+                        // Obsługa struktury PlaylistSongViewDto (może mieć zagnieżdżone 'song' lub być płaska)
+                        const s = item.song || item;
+                        return {
+                            id: s.id,
+                            title: s.title,
+                            duration: s.duration || 0,
+                            authorId: s.authorId,
+                            authorUsername: s.authorUsername,
+                            coverStorageKeyId: s.coverStorageKeyId,
+
+                            // Pola UI
+                            artist: { id: s.authorId, name: s.authorUsername || "Nieznany" },
+                            coverArtUrl: getImageUrl(s.coverStorageKeyId),
+                            genres: s.genres || []
+                        };
+                    });
+                } catch (songErr) {
+                    console.error("Błąd pobierania piosenek playlisty:", songErr);
+                    fetchedSongs = [];
+                }
+
+            } else {
+                // === TRYB ALBUMU (BEZ ZMIAN) ===
+                const [albumData, songsData] = await Promise.all([
+                    getAlbumById(id),
+                    getSongsByAlbumId(id)
+                ]);
+
+                fetchedCollection = {
+                    ...albumData,
+                    authorName: albumData.authorName || albumData.authorUsername,
+                    type: 'ALBUM'
+                };
+
+                fetchedSongs = songsData.map(s => ({
+                    ...s,
+                    artist: { id: s.authorId, name: s.authorUsername || "Nieznany" },
+                    coverArtUrl: getImageUrl(albumData.coverStorageKeyId),
+                    duration: s.duration || 0
+                }));
+            }
+
+            setCollection(fetchedCollection);
+            setSongs(fetchedSongs);
 
         } catch (err) {
-            console.error("Błąd pobierania albumu:", err);
-            setError("Nie udało się załadować albumu.");
+            console.error("Błąd pobierania kolekcji:", err);
+            if (err.response && err.response.status === 403) {
+                setError("Brak dostępu (Prywatna).");
+            } else {
+                setError("Nie udało się załadować zawartości.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        setCollection(null);
+        setSongs([]);
         fetchData();
-    }, [id]);
+    }, [id, isPlaylist]);
 
+    // Gatunki (tylko dla albumów)
     const albumGenres = useMemo(() => {
         if (!songs || songs.length === 0) return [];
         const allGenres = songs.flatMap(song => song.genres || []);
         return [...new Set(allGenres)];
     }, [songs]);
 
-    // USUWANIE CAŁEGO ALBUMU
+    // --- USUWANIE ---
     const handleDeleteClick = () => setIsDeleteModalOpen(true);
+
     const confirmDelete = async () => {
         setIsDeleting(true);
         try {
-            await deleteAlbum(collection.id);
+            if (isPlaylist) {
+                await deletePlaylist(collection.id);
+            } else {
+                await deleteAlbum(collection.id);
+            }
             navigate('/profile');
         } catch (err) {
-            console.error("Błąd usuwania albumu:", err);
-            alert("Nie udało się usunąć albumu.");
+            console.error("Błąd usuwania:", err);
+            alert("Nie udało się usunąć.");
+        } finally {
             setIsDeleting(false);
             setIsDeleteModalOpen(false);
         }
     };
 
-    // USUWANIE POJEDYNCZEJ PIOSENKI
+    // Usuwanie piosenki (zależnie od trybu)
     const handleRemoveSong = async (songId, songTitle) => {
-        // Zmieniony tekst alertu, aby użytkownik wiedział, że to trwałe usunięcie
-        if (!window.confirm(`Czy na pewno chcesz bezpowrotnie usunąć utwór "${songTitle}"?`)) {
-            return;
-        }
+        const msg = isPlaylist
+            ? `Czy usunąć utwór "${songTitle}" z tej playlisty?`
+            : `Czy usunąć utwór "${songTitle}" z albumu?`;
+
+        if (!window.confirm(msg)) return;
 
         try {
-            await removeSongFromAlbum(collection.id, songId);
-            // Aktualizujemy stan lokalny (szybciej niż fetch)
+            if (isPlaylist) {
+                await removeSongFromPlaylist(collection.id, songId);
+            } else {
+                await removeSongFromAlbum(collection.id, songId);
+            }
             setSongs(prev => prev.filter(s => s.id !== songId));
         } catch (err) {
             console.error("Błąd usuwania piosenki:", err);
-            // Tutaj zobaczysz teraz poprawny status 204 zamiast 500 po poprawce backendu
-            alert("Nie udało się usunąć piosenki. Sprawdź konsolę.");
+            alert("Nie udało się usunąć piosenki.");
         }
     };
 
-    const isOwner = currentUser && collection && currentUser.id === collection.authorId;
+    // Właściciel: Dla playlisty sprawdzamy creatorId (zmapowane na authorId)
+    // Używam '==' dla bezpieczeństwa typów (string vs number)
+    const isOwner = currentUser && collection && (currentUser.id == collection.authorId);
 
-    if (loading) return <div className="collection-page" style={{padding:'20px'}}>Ładowanie albumu...</div>;
-    if (error || !collection) return <div className="collection-page" style={{padding:'20px'}}>{error || "Album nie istnieje."}</div>;
+    if (loading) return <div className="collection-page" style={{padding:'40px'}}>Ładowanie...</div>;
+    if (error) return <div className="collection-page" style={{padding:'40px'}}>{error} <br/><Link to="/">Wróć</Link></div>;
+    if (!collection) return <div className="collection-page">Nie znaleziono.</div>;
 
+    // --- ODTWARZANIE ---
     const handlePlayCollection = () => {
         if (songs.length === 0) return;
         const firstSong = songs[0];
@@ -158,7 +254,7 @@ function CollectionPage() {
         }
     };
 
-    const albumMenuOptions = [
+    const headerMenuOptions = [
         { label: "Dodaj wszystkie do kolejki", onClick: () => songs.forEach(s => addToQueue(s)) },
     ];
 
@@ -176,11 +272,11 @@ function CollectionPage() {
                     onError={(e) => {e.target.src = defaultCover}}
                 />
                 <div className="song-details">
-                    <span className="song-type">ALBUM</span>
+                    <span className="song-type">{isPlaylist ? "PLAYLISTA" : "ALBUM"}</span>
                     <h1>{collection.title}</h1>
                     <div className="song-meta">
                         <Link to={`/artist/${collection.authorId}`} className="song-artist">
-                            {collection.authorName}
+                            {collection.authorName || "Nieznany"}
                         </Link>
                         <span>•</span>
                         <span>{new Date(collection.createdAt).getFullYear()}</span>
@@ -188,27 +284,19 @@ function CollectionPage() {
                         <span className="song-duration">{songs.length} utworów</span>
                     </div>
 
-                    <div className="genre-tags">
-                        {albumGenres.length > 0 ? (
-                            albumGenres.map(genre => (
-                                <Link key={genre} to={`/genre/${genre}`} className="genre-pill">
-                                    {genre}
-                                </Link>
-                            ))
-                        ) : (
-                            collection.description && <p style={{color:'#aaa', fontSize:'0.9rem', margin: 0}}>{collection.description}</p>
-                        )}
-                    </div>
+                    {!isPlaylist && (
+                        <div className="genre-tags">
+                            {albumGenres.map(genre => (
+                                <Link key={genre} to={`/genre/${genre}`} className="genre-pill">{genre}</Link>
+                            ))}
+                        </div>
+                    )}
 
                     {!collection.publiclyVisible && (
                         <div style={{ marginTop: '10px' }}>
                             <span style={{
-                                border: '1px solid #666',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                fontSize: '0.7rem',
-                                color: '#aaa',
-                                textTransform: 'uppercase'
+                                border: '1px solid #666', padding: '2px 6px', borderRadius: '4px',
+                                fontSize: '0.7rem', color: '#aaa', textTransform: 'uppercase'
                             }}>
                                 Prywatny
                             </span>
@@ -219,36 +307,32 @@ function CollectionPage() {
 
             {/* --- KONTROLKI --- */}
             <section className="song-controls">
-                {/* Lewa strona: Play i Ulubione */}
                 <button className="song-play-button" onClick={handlePlayCollection}>
                     <img src={showPauseOnHeader ? pauseIcon : playIcon} alt={showPauseOnHeader ? "Pauza" : "Odtwórz"} />
                 </button>
-                <button className={`song-control-button ${isAlbumFavorite ? 'active' : ''}`} onClick={() => setIsAlbumFavorite(!isAlbumFavorite)}>
-                    <img src={isAlbumFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
+
+                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => setIsFavorite(!isFavorite)}>
+                    <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
 
-                {/* Prawa strona: Przyciski właściciela (Dodaj i Usuń Album) */}
                 {isOwner && (
                     <div className="owner-controls">
-                        <button
-                            className="add-song-circle-btn"
-                            onClick={() => setIsAddSongModalOpen(true)}
-                            title="Dodaj utwór"
-                        >
-                            +
-                        </button>
-
-                        <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń album">
+                        {/* Przycisk dodawania piosenki (+) widoczny TYLKO dla Albumów */}
+                        {!isPlaylist && (
+                            <button className="add-song-circle-btn" onClick={() => setIsAddSongModalOpen(true)} title="Dodaj utwór">
+                                +
+                            </button>
+                        )}
+                        <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń">
                             <img src={binIcon} alt="Usuń" />
                         </button>
                     </div>
                 )}
 
-                {/* Menu kontekstowe (jeśli nie jesteś właścicielem, pojawi się obok serduszka, jeśli jesteś - obok kosza) */}
-                <ContextMenu options={albumMenuOptions} />
+                <ContextMenu options={headerMenuOptions} />
             </section>
 
-            {/* --- LISTA PIOSENEK --- */}
+            {/* --- LISTA UTWORÓW --- */}
             <section className="song-list-container">
                 <div className="song-list-header">
                     <span className="song-header-track">#</span>
@@ -260,35 +344,43 @@ function CollectionPage() {
 
                 <ul className="song-list">
                     {songs.map((song, index) => {
-                        const isThisSongActive = currentSong?.id === song.id;
-                        const isThisSongPlaying = isThisSongActive && isPlaying;
-                        const isSongLiked = !!favorites[song.id];
+                        const isActive = currentSong?.id === song.id;
+                        const isPlayingNow = isActive && isPlaying;
+                        const isLiked = !!favorites[song.id];
                         const songRating = ratings[song.id];
 
                         const songMenuOptions = [
-                            { label: isSongLiked ? "Usuń z polubionych" : "Dodaj do polubionych", onClick: () => toggleFavorite(song.id) },
+                            { label: isLiked ? "Usuń z polubionych" : "Dodaj do polubionych", onClick: () => toggleFavorite(song.id) },
                             { label: "Dodaj do kolejki", onClick: () => addToQueue(song) },
-                            { label: "Dodaj do playlisty", onClick: () => {
+                            {
+                                label: "Dodaj do playlisty",
+                                onClick: () => {
                                     setSongToAddToPlaylist(song);
-                                    setIsPlaylistModalOpen(true);
+                                    setIsAddToPlaylistModalOpen(true);
+                                }
+                            },
+                            {
+                                label: "Usuń z playlisty",
+                                onClick: () => {
+                                    setSongToRemoveFromPlaylist(song);
+                                    setIsRemovePlaylistModalOpen(true);
                                 }
                             },
                             { label: "Przejdź do artysty", onClick: () => navigate(`/artist/${song.artist.id}`) }
                         ];
 
-                        // DODANIE OPCJI USUWANIA DLA WŁAŚCICIELA
+                        // Specjalna opcja usuwania dla właściciela (Album vs Playlista)
                         if (isOwner) {
                             songMenuOptions.push({
-                                label: "Usuń z albumu",
+                                label: isPlaylist ? "Usuń z tej playlisty" : "Usuń z albumu",
                                 onClick: () => handleRemoveSong(song.id, song.title),
-                                // Opcjonalnie możesz dodać styl dla opcji "niebezpiecznej" (czerwony kolor), jeśli ContextMenu to wspiera
                             });
                         }
 
                         return (
-                            <li key={song.id} className={`song-list-item ${isThisSongActive ? 'active' : ''}`} onDoubleClick={() => handlePlayTrack(song)}>
+                            <li key={`${song.id}-${index}`} className={`song-list-item ${isActive ? 'active' : ''}`} onDoubleClick={() => handlePlayTrack(song)}>
                                 <span className="song-track-number">
-                                    {isThisSongPlaying ? (
+                                    {isPlayingNow ? (
                                         <img src={pauseIcon} alt="Pauza" onClick={() => pause()}/>
                                     ) : (
                                         <div className="number-container">
@@ -299,15 +391,15 @@ function CollectionPage() {
                                 </span>
 
                                 <div className="song-item-details">
-                                    <span className={`song-item-title ${isThisSongActive ? 'highlight' : ''}`}>{song.title}</span>
+                                    <span className={`song-item-title ${isActive ? 'highlight' : ''}`}>{song.title}</span>
                                     <Link to={`/artist/${song.artist.id}`} className="song-item-artist" onClick={(e) => e.stopPropagation()}>
                                         {song.artist.name}
                                     </Link>
                                 </div>
 
                                 <div className="song-item-actions">
-                                    <button className={`action-btn ${isSongLiked ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}>
-                                        <img src={isSongLiked ? heartIconOn : heartIconOff} alt="Like" />
+                                    <button className={`action-btn ${isLiked ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}>
+                                        <img src={isLiked ? heartIconOn : heartIconOff} alt="Like" />
                                     </button>
                                     <button className={`action-btn ${songRating === 'like' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'like')}>
                                         <img src={songRating === 'like' ? likeIconOn : likeIcon} alt="Up" />
@@ -327,37 +419,49 @@ function CollectionPage() {
                 </ul>
             </section>
 
-            {/* MODAL USUWANIA ALBUMU */}
+            {/* --- MODALE --- */}
+
+            {/* 1. Modal usuwania kolekcji */}
             {isDeleteModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
                     <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h3>Usunąć album "{collection?.title}"?</h3>
+                        <h3>Usunąć {isPlaylist ? 'playlistę' : 'album'} "{collection?.title}"?</h3>
                         <p style={{color: '#ff4444'}}>
-                            Uwaga: Usunięcie albumu spowoduje bezpowrotne usunięcie wszystkich {songs.length} piosenek!
+                            {isPlaylist
+                                ? "Playlista zostanie usunięta, ale piosenki pozostaną w systemie."
+                                : "Uwaga: Usunięcie albumu spowoduje bezpowrotne usunięcie wszystkich piosenek!"
+                            }
                         </p>
                         <div className="delete-modal-actions">
                             <button className="cancel-btn" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>Anuluj</button>
                             <button className="confirm-delete-btn" onClick={confirmDelete} disabled={isDeleting}>
-                                {isDeleting ? "Usuwanie..." : "Usuń wszystko"}
+                                {isDeleting ? "Usuwanie..." : "Usuń"}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* MODAL DODAWANIA PIOSENEK (TRYB EDYCJI) */}
-            <CreateAlbumModal
-                isOpen={isAddSongModalOpen}
-                onClose={() => setIsAddSongModalOpen(false)}
-                existingAlbumId={collection?.id}
-                onAlbumUpdate={fetchData}
+            {/* 2. Modal dodawania piosenek (TYLKO ALBUM) */}
+            {!isPlaylist && (
+                <CreateAlbumModal
+                    isOpen={isAddSongModalOpen}
+                    onClose={() => setIsAddSongModalOpen(false)}
+                    existingAlbumId={collection?.id}
+                    onAlbumUpdate={fetchData}
+                />
+            )}
+
+            <AddToPlaylistModal
+                isOpen={isAddToPlaylistModalOpen}
+                onClose={() => setIsAddToPlaylistModalOpen(false)}
+                songToAdd={songToAddToPlaylist}
             />
 
-            {/* === NOWY MODAL PLAYLISTY === */}
-            <AddToPlaylistModal
-                isOpen={isPlaylistModalOpen}
-                onClose={() => setIsPlaylistModalOpen(false)}
-                songToAdd={songToAddToPlaylist}
+            <RemoveFromPlaylistModal
+                isOpen={isRemovePlaylistModalOpen}
+                onClose={() => setIsRemovePlaylistModalOpen(false)}
+                songToRemove={songToRemoveFromPlaylist}
             />
         </div>
     );

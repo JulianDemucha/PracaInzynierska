@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "../context/useAuth.js";
-import { Link, useNavigate } from 'react-router-dom'; // Dodano useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import './ProfilePage.css';
 import defaultAvatar from '../assets/images/default-avatar.png';
 
@@ -13,15 +13,12 @@ import MediaCard from '../components/cards/MediaCard.jsx';
 // Serwisy
 import { getUserSongs } from '../services/songService.js';
 import { getUserAlbums } from '../services/albumService.js';
+import { getUserPlaylists } from '../services/playlistService.js'; // <--- NOWY IMPORT
 import { getImageUrl } from "../services/imageService.js";
-import { deleteUserAccount } from "../services/userService.js"; // <--- NOWY IMPORT (stwórz ten plik/funkcję)
+import { deleteUserAccount } from "../services/userService.js";
 
-// --- DANE TESTOWE ---
+// --- DANE TESTOWE (Zostawiamy komentarze, playlisty usuwamy z mocka w renderze) ---
 const mockOtherContent = {
-    playlists: [
-        { id: 1, title: "Moja playlista nr 1", year: 2022, coverArtUrl: "https://placehold.co/200x200/1DB954/white?text=Playlista+1", type: "Playlista" },
-        { id: 2, title: "Moja playlista nr 2", year: 2021, coverArtUrl: "https://placehold.co/200x200/E73C7E/white?text=Playlista+2", type: "Playlista" },
-    ],
     comments: [
         { id: 1, text: "Mój komentarz 1..." }
     ]
@@ -36,21 +33,29 @@ function ProfilePage() {
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
 
-    // NOWY STAN: Modal usuwania konta
+    // Modal usuwania konta
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const [userSongs, setUserSongs] = useState([]);
     const [userAlbums, setUserAlbums] = useState([]);
+    const [userPlaylists, setUserPlaylists] = useState([]); // <--- NOWY STAN
 
     useEffect(() => {
         const fetchData = async () => {
             if (currentUser?.id) {
                 try {
+                    // Pobieramy równolegle lub po kolei
                     const songsData = await getUserSongs(currentUser.id);
                     setUserSongs(songsData);
+
                     const albumsData = await getUserAlbums(currentUser.id);
                     setUserAlbums(albumsData);
+
+                    // POBIERANIE PLAYLIST
+                    const playlistsData = await getUserPlaylists(currentUser.id);
+                    setUserPlaylists(playlistsData);
+
                 } catch (error) {
                     console.error("Błąd pobierania danych profilu:", error);
                 }
@@ -63,12 +68,11 @@ function ProfilePage() {
         ? new Date(currentUser.createdAt).toLocaleDateString('pl-PL')
         : 'Nieznana data';
 
-    // --- NOWA FUNKCJA USUWANIA KONTA ---
+    // Funkcja usuwania konta
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
         try {
             await deleteUserAccount();
-            // Po udanym usunięciu wyloguj i przekieruj
             logout();
             navigate('/');
         } catch (error) {
@@ -124,7 +128,7 @@ function ProfilePage() {
                     {/* PRZYCISK WYLOGUJ */}
                     <Link to="/" className="logout-button" onClick={logout}>Wyloguj</Link>
 
-                    {/* NOWY PRZYCISK: USUŃ KONTO */}
+                    {/* PRZYCISK: USUŃ KONTO */}
                     <button className="delete-account-button" onClick={() => setIsDeleteModalOpen(true)}>
                         Usuń konto
                     </button>
@@ -133,7 +137,6 @@ function ProfilePage() {
 
             {/* ===== ZAWARTOŚĆ ===== */}
             <section className="profile-content">
-                {/* ... (Bez zmian w sekcjach contentu) ... */}
 
                 {/* --- Pokaż "Własne utwory" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
@@ -180,20 +183,27 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Playlisty" (MOCK) --- */}
+                {/* --- Sekcja Playlisty (TERAZ PRAWDZIWE DANE) --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
                         <h2>Playlisty</h2>
                         <div className="media-grid">
-                            {mockOtherContent.playlists.map(playlist => (
-                                <MediaCard
-                                    key={playlist.id}
-                                    linkTo={`/playlist/${playlist.id}`}
-                                    imageUrl={playlist.coverArtUrl}
-                                    title={playlist.title}
-                                    subtitle={playlist.type}
-                                />
-                            ))}
+                            {userPlaylists.length > 0 ? (
+                                userPlaylists.map(playlist => (
+                                    <MediaCard
+                                        key={playlist.id}
+                                        linkTo={`/playlist/${playlist.id}`}
+                                        // Używamy getImageUrl jeśli jest klucz, lub defaultAvatar.
+                                        // Czasami Playlista zwraca pole 'name' zamiast 'title' (zależy od DTO),
+                                        // więc używamy fallbacku ||.
+                                        imageUrl={playlist.coverStorageKeyId ? getImageUrl(playlist.coverStorageKeyId) : defaultAvatar}
+                                        title={playlist.title || playlist.name}
+                                        subtitle={`${playlist.songsCount || 0} utworów • Playlista`}
+                                    />
+                                ))
+                            ) : (
+                                <p className="empty-tab-message">Nie stworzyłeś jeszcze żadnych playlist.</p>
+                            )}
                         </div>
                     </div>
                 )}
@@ -216,7 +226,7 @@ function ProfilePage() {
             <AddSongModal isOpen={isAddSongModalOpen} onClose={() => setIsAddSongModalOpen(false)} />
             <CreateAlbumModal isOpen={isCreateAlbumModalOpen} onClose={() => setIsCreateAlbumModalOpen(false)} />
 
-            {/* --- NOWY MODAL: POTWIERDZENIE USUNIĘCIA KONTA --- */}
+            {/* Modal usuwania konta */}
             {isDeleteModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
                     <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
