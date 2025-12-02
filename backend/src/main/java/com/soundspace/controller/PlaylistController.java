@@ -10,6 +10,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/playlists")
 @RequiredArgsConstructor
@@ -27,5 +29,11 @@ public class PlaylistController {
                                                                  @PathVariable Long songId,
                                                                  @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(playlistService.addSongToPlaylist(playlistId, songId, userDetails));
+    }
+
+    @GetMapping("/{playlistId}/songs")
+    public ResponseEntity<List<PlaylistSongViewDto>> getPlaylistSongs(@PathVariable Long playlistId,
+                                                                      @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.getPlaylistSongs(playlistId, userDetails));
     }
 }

@@ -57,7 +57,17 @@ public class PlaylistService {
 //        return playlistRepository.findAllByOrderByIdAsc();
 //    }
 
-    public List<PlaylistSongViewDto> getPlaylistSongs(Long playlistId) {
+    public List<PlaylistSongViewDto> getPlaylistSongs(Long playlistId, UserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
+        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+
+        // walidacja permisji
+        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+        if (requestingUserId.equals(playlist.getCreator().getId()) && !playlist.getPubliclyVisible()) {
+            throw new AccessDeniedException("Access denied");
+        }
+
         return playlistEntryRepository.findAllSongsInPlaylist(playlistId)
                 .stream().map(PlaylistSongViewDto::toDto).toList();
     }
