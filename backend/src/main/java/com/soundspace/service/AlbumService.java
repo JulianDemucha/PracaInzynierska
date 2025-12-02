@@ -1,6 +1,7 @@
 package com.soundspace.service;
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.ProcessedImage;
+import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.dto.request.CreateAlbumRequest;
 import com.soundspace.entity.Album;
@@ -68,6 +69,19 @@ public class AlbumService {
         )) throw new AccessDeniedException("Brak uprawnień");
 
         return AlbumDto.toDto(album);
+    }
+
+    public List<SongDto> getSongs(Long albumId, String userEmail) {
+        List<SongProjection> songsProjection = songRepository.findSongsByAlbumNative(albumId);
+        Album album = albumRepository.getAlbumById(albumId);
+        if (album == null) throw new AlbumNotFoundException(albumId);
+
+        // jezeli album jest prywatny i requestujacy user nie jest autorem albumu - throw
+        if (!album.getPubliclyVisible() && !appUserService.getUserByEmail(userEmail).getId()
+                .equals(album.getAuthor().getId()))
+            throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
+
+        return getSongsFromSongProjection(songsProjection);
     }
 
     public List<AlbumDto> findAllAlbumsByUserId(Long userId, String userEmail) {
@@ -283,6 +297,11 @@ public class AlbumService {
                 .stream()
                 .map(AlbumDto::toDto)
                 .toList();
+    }
+
+    private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
+        return songsProjection.stream()
+                .map(SongDto::toDto).toList();
     }
 
 }

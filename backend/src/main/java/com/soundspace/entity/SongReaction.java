@@ -1,11 +1,12 @@
 package com.soundspace.entity;
 
+import com.soundspace.enums.ReactionType;
 import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "favorites")
-public class Favorites {
+@Table(name = "song_likes")
+public class SongReaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +20,11 @@ public class Favorites {
     @JoinColumn(name = "song_id", nullable = false)
     private Song song;
 
-    @Column(name = "favorited_at", nullable = false)
-    private Instant favoritedAt = Instant.now();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reaction_type", nullable = false)
+    private ReactionType reactionType;
+
+    @Column(name = "reacted_at", nullable = false)
+    private Instant reactedAt = Instant.now();
 
 }

@@ -130,7 +130,8 @@ public class ImageService {
                 )
 
         )
-            throw new InvalidStorageLocationException(storageKeyStr);
+            throw new InvalidStorageLocationException
+                    ("Nie można pobrać pliku: niedozwolona ścieżka lub nieobsługiwany typ pliku (wymagany .jpg).");
 
         return resource;
     }
