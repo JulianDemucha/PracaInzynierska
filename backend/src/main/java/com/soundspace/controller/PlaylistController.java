@@ -49,4 +49,12 @@ public class PlaylistController {
         playlistService.delete(playlistId, userDetails);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{playlistId}/remove/{songId}")
+    public ResponseEntity<Void> removeSong(@PathVariable Long playlistId,
+                                           @PathVariable Long songId,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
+        playlistService.removeSong(playlistId, songId, userDetails);
+        return ResponseEntity.noContent().build();
+    }
 }

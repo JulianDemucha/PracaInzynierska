@@ -1,7 +1,6 @@
 package com.soundspace.repository;
 
 import com.soundspace.dto.projection.PlaylistSongProjection;
-import com.soundspace.entity.Playlist;
 import com.soundspace.entity.PlaylistEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -38,6 +37,8 @@ public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Lo
     List<PlaylistSongProjection> findAllSongsInPlaylist(@Param("playlistId") Long playlistId);
 
 
+    void deleteBySongIdAndPlaylistId(Long song_id, Long playlist_id);
+
     // usuwa piosenke ze wszystkich playlsit w ktorych ta piosenka jest
     @Modifying
     @Query("DELETE FROM PlaylistEntry pe WHERE pe.song.id = :songId")
@@ -48,15 +49,28 @@ public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Lo
     @Query("DELETE FROM PlaylistEntry pe WHERE pe.playlist.id = :playlistId")
     void deleteAllByPlaylistId(@Param("playlistId") Long playlistId);
 
-    ////////////////////////////// BULK DELETE USERA //////////////////////////////
+    @Modifying
+    @Query(value = """
+            UPDATE playlist_entries pe
+            SET position = new_ranking.rn - 1
+            FROM (
+                SELECT id, ROW_NUMBER() OVER (ORDER BY position ASC) as rn
+                FROM playlist_entries
+                WHERE playlist_id = :playlistId
+            ) new_ranking
+            WHERE pe.id = new_ranking.id
+            """, nativeQuery = true)
+    void renumberPlaylist(@Param("playlistId") Long playlistId);
+
+    /// /////////////////////////// BULK DELETE USERA //////////////////////////////
 
     // zwraca liste potrzebna do wywolania renumberPlaylists
     @Query("""
-        SELECT DISTINCT pe.playlist.id
-        FROM PlaylistEntry pe
-        WHERE pe.song.author.id = :userId
-          AND pe.playlist.creator.id != :userId
-    """)
+            SELECT DISTINCT pe.playlist.id
+            FROM PlaylistEntry pe
+            WHERE pe.song.author.id = :userId
+              AND pe.playlist.creator.id != :userId
+            """)
     List<Long> findPlaylistIdsToRepair(@Param("userId") Long userId);
 
     // - usuwa kazda piosenke danego usera ze wszystkich playlsit w ktorych ta piosenka jest
@@ -68,15 +82,15 @@ public interface PlaylistEntryRepository extends JpaRepository<PlaylistEntry, Lo
     // renumber playlist z ktorych usunieto piosenki i maja dziury cn
     @Modifying
     @Query(value = """
-        UPDATE playlist_entries pe
-        SET position = new_ranking.rn - 1
-        FROM (
-            SELECT id, ROW_NUMBER() OVER (PARTITION BY playlist_id ORDER BY position ASC) as rn
-            FROM playlist_entries
-            WHERE playlist_id IN :playlistIds
-        ) new_ranking
-        WHERE pe.id = new_ranking.id
-    """, nativeQuery = true)
+            UPDATE playlist_entries pe
+            SET position = new_ranking.rn - 1
+            FROM (
+                SELECT id, ROW_NUMBER() OVER (PARTITION BY playlist_id ORDER BY position ASC) as rn
+                FROM playlist_entries
+                WHERE playlist_id IN :playlistIds
+            ) new_ranking
+            WHERE pe.id = new_ranking.id
+            """, nativeQuery = true)
     void renumberPlaylists(@Param("playlistIds") List<Long> playlistIds);
 
     Optional<PlaylistEntry> findBySongId(Long songId);
