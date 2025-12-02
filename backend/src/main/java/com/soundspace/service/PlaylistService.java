@@ -248,7 +248,7 @@ public class PlaylistService {
         if (userEmail == null) throw new AccessDeniedException("User is not logged in");
         Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
 
-        if (requestingUserId.equals(playlist.getCreator().getId()) && !playlist.getPubliclyVisible()) {
+        if (!requestingUserId.equals(playlist.getCreator().getId()) && !playlist.getPubliclyVisible()) {
             throw new AccessDeniedException("Access denied");
         }
     }
