@@ -24,6 +24,27 @@ function AddSongModal({ isOpen, onClose }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [showValidation, setShowValidation] = useState(false);
 
+    function onImageLoad(e) {
+        const { width, height } = e.currentTarget;
+        const smallestDimension = Math.min(width, height);
+        const cropSize = smallestDimension * 0.9;
+
+        const crop = centerCrop(
+            makeAspectCrop(
+                {
+                    unit: 'px',
+                    width: cropSize,
+                },
+                1,
+                width,
+                height
+            ),
+            width,
+            height
+        );
+        setCrop(crop);
+    }
+
     const resetForm = () => {
         setTitle("");
         setSelectedGenres([]);
@@ -85,14 +106,11 @@ function AddSongModal({ isOpen, onClose }) {
             setAudioFile(file);
             setSongFileName(file.name);
         } else if (type === 'cover') {
+            setCrop(undefined);
             setImgSrc('');
             const reader = new FileReader();
             reader.onload = () => {
                 setImgSrc(reader.result.toString() || '');
-                setCrop(centerCrop(
-                    makeAspectCrop({ unit: '%', width: 90 }, 1, 100, 100),
-                    100, 100
-                ));
             };
             reader.readAsDataURL(file);
         }
@@ -160,6 +178,8 @@ function AddSongModal({ isOpen, onClose }) {
         setIsLoading(true);
 
         try {
+            if (!imgRef.current) throw new Error("Błąd ładowania obrazka");
+
             const croppedImageBlob = await getCroppedImg(imgRef.current, crop);
 
             const formData = new FormData();
@@ -237,6 +257,7 @@ function AddSongModal({ isOpen, onClose }) {
                                             ref={imgRef}
                                             src={imgSrc}
                                             alt="Podgląd okładki"
+                                            onLoad={onImageLoad}
                                         />
                                     </ReactCrop>
                                 </div>

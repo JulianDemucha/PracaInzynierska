@@ -75,6 +75,28 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
         }
     }, [isOpen, existingAlbumId]);
 
+    function onImageLoad(e) {
+        const { width, height } = e.currentTarget;
+        if (width === 0 || height === 0) return;
+
+        const smallestDimension = Math.min(width, height);
+        const cropSize = smallestDimension * 0.9;
+
+        const crop = centerCrop(
+            makeAspectCrop(
+                {
+                    unit: 'px',
+                    width: cropSize,
+                },
+                1,
+                width,
+                height
+            ),
+            width,
+            height
+        );
+        setCrop(crop);
+    }
     if (!isOpen) return null;
 
     // --- PLIKI ---
@@ -84,11 +106,11 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
         setErrorMessage("");
 
         if (type === 'cover') {
+            setCrop(undefined);
             setImgSrc('');
             const reader = new FileReader();
             reader.onload = () => {
                 setImgSrc(reader.result.toString() || '');
-                setCrop(centerCrop(makeAspectCrop({unit: '%', width: 90}, 1, 100, 100), 100, 100));
             };
             reader.readAsDataURL(file);
         } else if (type === 'song') {
@@ -275,11 +297,20 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
 
                             {imgSrc !== defaultAvatar && (
                                 <div className="cropper-container">
-                                    <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1}>
-                                        <img ref={imgRef} src={imgSrc} alt="Cover" />
+                                    <ReactCrop
+                                        crop={crop}
+                                        onChange={c => setCrop(c)}
+                                        aspect={1}
+                                    >
+                                        <img
+                                            ref={imgRef}
+                                            src={imgSrc}
+                                            alt="Podgląd okładki"
+                                            onLoad={onImageLoad}
+                                        />
                                     </ReactCrop>
                                 </div>
-                            )}
+                                )}
 
                             <label>Gatunek</label>
                             <div className={`genre-picker-container ${showValidation && selectedGenres.length === 0 ? 'error-border' : ''}`}>

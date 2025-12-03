@@ -29,6 +29,28 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
         }
     }, [isOpen, currentUser]);
 
+    function onImageLoad(e) {
+        const {width, height} = e.currentTarget;
+        if (width === 0 || height === 0) return;
+
+        const smallestDimension = Math.min(width, height);
+        const cropSize = smallestDimension * 0.9;
+
+        const crop = centerCrop(
+            makeAspectCrop(
+                {
+                    unit: 'px',
+                    width: cropSize,
+                },
+                1, // Aspect ratio
+                width,
+                height
+            ),
+            width,
+            height
+        );
+        setCrop(crop);
+    }
     const resetCreateForm = () => {
         setView('list');
         setNewPlaylistName("");
@@ -61,11 +83,11 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
         const file = e.target.files[0];
         if (!file) return;
         setErrorMessage("");
+        setCrop(undefined);
         setImgSrc('');
         const reader = new FileReader();
         reader.onload = () => {
             setImgSrc(reader.result.toString() || '');
-            setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, 1, 100, 100), 100, 100));
         };
         reader.readAsDataURL(file);
     };
@@ -224,8 +246,18 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
                             <input id="playlist-cover-upload" type="file" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} style={{display: 'none'}} />
                             {imgSrc && (
                                 <div className="playlist-cropper-container">
-                                    <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1}>
-                                        <img ref={imgRef} src={imgSrc} alt="Cover" />
+                                    <ReactCrop
+                                        crop={crop}
+                                        onChange={(_, percentCrop) => setCrop(percentCrop)}
+                                        onComplete={(c) => setCrop(c)}
+                                        aspect={1}
+                                    >
+                                        <img
+                                            ref={imgRef}
+                                            src={imgSrc}
+                                            alt="Cover"
+                                            onLoad={onImageLoad}
+                                        />
                                     </ReactCrop>
                                 </div>
                             )}

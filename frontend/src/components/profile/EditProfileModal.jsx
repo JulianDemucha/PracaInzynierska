@@ -28,11 +28,13 @@ function EditProfileModal({isOpen, onClose}) {
 
     function onImageLoad(e) {
         const { width, height } = e.currentTarget;
+        const smallestDimension = Math.min(width, height);
+        const cropSize = smallestDimension * 0.9;
         const crop = centerCrop(
             makeAspectCrop(
                 {
-                    unit: '%',
-                    width: 90,
+                    unit: 'px',
+                    width: cropSize,
                 },
                 1,
                 width,
@@ -119,7 +121,7 @@ function EditProfileModal({isOpen, onClose}) {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
+        setCrop(undefined);
         const reader = new FileReader();
         reader.onload = () => {
             setImgSrc(reader.result.toString() || '');
