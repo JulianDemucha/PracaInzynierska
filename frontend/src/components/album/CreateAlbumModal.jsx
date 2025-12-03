@@ -14,7 +14,7 @@ const genres = [
 ];
 
 // DODANO: prop existingAlbumId oraz onAlbumUpdate
-function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdate}) {
+function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdate, onSongsUpdate}) {
     const { currentUser } = useAuth();
 
     const [step, setStep] = useState(1);
@@ -256,7 +256,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
 
         // Wywołaj callback odświeżania danych w rodzicu
         if (onAlbumUpdate) onAlbumUpdate();
-
+        if (onSongsUpdate) onSongsUpdate();
         onClose();
     };
 

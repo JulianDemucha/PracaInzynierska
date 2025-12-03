@@ -10,7 +10,7 @@ const genres = [
     "PUNK", "FUNK", "TRAP", "SOUL", "LATIN", "K_POP", "INDIE", "ALTERNATIVE"
 ];
 
-function AddSongModal({ isOpen, onClose }) {
+function AddSongModal({ isOpen, onClose, onSongAdded }) {
     const [selectedGenres, setSelectedGenres] = useState([]);
     const [title, setTitle] = useState("");
     const [isPublic, setIsPublic] = useState(false);
@@ -201,6 +201,9 @@ function AddSongModal({ isOpen, onClose }) {
             })
 
             console.log("Server response:", response.data);
+            if (onSongAdded) {
+                onSongAdded();
+            }
             handleCloseModal();
 
         } catch (error) {

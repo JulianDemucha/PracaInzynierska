@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from "../context/useAuth.js";
 import { Link, useNavigate } from 'react-router-dom';
 import './ProfilePage.css';
@@ -41,28 +41,43 @@ function ProfilePage() {
     const [userAlbums, setUserAlbums] = useState([]);
     const [userPlaylists, setUserPlaylists] = useState([]); // <--- NOWY STAN
 
+    const fetchSongs = useCallback(async () => {
+        if (!currentUser?.id) return;
+        try {
+            const songsData = await getUserSongs(currentUser.id);
+            setUserSongs(songsData);
+        } catch (error) {
+            console.error("Błąd pobierania utworów:", error);
+        }
+    }, [currentUser?.id]);
+
+    const fetchAlbums = useCallback(async () => {
+        if (!currentUser?.id) return;
+        try {
+            const albumsData = await getUserAlbums(currentUser.id);
+            setUserAlbums(albumsData);
+        } catch (error) {
+            console.error("Błąd pobierania albumów:", error);
+        }
+    }, [currentUser?.id]);
+
+    const fetchPlaylists = useCallback(async () => {
+        if (!currentUser?.id) return;
+        try {
+            const playlistsData = await getUserPlaylists(currentUser.id);
+            setUserPlaylists(playlistsData);
+        } catch (error) {
+            console.error("Błąd pobierania playlist:", error);
+        }
+    }, [currentUser?.id]);
+
     useEffect(() => {
-        const fetchData = async () => {
-            if (currentUser?.id) {
-                try {
-                    // Pobieramy równolegle lub po kolei
-                    const songsData = await getUserSongs(currentUser.id);
-                    setUserSongs(songsData);
-
-                    const albumsData = await getUserAlbums(currentUser.id);
-                    setUserAlbums(albumsData);
-
-                    // POBIERANIE PLAYLIST
-                    const playlistsData = await getUserPlaylists(currentUser.id);
-                    setUserPlaylists(playlistsData);
-
-                } catch (error) {
-                    console.error("Błąd pobierania danych profilu:", error);
-                }
-            }
-        };
-        fetchData();
-    }, [currentUser]);
+        if (currentUser?.id) {
+            fetchSongs();
+            fetchAlbums();
+            fetchPlaylists();
+        }
+    }, [currentUser, fetchSongs, fetchAlbums, fetchPlaylists]);
 
     const formattedJoinDate = currentUser?.createdAt
         ? new Date(currentUser.createdAt).toLocaleDateString('pl-PL')
@@ -222,9 +237,21 @@ function ProfilePage() {
             </section>
 
             {/* Modale */}
-            <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
-            <AddSongModal isOpen={isAddSongModalOpen} onClose={() => setIsAddSongModalOpen(false)} />
-            <CreateAlbumModal isOpen={isCreateAlbumModalOpen} onClose={() => setIsCreateAlbumModalOpen(false)} />
+            <EditProfileModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)} />
+            <AddSongModal
+                isOpen={isAddSongModalOpen}
+                onClose={() => setIsAddSongModalOpen(false)}
+                onSongAdded={fetchSongs}
+            />
+
+            <CreateAlbumModal
+                isOpen={isCreateAlbumModalOpen}
+                onClose={() => setIsCreateAlbumModalOpen(false)}
+                onAlbumUpdate={fetchAlbums}
+                onSongsUpdate={fetchSongs}
+            />
 
             {/* Modal usuwania konta */}
             {isDeleteModalOpen && (
