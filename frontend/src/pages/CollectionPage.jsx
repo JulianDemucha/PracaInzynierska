@@ -18,7 +18,8 @@ import {
     getPlaylistById,
     getPlaylistSongs,
     deletePlaylist,
-    removeSongFromPlaylist
+    removeSongFromPlaylist,
+    getUserPlaylists
 } from '../services/playlistService.js';
 
 // --- KOMPONENTY ---
@@ -63,6 +64,8 @@ function CollectionPage() {
 
     const [isFavorite, setIsFavorite] = useState(false);
 
+    const [songsPlaylistCount, setSongsPlaylistCount] = useState({});
+
     // Modale
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -100,7 +103,7 @@ function CollectionPage() {
                 // Normalizacja danych (playlistData ma inne pola niż albumData)
                 fetchedCollection = {
                     id: playlistData.id,
-                    title: playlistData.title || playlistData.name || "Bez nazwy", // Obsługa title/name
+                    title: playlistData.title, // Obsługa title/name
                     description: playlistData.description || "",
                     authorId: playlistData.creatorId, // Backend zwraca creatorId
                     authorName: playlistData.creatorUsername,
@@ -172,11 +175,43 @@ function CollectionPage() {
         }
     };
 
+    const fetchUserPlaylistData = async () => {
+        if (!currentUser) return;
+        try {
+            const userPlaylists = await getUserPlaylists(currentUser.id);
+            if (!userPlaylists || userPlaylists.length === 0) return;
+
+            const counts = {};
+
+            await Promise.all(userPlaylists.map(async (pl) => {
+                try {
+                    const songsInPl = await getPlaylistSongs(pl.id);
+                    songsInPl.forEach(item => {
+                        const songId = item.song?.id || item.id || item.songId;
+                        if (songId) {
+                            counts[songId] = (counts[songId] || 0) + 1;
+                        }
+                    });
+                } catch (e) {
+                    console.warn(`Nie udało się pobrać piosenek dla playlisty ${pl.id}`, e);
+                }
+            }));
+
+            setSongsPlaylistCount(counts);
+        } catch (e) {
+            console.error("Błąd analizy playlist użytkownika:", e);
+        }
+    };
+
     useEffect(() => {
         setCollection(null);
         setSongs([]);
         fetchData();
     }, [id, isPlaylist]);
+
+    useEffect(() => {
+        fetchUserPlaylistData();
+    }, [currentUser]);
 
     // Gatunki (tylko dla albumów)
     const albumGenres = useMemo(() => {
@@ -221,6 +256,7 @@ function CollectionPage() {
                 await removeSongFromAlbum(collection.id, songId);
             }
             setSongs(prev => prev.filter(s => s.id !== songId));
+            fetchUserPlaylistData();
         } catch (err) {
             console.error("Błąd usuwania piosenki:", err);
             alert("Nie udało się usunąć piosenki.");
@@ -349,25 +385,31 @@ function CollectionPage() {
                         const isLiked = !!favorites[song.id];
                         const songRating = ratings[song.id];
 
+                        const playlistCount = songsPlaylistCount[song.id] || 0;
+                        const showGlobalRemove = playlistCount > 1;
+
                         const songMenuOptions = [
                             { label: isLiked ? "Usuń z polubionych" : "Dodaj do polubionych", onClick: () => toggleFavorite(song.id) },
                             { label: "Dodaj do kolejki", onClick: () => addToQueue(song) },
+                            { label: "Przejdź do artysty", onClick: () => navigate(`/artist/${song.artist.id}`) },
+                            { label: "Przejdź do utworu", onClick: () => navigate(`/song/${song.id}`) },
                             {
                                 label: "Dodaj do playlisty",
                                 onClick: () => {
                                     setSongToAddToPlaylist(song);
                                     setIsAddToPlaylistModalOpen(true);
                                 }
-                            },
-                            {
+                            }
+                        ];
+                        if (showGlobalRemove) {
+                            songMenuOptions.push({
                                 label: "Usuń z playlisty",
                                 onClick: () => {
                                     setSongToRemoveFromPlaylist(song);
                                     setIsRemovePlaylistModalOpen(true);
                                 }
-                            },
-                            { label: "Przejdź do artysty", onClick: () => navigate(`/artist/${song.artist.id}`) }
-                        ];
+                            });
+                        }
 
                         // Specjalna opcja usuwania dla właściciela (Album vs Playlista)
                         if (isOwner) {
