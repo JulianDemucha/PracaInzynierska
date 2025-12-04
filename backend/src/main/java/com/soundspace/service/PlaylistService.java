@@ -44,10 +44,11 @@ public class PlaylistService {
     private final SongRepository songRepository;
     private final PlaylistEntryRepository playlistEntryRepository;
 
-    // wip - tu bedzie sie mapowalo w playlistdto i zwracalo jakos
-//    public List<PlaylistDto> getAllPlaylists() {
-//        return playlistRepository.findAllByOrderByIdAsc();
-//    }
+    public List<PlaylistDto> getAllPlaylists(UserDetails userDetails) {
+        return playlistRepository.findAllWithDetails().stream()
+                .map(PlaylistDto::toDto)
+                .filter(p -> isUserAuthorizedToGetPlaylist(p, userDetails)).toList();
+    }
 
     @Transactional(readOnly = true)
     public List<PlaylistDto> getAllByUserId(Long userId, UserDetails userDetails) {
@@ -101,7 +102,7 @@ public class PlaylistService {
             coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, creator);
 
             Playlist playlist = new Playlist();
-            playlist.setName(request.title());
+            playlist.setTitle(request.title());
             playlist.setCreator(creator);
             playlist.setPubliclyVisible(request.publiclyVisible());
             playlist.setCreatedAt(Instant.now());
@@ -251,6 +252,20 @@ public class PlaylistService {
         if (!requestingUserId.equals(playlist.getCreator().getId()) && !playlist.getPubliclyVisible()) {
             throw new AccessDeniedException("Access denied");
         }
+    }
+
+    private boolean isUserAuthorizedToGetPlaylist(Playlist playlist, UserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
+        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
+        return (requestingUserId.equals(playlist.getCreator().getId()) || playlist.getPubliclyVisible());
+    }
+
+    private boolean isUserAuthorizedToGetPlaylist(PlaylistDto playlist, UserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
+        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
+        return (requestingUserId.equals(playlist.creatorId()) || playlist.publiclyVisible());
     }
 
     // resize i convert

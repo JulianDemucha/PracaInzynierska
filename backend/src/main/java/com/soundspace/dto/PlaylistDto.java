@@ -1,5 +1,6 @@
 package com.soundspace.dto;
 
+import com.soundspace.dto.projection.PlaylistProjection;
 import com.soundspace.entity.Playlist;
 
 public record PlaylistDto(
@@ -18,7 +19,7 @@ public record PlaylistDto(
 
         return new PlaylistDto(
                 playlist.getId(),
-                playlist.getName(),
+                playlist.getTitle(),
                 playlist.getCreator().getId(),
                 playlist.getCreator().getLogin(),
                 playlist.getPubliclyVisible(),
@@ -26,6 +27,20 @@ public record PlaylistDto(
                 playlist.getUpdatedAt().toString(),
                 playlist.getCoverStorageKey().getId(),
                 songsCount
+        );
+    }
+
+    public static PlaylistDto toDto(PlaylistProjection p){
+        return new PlaylistDto(
+                p.getId(),
+                p.getTitle(),
+                p.getCreatorId(),
+                p.getCreatorUsername(),
+                p.getPubliclyVisible(),
+                p.getCreatedAt().toString(),
+                p.getUpdatedAt().toString(),
+                p.getCoverStorageKeyId(),
+                p.getSongsCount()
         );
     }
 }

@@ -1,5 +1,5 @@
 package com.soundspace.repository;
-
+import com.soundspace.dto.projection.PlaylistProjection;
 import com.soundspace.entity.Playlist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,4 +24,23 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
             WHERE p.creator.id = :userId
             """)
     List<Playlist> getAllByCreatorId(@Param("userId") Long userId);
+
+    @Query(value = """
+            SELECT
+            p.id AS id,
+            p.title AS title,
+            u.id AS creatorId,
+            u.login AS creatorUsername,
+            p.publiclyVisible AS publiclyVisible,
+            p.createdAt AS createdAt,
+            p.updatedAt AS updatedAt,
+            sk.id AS coverStorageKeyId,
+            CAST(COUNT(pe) AS int) AS songsCount
+            FROM Playlist p
+            LEFT JOIN p.creator u
+            LEFT JOIN p.coverStorageKey sk
+            LEFT JOIN p.songs pe
+            GROUP BY p.id, u.id, sk.id
+            """)
+    List<PlaylistProjection> findAllWithDetails();
 }
