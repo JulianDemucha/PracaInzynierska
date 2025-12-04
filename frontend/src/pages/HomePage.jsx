@@ -5,6 +5,7 @@ import MediaCard from '../components/cards/MediaCard.jsx';
 import { getImageUrl } from '../services/imageService.js';
 import { getAllSongs } from '../services/songService.js';
 import { getAllAlbums } from '../services/albumService.js';
+import { getAllPlaylists } from '../services/playlistService.js';
 
 // Lista wszystkich gatunków (statyczna)
 const genres = [
@@ -16,16 +17,15 @@ const genres = [
 const ITEMS_IN_ROW = 7;
 
 function HomePage() {
-    // Stany rozwijania sekcji
     const [isHitsExpanded, setIsHitsExpanded] = useState(false);
     const [isGenresExpanded, setIsGenresExpanded] = useState(false);
     const [isSongsExpanded, setIsSongsExpanded] = useState(false);
     const [isAlbumsExpanded, setIsAlbumsExpanded] = useState(false);
     const [isPlaylistsExpanded, setIsPlaylistsExpanded] = useState(false);
 
-    // Stany danych (FAKTYCZNE DANE z backendu)
     const [allSongs, setAllSongs] = useState([]);
     const [allAlbums, setAllAlbums] = useState([]);
+    const [allPlaylists, setAllPlaylists] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Pobieranie danych z serwisów
@@ -33,14 +33,23 @@ function HomePage() {
         const fetchHomeData = async () => {
             try {
                 setLoading(true);
-                // Pobieramy równolegle utwory i albumy
-                const [songsData, albumsData] = await Promise.all([
+
+                const [songsData, albumsData, playlistsData] = await Promise.all([
                     getAllSongs(),
-                    getAllAlbums()
+                    getAllAlbums(),
+                    getAllPlaylists()
                 ]);
 
                 setAllSongs(songsData);
                 setAllAlbums(albumsData);
+
+                if (playlistsData && Array.isArray(playlistsData)) {
+                    const publicOnly = playlistsData.filter(p => p.publiclyVisible === true);
+                    setAllPlaylists(publicOnly);
+                } else {
+                    setAllPlaylists([]);
+                }
+
             } catch (error) {
                 console.error("Błąd pobierania danych strony głównej:", error);
             } finally {
@@ -52,7 +61,6 @@ function HomePage() {
     }, []);
 
     // Logika wyświetlania:
-    // Hity: Na razie bierzemy np. pierwsze 8 piosenek z listy wszystkich (jako symulacja)
     const hitsSongs = allSongs.slice(0, 10);
 
     const visibleHits = isHitsExpanded ? hitsSongs : hitsSongs.slice(0, ITEMS_IN_ROW);
@@ -60,9 +68,7 @@ function HomePage() {
     const visibleSongs = isSongsExpanded ? allSongs : allSongs.slice(0, ITEMS_IN_ROW);
     const visibleAlbums = isAlbumsExpanded ? allAlbums : allAlbums.slice(0, ITEMS_IN_ROW);
 
-    // Playlisty - pusta lista zgodnie z poleceniem "nic nie rób"
-    const playlists = [];
-    const visiblePlaylists = playlists; // Brak elementów = brak potrzeby slice
+    const visiblePlaylists = isPlaylistsExpanded ? allPlaylists : allPlaylists.slice(0, ITEMS_IN_ROW);
 
     if (loading) {
         return <div className="home-page" style={{display: 'flex', justifyContent: 'center', paddingTop: '50px'}}>Ładowanie...</div>;
@@ -71,7 +77,7 @@ function HomePage() {
     return (
         <div className="home-page">
 
-            {/* 1. SEKCJA: HITY (Symulowane z faktycznych danych) */}
+            {/* HITY */}
             <section className="home-section">
                 <div className="section-header">
                     <h2>🔥 Hity (Najbardziej Polubione)</h2>
@@ -87,7 +93,6 @@ function HomePage() {
                             key={song.id}
                             title={song.title}
                             subtitle={song.artist}
-                            // Używamy faktycznego helpera do obrazków
                             imageUrl={getImageUrl(song.coverStorageKeyId)}
                             linkTo={`/song/${song.id}`}
                         />
@@ -172,20 +177,30 @@ function HomePage() {
                 </div>
             </section>
 
-            {/* 5. SEKCJA: PLAYLISTY (Placeholder) */}
+            {/* 5. SEKCJA: PLAYLISTY */}
             <section className="home-section">
                 <div className="section-header">
-                    <h2>Playlisty</h2>
-                    {playlists.length > ITEMS_IN_ROW && (
+                    <h2>Playlisty Społeczności</h2>
+                    {allPlaylists.length > ITEMS_IN_ROW && (
                         <span className="see-all" onClick={() => setIsPlaylistsExpanded(!isPlaylistsExpanded)}>
                             {isPlaylistsExpanded ? "ZWIŃ" : "POKAŻ WSZYSTKIE"}
                         </span>
                     )}
                 </div>
                 <div className="genre-grid">
-                    <div style={{ color: '#aaa', fontStyle: 'italic', gridColumn: '1 / -1' }}>
-                        Sekcja playlist w przygotowaniu...
-                    </div>
+                    {visiblePlaylists.length > 0 ? (
+                        visiblePlaylists.map((playlist) => (
+                            <MediaCard
+                                key={playlist.id}
+                                title={playlist.title}
+                                subtitle={`${playlist.songsCount || 0} utworów • ${playlist.creatorUsername || 'Nieznany'}`}
+                                imageUrl={getImageUrl(playlist.coverStorageKeyId)}
+                                linkTo={`/playlist/${playlist.id}`}
+                            />
+                        ))
+                    ) : (
+                        <p style={{color: '#aaa', gridColumn: '1 / -1'}}>Brak publicznych playlist.</p>
+                    )}
                 </div>
             </section>
 

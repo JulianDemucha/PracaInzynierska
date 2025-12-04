@@ -47,3 +47,8 @@ export const changeSongPosition = async (playlistId, songId, newPosition) => {
     const response = await api.put(`/playlists/${playlistId}/changeSongPosition/${songId}/${newPosition}`);
     return response.data;
 };
+
+export const getAllPlaylists = async () => {
+    const response = await api.get('/playlists/');
+    return response.data;
+};
