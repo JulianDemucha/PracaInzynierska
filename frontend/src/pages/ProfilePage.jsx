@@ -13,11 +13,11 @@ import MediaCard from '../components/cards/MediaCard.jsx';
 // Serwisy
 import { getUserSongs } from '../services/songService.js';
 import { getUserAlbums } from '../services/albumService.js';
-import { getUserPlaylists } from '../services/playlistService.js'; // <--- NOWY IMPORT
+import { getUserPlaylists } from '../services/playlistService.js';
 import { getImageUrl } from "../services/imageService.js";
 import { deleteUserAccount } from "../services/userService.js";
 
-// --- DANE TESTOWE (Zostawiamy komentarze, playlisty usuwamy z mocka w renderze) ---
+// --- DANE TESTOWE ---
 const mockOtherContent = {
     comments: [
         { id: 1, text: "Mój komentarz 1..." }
@@ -26,7 +26,7 @@ const mockOtherContent = {
 
 function ProfilePage() {
     const { currentUser, logout, loading } = useAuth();
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // Hook do nawigacji
 
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -39,7 +39,7 @@ function ProfilePage() {
 
     const [userSongs, setUserSongs] = useState([]);
     const [userAlbums, setUserAlbums] = useState([]);
-    const [userPlaylists, setUserPlaylists] = useState([]); // <--- NOWY STAN
+    const [userPlaylists, setUserPlaylists] = useState([]);
 
     const fetchSongs = useCallback(async () => {
         if (!currentUser?.id) return;
@@ -83,13 +83,13 @@ function ProfilePage() {
         ? new Date(currentUser.createdAt).toLocaleDateString('pl-PL')
         : 'Nieznana data';
 
-    // Funkcja usuwania konta
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
         try {
             await deleteUserAccount();
             logout();
-            navigate('/');
+            window.location.href = '/';
+
         } catch (error) {
             console.error("Błąd usuwania konta:", error);
             alert("Nie udało się usunąć konta. Spróbuj ponownie.");
@@ -198,7 +198,7 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Sekcja Playlisty (TERAZ PRAWDZIWE DANE) --- */}
+                {/* --- Sekcja Playlisty --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
                         <h2>Playlisty</h2>
@@ -208,9 +208,6 @@ function ProfilePage() {
                                     <MediaCard
                                         key={playlist.id}
                                         linkTo={`/playlist/${playlist.id}`}
-                                        // Używamy getImageUrl jeśli jest klucz, lub defaultAvatar.
-                                        // Czasami Playlista zwraca pole 'name' zamiast 'title' (zależy od DTO),
-                                        // więc używamy fallbacku ||.
                                         imageUrl={playlist.coverStorageKeyId ? getImageUrl(playlist.coverStorageKeyId) : defaultAvatar}
                                         title={playlist.title || playlist.name}
                                         subtitle={`${playlist.songsCount || 0} utworów • Playlista`}
@@ -223,7 +220,7 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Komentarze" (MOCK) --- */}
+                {/* --- Pokaż "Komentarze" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'komentarze') && (
                     <div className="content-section">
                         <h2>Komentarze</h2>
