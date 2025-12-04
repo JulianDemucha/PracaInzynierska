@@ -1,6 +1,5 @@
 package com.soundspace.entity;
 
-import com.soundspace.enums.Visibility;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +19,7 @@ public class Playlist {
     private Long id;
 
     @Column
-    private String name;
+    private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
