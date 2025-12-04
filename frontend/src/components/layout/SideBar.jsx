@@ -3,23 +3,19 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from "../../context/useAuth.js";
 import './Sidebar.css';
 
+// Importy serwisów
 import { getUserAlbums } from '../../services/albumService.js';
+import { getUserPlaylists } from '../../services/playlistService.js';
 
 // Importy Modali
 import AddSongModal from '../song/AddSongModal.jsx';
 import CreateAlbumModal from '../album/CreateAlbumModal.jsx';
 
-const MOCK_PLAYLISTS = [
-    { id: 101, name: "Do samochodu" },
-    { id: 102, name: "Siłownia Pump" },
-    { id: 103, name: "Sad Vibes 2024" },
-];
-
 function Sidebar() {
     const { currentUser, logout } = useAuth();
 
     const [userAlbums, setUserAlbums] = useState([]);
-    const [userPlaylists, setUserPlaylists] = useState(MOCK_PLAYLISTS);
+    const [userPlaylists, setUserPlaylists] = useState([]);
 
     // Stany widoczności modali
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
@@ -30,41 +26,34 @@ function Sidebar() {
         const fetchUserCollections = async () => {
             if (currentUser?.id) {
                 try {
-                    const albumsData = await getUserAlbums(currentUser.id);
-                    setUserAlbums(albumsData);
+                    // Pobieramy Albumy i Playlisty równolegle
+                    const [albumsData, playlistsData] = await Promise.all([
+                        getUserAlbums(currentUser.id),
+                        getUserPlaylists(currentUser.id)
+                    ]);
 
-                    // TODO: fetchowanie playlist
-                    // const playlistsData = await getUserPlaylists(currentUser.id);
-                    // setUserPlaylists(playlistsData);
+                    setUserAlbums(albumsData || []);
+                    setUserPlaylists(playlistsData || []);
 
                 } catch (error) {
                     console.error("Błąd pobierania kolekcji użytkownika:", error);
                     setUserAlbums([]);
+                    setUserPlaylists([]);
                 }
             } else {
                 setUserAlbums([]);
-                setUserPlaylists(MOCK_PLAYLISTS);
+                setUserPlaylists([]);
             }
         };
 
         fetchUserCollections();
     }, [currentUser]);
 
-    const allCollections = [
-        ...userPlaylists,
-        ...userAlbums.map(album => ({
-            id: album.id,
-            name: album.title,
-            type: 'album'
-        }))
-    ];
-
-
     return (
         <aside className="sidebar">
             <div className="sidebar-content">
 
-                {/* 1. SEKCJA: TWOJA BIBLIOTEKA */}
+                {/* 1. SEKCJA: TWOJA BIBLIOTEKA (Stała) */}
                 <nav className="nav-section">
                     <p className="section-title">TWOJA BIBLIOTEKA</p>
                     <NavLink to="/favorites" className="nav-link">
@@ -75,30 +64,62 @@ function Sidebar() {
                     </NavLink>
                 </nav>
 
-                {/* 2. SEKCJA: PLAYLISTY I ALBUMY TWORCY */}
+                {/* 2. SEKCJA: PLAYLISTY (Oddzielna) */}
                 <nav className="nav-section">
-                    <p className="section-title">PLAYLISTY I ALBUMY</p>
+                    <p className="section-title">TWOJE PLAYLISTY</p>
                     <div className="playlists-list">
-                        {allCollections.map((item, index) => (
+                        {userPlaylists.map((playlist) => (
                             <NavLink
-                                key={`${item.type || 'playlist'}-${item.id}`}
-                                to={item.type === 'album' ? `/album/${item.id}` : `/playlist/${item.id}`}
+                                key={`playlist-${playlist.id}`}
+                                to={`/playlist/${playlist.id}`}
                                 className="nav-link playlist-link"
                             >
-                                # {item.name}
+                                # {playlist.title}
                             </NavLink>
                         ))}
-                        {allCollections.length === 0 && currentUser && (
-                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>Brak kolekcji.</span>
+
+                        {userPlaylists.length === 0 && currentUser && (
+                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3', fontStyle: 'italic'}}>
+                                Brak playlist.
+                            </span>
                         )}
-                        {allCollections.length === 0 && !currentUser && (
-                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>Zaloguj się, by zobaczyć kolekcje.</span>
+                        {!currentUser && (
+                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>
+                                Zaloguj się.
+                            </span>
+                        )}
+                    </div>
+                </nav>
+
+                {/* 3. SEKCJA: ALBUMY (Oddzielna) */}
+                <nav className="nav-section">
+                    <p className="section-title">TWOJE ALBUMY</p>
+                    <div className="playlists-list">
+                        {userAlbums.map((album) => (
+                            <NavLink
+                                key={`album-${album.id}`}
+                                to={`/album/${album.id}`}
+                                className="nav-link playlist-link"
+                            >
+                                # {album.title}
+                            </NavLink>
+                        ))}
+
+                        {userAlbums.length === 0 && currentUser && (
+                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3', fontStyle: 'italic'}}>
+                                Brak albumów.
+                            </span>
+                        )}
+                        {!currentUser && (
+                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>
+                                Zaloguj się.
+                            </span>
                         )}
                     </div>
                 </nav>
             </div>
 
-            {/* 3. STOPKA */}
+            {/* 4. STOPKA */}
             <div className="sidebar-footer">
                 <div className="cta-container">
                     {/* PRZYCISK: DODAJ UTWÓR */}
@@ -130,7 +151,7 @@ function Sidebar() {
                             </div>
                             <div className="user-details">
                                 <span className="username">{currentUser.username}</span>
-                                <span className="user-role">Artysta</span>
+                                <span className="user-role">Użytkownik</span>
                             </div>
                         </div>
 
