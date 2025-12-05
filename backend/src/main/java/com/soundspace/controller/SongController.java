@@ -1,6 +1,7 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.SongDto;
+import com.soundspace.dto.request.SongUpdateRequest;
 import com.soundspace.dto.request.SongUploadRequest;
 import com.soundspace.service.*;
 import jakarta.validation.Valid;
@@ -34,9 +35,9 @@ public class SongController {
     private final SongStreamingService songStreamingService;
     private final SongCoreService songCoreService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long id, Authentication authentication) {
-        return ResponseEntity.ok(songCoreService.getSong(id, extractUserDetails(authentication)));
+    @GetMapping("/{songId}")
+    public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long songId, Authentication authentication) {
+        return ResponseEntity.ok(songCoreService.getSong(songId, extractUserDetails(authentication)));
     }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
@@ -52,16 +53,16 @@ public class SongController {
         return ResponseEntity.created(location).body(result);
     }
 
-    @GetMapping("/stream/{id}")
+    @GetMapping("/stream/{songId}")
     public ResponseEntity<ResourceRegion> streamSong(
-            @PathVariable Long id,
+            @PathVariable Long songId,
             @RequestHeader(value = "Range", required = false) String rangeHeader,
             Authentication authentication) {
 
         try {
 
-            ResourceRegion region = songStreamingService.getSongRegion(id, rangeHeader, extractUserDetails(authentication));
-            String mimeType = songStreamingService.getSongMimeType(id);
+            ResourceRegion region = songStreamingService.getSongRegion(songId, rangeHeader, extractUserDetails(authentication));
+            String mimeType = songStreamingService.getSongMimeType(songId);
 
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                     .contentType(MediaType.parseMediaType(mimeType))
@@ -74,17 +75,17 @@ public class SongController {
         }
     }
 
-    @GetMapping("/user/{id}")
-    public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long id,
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long userId,
                                                           Authentication authentication) {
-        return ResponseEntity.ok(songCoreService.getSongsByUserId(id, extractUserDetails(authentication)));
+        return ResponseEntity.ok(songCoreService.getSongsByUserId(userId, extractUserDetails(authentication)));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSongById(@PathVariable Long id,
+    @DeleteMapping("/{songId}")
+    public ResponseEntity<Void> deleteSongById(@PathVariable Long songId,
                                                @AuthenticationPrincipal UserDetails userDetails) {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
-        songCoreService.deleteSongById(id, email);
+        songCoreService.deleteSongById(songId, email);
         return ResponseEntity.noContent().build(); //402
     }
 
@@ -98,6 +99,16 @@ public class SongController {
     public ResponseEntity<List<SongDto>> getAllSongs(Authentication authentication) {
         return ResponseEntity.ok(songCoreService.getAllSongs(extractUserDetails(authentication)));
     }
+
+    @PutMapping("/{songId}")
+    public ResponseEntity<SongDto> updateSongById(@ModelAttribute @Valid SongUpdateRequest request,
+                                                  @PathVariable Long songId,
+                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(songCoreService.updateSong(songId, request, userDetails));
+    }
+
+
+    /// HELPERY
 
     private UserDetails extractUserDetails(Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {

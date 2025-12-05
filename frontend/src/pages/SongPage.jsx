@@ -234,35 +234,6 @@ function SongPage() {
                 )}
             </section>
 
-            {/* ===== SEKCJA KOMENTARZY ===== */}
-            <section className="comments-section">
-                <h2>Komentarze</h2>
-                {song.comments.length === 0 ? (
-                    <p className="empty-message">Brak komentarzy. Bądź pierwszy!</p>
-                ) : (
-                    <>
-                        <div className="comment-sort-controls">
-                            <button className={commentSort === 'popular' ? 'active' : ''} onClick={() => setCommentSort('popular')}>
-                                Najpopularniejsze
-                            </button>
-                            <button className={commentSort === 'newest' ? 'active' : ''} onClick={() => setCommentSort('newest')}>
-                                Najnowsze
-                            </button>
-                        </div>
-                        <ul className="comment-list">
-                            {sortedComments.slice(0, visibleComments).map(comment => (
-                                <li key={comment.id} className="comment-item">
-                                    <img src={comment.avatarUrl || defaultAvatar} alt="avatar" className="comment-avatar" />
-                                    <div className="comment-body">
-                                        <span className="comment-user">{comment.user}</span>
-                                        <p className="comment-text">{comment.text}</p>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </>
-                )}
-            </section>
 
             {isDeleteModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>

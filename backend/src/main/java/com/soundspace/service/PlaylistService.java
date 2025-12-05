@@ -3,7 +3,7 @@ package com.soundspace.service;
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.PlaylistSongViewDto;
 import com.soundspace.dto.ProcessedImage;
-import com.soundspace.dto.request.CreatePlaylistRequest;
+import com.soundspace.dto.request.PlaylistCreateRequest;
 import com.soundspace.entity.*;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
@@ -94,7 +94,7 @@ public class PlaylistService {
     }
 
     @Transactional
-    public PlaylistDto create(CreatePlaylistRequest request, UserDetails userDetails) {
+    public PlaylistDto create(PlaylistCreateRequest request, UserDetails userDetails) {
         String userEmail = userDetails.getUsername();
         if (userEmail == null) throw new AccessDeniedException("User is not logged in");
 

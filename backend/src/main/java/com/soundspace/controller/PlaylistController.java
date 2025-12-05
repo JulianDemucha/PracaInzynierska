@@ -2,7 +2,7 @@ package com.soundspace.controller;
 
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.PlaylistSongViewDto;
-import com.soundspace.dto.request.CreatePlaylistRequest;
+import com.soundspace.dto.request.PlaylistCreateRequest;
 import com.soundspace.service.PlaylistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +27,7 @@ public class PlaylistController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<PlaylistDto> createPlaylist(@ModelAttribute CreatePlaylistRequest request,
+    public ResponseEntity<PlaylistDto> createPlaylist(@ModelAttribute PlaylistCreateRequest request,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
         PlaylistDto createdPlaylist = playlistService.create(request, userDetails);
         return ResponseEntity.created(URI.create("/api/playlists/"+createdPlaylist.id())).body(createdPlaylist);

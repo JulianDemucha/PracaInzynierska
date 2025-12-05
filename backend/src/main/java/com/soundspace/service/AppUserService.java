@@ -36,7 +36,7 @@ public class AppUserService {
 
     private static final Long DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID = 6767L;
     private static final String AVATARS_TARGET_DIRECTORY = "users/avatars";
-    private static final String AVATAR_OUTPUT_EXTENSION = "jpg";
+    private static final String AVATAR_TARGET_EXTENSION = "jpg";
     private static final int AVATAR_WIDTH = 600;
     private static final int AVATAR_HEIGHT = 600;
     private static final double AVATAR_QUALITY = 0.80;
@@ -191,14 +191,14 @@ public class AppUserService {
 
         try {
             // resize/convert -> ProcessedImage
-            var processed = imageService.resizeImageAndConvert(avatar, AVATAR_WIDTH, AVATAR_HEIGHT, AVATAR_OUTPUT_EXTENSION, AVATAR_QUALITY);
+            var processed = imageService.resizeImageAndConvert(avatar, AVATAR_WIDTH, AVATAR_HEIGHT, AVATAR_TARGET_EXTENSION, AVATAR_QUALITY);
 
             // zapis do temp file
-            tmpAvatar = Files.createTempFile("avatar-", "." + AVATAR_OUTPUT_EXTENSION);
+            tmpAvatar = Files.createTempFile("avatar-", "." + AVATAR_TARGET_EXTENSION);
             Files.write(tmpAvatar, processed.bytes());
 
             // zapis do storage
-            String storageKey = storageService.saveFromPath(tmpAvatar, updatedUser.getId(), AVATAR_OUTPUT_EXTENSION, AVATARS_TARGET_DIRECTORY);
+            String storageKey = storageService.saveFromPath(tmpAvatar, updatedUser.getId(), AVATAR_TARGET_EXTENSION, AVATARS_TARGET_DIRECTORY);
             log.info("Zapisano avatar do storage: {}", storageKey);
 
             // zapis encji StorageKey
@@ -217,7 +217,7 @@ public class AppUserService {
 
             return updatedUser;
 
-            //todo rzucic tu jakies custom endpointy i handlowac na http status
+            //todo rzucic tu jakies custom exceptiony i handlowac na http status
 
         } catch (IOException e) {
             throw new StorageException("Błąd zapisu pliku avatara", e);

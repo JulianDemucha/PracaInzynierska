@@ -133,7 +133,6 @@ function ProfilePage() {
                     <li onClick={() => setActiveTab('wlasne')} className={activeTab === 'wlasne' ? 'active' : ''}>Własne utwory</li>
                     <li onClick={() => setActiveTab('albumy')} className={activeTab === 'albumy' ? 'active' : ''}>Albumy</li>
                     <li onClick={() => setActiveTab('playlisty')} className={activeTab === 'playlisty' ? 'active' : ''}>Playlisty</li>
-                    <li onClick={() => setActiveTab('komentarze')} className={activeTab === 'komentarze' ? 'active' : ''}>Komentarze</li>
                 </ul>
                 <div className="profile-nav-actions">
                     <button className="add-song-button" onClick={() => setIsAddSongModalOpen(true)}>Dodaj utwór</button>
@@ -216,18 +215,6 @@ function ProfilePage() {
                             ) : (
                                 <p className="empty-tab-message">Nie stworzyłeś jeszcze żadnych playlist.</p>
                             )}
-                        </div>
-                    </div>
-                )}
-
-                {/* --- Pokaż "Komentarze" --- */}
-                {(activeTab === 'wszystko' || activeTab === 'komentarze') && (
-                    <div className="content-section">
-                        <h2>Komentarze</h2>
-                        <div className="song-row-placeholder">
-                            {mockOtherContent.comments.length > 0
-                                ? "Tutaj pojawią się Twoje komentarze (W budowie...)"
-                                : "Brak komentarzy"}
                         </div>
                     </div>
                 )}
