@@ -105,15 +105,16 @@ public class PlaylistService {
 
         try {
             MultipartFile coverFile = request.coverFile();
-            if (coverFile == null || coverFile.isEmpty()) {
-                throw new IllegalArgumentException("Plik okładki jest wymagany");
+            if(coverFile == null || coverFile.isEmpty()){
+                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
+
+            } else {
+                // resize, convert i zapis cover image do temp file
+                tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+
+                // docelowy zapis cover image
+                coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, creator);
             }
-
-            // resize, convert i zapis cover image do temp file
-            tmpCoverPath = processCoverAndSaveToTemp(coverFile);
-
-            // docelowy zapis cover image
-            coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, creator);
 
             Playlist playlist = new Playlist();
             playlist.setTitle(request.title());

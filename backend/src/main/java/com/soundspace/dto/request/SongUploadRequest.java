@@ -17,8 +17,7 @@ public class SongUploadRequest {
 
     @NotNull(message = "Plik audio (m4a) jest wymagany")
     private MultipartFile audioFile;
-
-    @NotNull(message = "Plik okładki jest wymagany")
+    
     private MultipartFile coverFile;
 
     @NotBlank
