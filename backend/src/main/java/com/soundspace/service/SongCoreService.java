@@ -66,8 +66,7 @@ public class SongCoreService {
                     .map(SongDto::toDto)
                     .toList();
 
-//        //else
-//        throw new AccessDeniedException("Brak dostępu do piosenki");
+        //else
         return songRepository.findPublicSongsByUserNative(songsAuthorId)
                 .stream()
                 .map(SongDto::toDto)
@@ -165,7 +164,7 @@ public class SongCoreService {
     }
 
     @Transactional
-    public SongDto updateSong(Long songId, SongUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
+    public SongDto update(Long songId, SongUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
         Song updatedSong = getSongById(songId); //narazie wszytkie pola takie same, a pozniej beda zmieniane zeby zapisac po update
 
         AppUser user = appUserService.getUserByEmail(userDetails.getUsername());

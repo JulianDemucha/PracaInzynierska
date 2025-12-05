@@ -59,7 +59,7 @@ public class AppUserService {
     }
 
     @Transactional
-    public AppUserDto updateUser(AppUserUpdateRequest request, UserDetails userDetails) {
+    public AppUserDto update(AppUserUpdateRequest request, UserDetails userDetails) {
 
         // user details subject to email zamiast username -> getUsername() zwraca email
         AppUser updatedUser = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow();
