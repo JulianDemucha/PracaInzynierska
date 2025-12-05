@@ -24,7 +24,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             JOIN a.genres g
             WHERE a.author.id = :authorId
             """)
-    List<Album> findAllByAuthorId(@Param("userId") Long authorId);
+    List<Album> findAllByAuthorId(@Param("authorId") Long authorId);
 
     @Query("""
             SELECT DISTINCT a
@@ -36,7 +36,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             WHERE a.author.id = :authorId
             AND a.publiclyVisible = true
             """)
-    List<Album> findPublicByAuthorId(@Param("userId") Long authorId);
+    List<Album> findPublicByAuthorId(@Param("authorId") Long authorId);
 
     @Query("""
             SELECT DISTINCT a
