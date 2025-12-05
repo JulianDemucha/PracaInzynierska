@@ -104,7 +104,7 @@ public class SongController {
     public ResponseEntity<SongDto> updateSongById(@ModelAttribute @Valid SongUpdateRequest request,
                                                   @PathVariable Long songId,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(songCoreService.updateSong(songId, request, userDetails));
+        return ResponseEntity.ok(songCoreService.update(songId, request, userDetails));
     }
 
 

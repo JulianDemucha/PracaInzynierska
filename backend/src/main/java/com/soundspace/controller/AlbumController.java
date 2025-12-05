@@ -4,6 +4,7 @@ import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.dto.request.AlbumCreateRequest;
+import com.soundspace.dto.request.AlbumUpdateRequest;
 import com.soundspace.service.AlbumService;
 import com.soundspace.service.AppUserService;
 import com.soundspace.service.SongUploadService;
@@ -81,11 +82,20 @@ public class AlbumController {
                                                                  Authentication authentication) {
         return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName, extractUserDetails(authentication)));
     }
+
     @GetMapping
     public ResponseEntity<List<AlbumDto>> getAllAlbums(Authentication authentication) {
         return ResponseEntity.ok(albumService.getAllAlbums(extractUserDetails(authentication)));
     }
 
+    @PutMapping("/{albumId}")
+    public ResponseEntity<AlbumDto> updateAlbum(@ModelAttribute @Valid AlbumUpdateRequest request,
+                                                @PathVariable Long albumId,
+                                                @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(albumService.update(albumId, request, userDetails));
+    }
+
+    /// helpers
 
     private UserDetails extractUserDetails(Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {

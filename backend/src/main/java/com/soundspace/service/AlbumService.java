@@ -5,6 +5,7 @@ import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.dto.request.AlbumCreateRequest;
+import com.soundspace.dto.request.AlbumUpdateRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
@@ -23,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,8 +45,8 @@ public class AlbumService {
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
 
-    private static final String COVERS_TARGET_DIRECTORY = "albums/covers";
-    private static final String TARGET_COVER_EXTENSION = "jpg";
+    private static final String COVER_TARGET_DIRECTORY = "albums/covers";
+    private static final String COVER_TARGET_EXTENSION = "jpg";
     private static final int COVER_WIDTH = 1200;
     private static final int COVER_HEIGHT = 1200;
     private static final double COVER_QUALITY = 0.85;
@@ -61,12 +63,12 @@ public class AlbumService {
         Album album = findById(id).orElseThrow(
                 () -> new AlbumNotFoundException(id));
 
-        if(album.getPubliclyVisible()) return AlbumDto.toDto(album);
+        if (album.getPubliclyVisible()) return AlbumDto.toDto(album);
 
 
         // jeżeli requestujący user nie jest autorem albumu i album jest prywatny - throw
         if (userDetails == null || (
-                        !appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(album.getAuthor().getId())
+                !appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(album.getAuthor().getId())
         )) throw new AccessDeniedException("Brak uprawnień");
 
         return AlbumDto.toDto(album);
@@ -80,7 +82,7 @@ public class AlbumService {
                 .toList();
 
         // jesli publiczny to ok
-        if(album.getPubliclyVisible())
+        if (album.getPubliclyVisible())
             return songs;
 
         // jezeli nie-publiczny i niezalogowany -> throw
@@ -88,7 +90,7 @@ public class AlbumService {
             throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
 
         // jezeli nie-publiczny, zalogowany ale nie jest ownerem playlisty
-        if(!appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(album.getAuthor().getId()))
+        if (!appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(album.getAuthor().getId()))
             throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
 
         // jesli jest ownerem
@@ -189,8 +191,9 @@ public class AlbumService {
 
     @Transactional
     public void removeAlbumSong(Long albumId, Long songId, String userEmail) {
-        Album album = findById(albumId).orElseThrow(
-                () -> new AlbumNotFoundException(albumId));
+        if (albumRepository.existsById(albumId))
+            throw new AlbumNotFoundException(albumId);
+
 
         Song song = songCoreService.getSongById(songId);
 
@@ -245,11 +248,57 @@ public class AlbumService {
 
     }
 
+    @Transactional
+    public AlbumDto update(Long albumId, AlbumUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
+        Album updatedAlbum = albumRepository.findById(albumId).orElseThrow(); //narazie wszytkie pola takie same, a pozniej beda zmieniane zeby zapisac po update
+
+        AppUser user = appUserService.getUserByEmail(userDetails.getUsername());
+        if (!updatedAlbum.getAuthor().getId().equals(user.getId()))
+            throw new AccessDeniedException("Brak dostępu do edycji piosenki");
+
+        MultipartFile coverFile = request.coverFile();
+        StorageKey storageKeyToDelete = null;
+        if (coverFile != null && !coverFile.isEmpty()) {
+            storageKeyToDelete = updatedAlbum.getCoverStorageKey();
+            updatedAlbum.setCoverStorageKey(imageService.processAndSaveNewImage(
+                    coverFile,
+                    user,
+                    COVER_WIDTH,
+                    COVER_HEIGHT,
+                    COVER_QUALITY,
+                    COVER_TARGET_EXTENSION,
+                    COVER_TARGET_DIRECTORY,
+                    "cover"
+            ));
+        }
+
+        if (request.title() != null) {
+            updatedAlbum.setTitle(request.title());
+        }
+
+        if (request.description() != null) {
+            updatedAlbum.setDescription(request.description());
+        }
+
+        if (request.publiclyVisible() != null) {
+            updatedAlbum.setPubliclyVisible(request.publiclyVisible());
+            albumRepository.refreshPubliclyVisibleInAlbumSongs(albumId);
+        }
+
+        albumRepository.save(updatedAlbum);
+        albumRepository.flush();
+        albumRepository.refreshCoverStorageKeyInAlbumSongs(albumId);
+        if (storageKeyToDelete != null) {
+            imageService.cleanUpOldImage(storageKeyToDelete, "cover");
+        }
+        return AlbumDto.toDto(updatedAlbum);
+    }
+
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
         ProcessedImage processedCover =
-                imageService.resizeImageAndConvert(coverFile, COVER_WIDTH, COVER_HEIGHT, TARGET_COVER_EXTENSION, COVER_QUALITY);
+                imageService.resizeImageAndConvert(coverFile, COVER_WIDTH, COVER_HEIGHT, COVER_TARGET_EXTENSION, COVER_QUALITY);
 
-        Path tmpCoverPath = Files.createTempFile("album-cover-", "." + TARGET_COVER_EXTENSION);
+        Path tmpCoverPath = Files.createTempFile("album-cover-", "." + COVER_TARGET_EXTENSION);
         Files.write(tmpCoverPath, processedCover.bytes());
         return tmpCoverPath;
     }
@@ -257,14 +306,14 @@ public class AlbumService {
     private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
         long coverFileSize = Files.size(tmpCoverPath);
         // Pobieramy typ MIME (zakładamy image/jpeg po konwersji, ale można użyć Tiki dla pewności)
-        String mimeType = "image/" + TARGET_COVER_EXTENSION;
+        String mimeType = "image/" + COVER_TARGET_EXTENSION;
 
         // Zapis fizyczny do storage
         String coverStorageKeyString = storageService.saveFromPath(
                 tmpCoverPath,
                 appUser.getId(),
-                TARGET_COVER_EXTENSION,
-                COVERS_TARGET_DIRECTORY
+                COVER_TARGET_EXTENSION,
+                COVER_TARGET_DIRECTORY
         );
         log.info("Zapisano okładkę albumu: key={}", coverStorageKeyString);
 

@@ -37,7 +37,7 @@ public class AppUserController {
             @ModelAttribute @Valid AppUserUpdateRequest appUserUpdateRequest,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return ResponseEntity.ok(appUserService.updateUser(appUserUpdateRequest, userDetails));
+        return ResponseEntity.ok(appUserService.update(appUserUpdateRequest, userDetails));
     }
 
     @DeleteMapping("/me")
