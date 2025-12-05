@@ -151,15 +151,6 @@
     gap: 1.5rem;
 }
 
-/* Placeholder dla komentarzy */
-.song-row-placeholder {
-    padding: 12px 8px;
-    border-radius: 4px;
-}
-.song-row-placeholder:hover {
-    background-color: #282828;
-}
-
 /* Wiadomość, gdy nic nie ma */
 .empty-tab-message {
     color: #b3b3b3;
