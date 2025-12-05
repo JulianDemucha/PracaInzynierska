@@ -16,12 +16,55 @@ const genres = [
 
 const ITEMS_IN_ROW = 7;
 
+const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) => {
+    if (totalCount <= initialLimit) return null;
+
+    return (
+        <div className="expand-controls">
+            {currentLimit < totalCount && (
+                <>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(Math.min(currentLimit + ITEMS_IN_ROW, totalCount))}
+                    >
+                        Pokaż 7 więcej
+                    </button>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(totalCount)}
+                    >
+                        Pokaż wszystkie
+                    </button>
+                </>
+            )}
+
+            {currentLimit > initialLimit && (
+                <>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(Math.max(currentLimit - ITEMS_IN_ROW, initialLimit))}
+                    >
+                        Pokaż 7 mniej
+                    </button>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(initialLimit)}
+                    >
+                        Zwiń
+                    </button>
+                </>
+            )}
+        </div>
+    );
+};
+
 function HomePage() {
-    const [isHitsExpanded, setIsHitsExpanded] = useState(false);
-    const [isGenresExpanded, setIsGenresExpanded] = useState(false);
-    const [isSongsExpanded, setIsSongsExpanded] = useState(false);
-    const [isAlbumsExpanded, setIsAlbumsExpanded] = useState(false);
-    const [isPlaylistsExpanded, setIsPlaylistsExpanded] = useState(false);
+    // Stany limitów wyświetlania
+    const [hitsLimit, setHitsLimit] = useState(ITEMS_IN_ROW);
+    const [genresLimit, setGenresLimit] = useState(ITEMS_IN_ROW);
+    const [songsLimit, setSongsLimit] = useState(ITEMS_IN_ROW);
+    const [albumsLimit, setAlbumsLimit] = useState(ITEMS_IN_ROW);
+    const [playlistsLimit, setPlaylistsLimit] = useState(ITEMS_IN_ROW);
 
     const [allSongs, setAllSongs] = useState([]);
     const [allAlbums, setAllAlbums] = useState([]);
@@ -34,16 +77,20 @@ function HomePage() {
             try {
                 setLoading(true);
 
-                const [songsData, albumsData, playlistsData] = await Promise.all([
+                const results = await Promise.allSettled([
                     getAllSongs(),
                     getAllAlbums(),
                     getAllPlaylists()
                 ]);
 
-                setAllSongs(songsData);
-                setAllAlbums(albumsData);
+                const getData = (result) => result.status === 'fulfilled' ? result.value : [];
 
+                setAllSongs(getData(results[0]));
+                setAllAlbums(getData(results[1]));
+
+                const playlistsData = getData(results[2]);
                 if (playlistsData && Array.isArray(playlistsData)) {
+                    // Filtrujemy tylko publiczne playlisty na stronie głównej
                     const publicOnly = playlistsData.filter(p => p.publiclyVisible === true);
                     setAllPlaylists(publicOnly);
                 } else {
@@ -60,15 +107,7 @@ function HomePage() {
         fetchHomeData();
     }, []);
 
-    // Logika wyświetlania:
-    const hitsSongs = allSongs.slice(0, 10);
-
-    const visibleHits = isHitsExpanded ? hitsSongs : hitsSongs.slice(0, ITEMS_IN_ROW);
-    const visibleGenres = isGenresExpanded ? genres : genres.slice(0, ITEMS_IN_ROW);
-    const visibleSongs = isSongsExpanded ? allSongs : allSongs.slice(0, ITEMS_IN_ROW);
-    const visibleAlbums = isAlbumsExpanded ? allAlbums : allAlbums.slice(0, ITEMS_IN_ROW);
-
-    const visiblePlaylists = isPlaylistsExpanded ? allPlaylists : allPlaylists.slice(0, ITEMS_IN_ROW);
+    const hitsSongs = allSongs.slice(0, 21);
 
     if (loading) {
         return <div className="home-page" style={{display: 'flex', justifyContent: 'center', paddingTop: '50px'}}>Ładowanie...</div>;
@@ -77,20 +116,18 @@ function HomePage() {
     return (
         <div className="home-page">
 
-            {/* HITY */}
+            {/* 1. SEKCJA: HITY */}
             <section className="home-section">
                 <div className="section-header">
-                    <h2>🔥 Hity (Najbardziej Polubione)</h2>
-                    {hitsSongs.length > ITEMS_IN_ROW && (
-                        <span className="see-all" onClick={() => setIsHitsExpanded(!isHitsExpanded)}>
-                            {isHitsExpanded ? "ZWIŃ" : "POKAŻ WSZYSTKIE"}
-                        </span>
-                    )}
+                    <h2>
+                        🔥 Hity (Najbardziej Polubione)
+                        <span className="section-count">({hitsSongs.length})</span>
+                    </h2>
                 </div>
                 <div className="genre-grid">
-                    {visibleHits.map((song) => (
+                    {hitsSongs.slice(0, hitsLimit).map((song) => (
                         <MediaCard
-                            key={song.id}
+                            key={`hit-${song.id}`}
                             title={song.title}
                             subtitle={song.artist}
                             imageUrl={getImageUrl(song.coverStorageKeyId)}
@@ -98,20 +135,24 @@ function HomePage() {
                         />
                     ))}
                 </div>
+                <ExpandControls
+                    totalCount={hitsSongs.length}
+                    currentLimit={hitsLimit}
+                    initialLimit={ITEMS_IN_ROW}
+                    onUpdate={setHitsLimit}
+                />
             </section>
 
             {/* 2. SEKCJA: GATUNKI */}
             <section className="home-section">
                 <div className="section-header">
-                    <h2>Przeglądaj Gatunki</h2>
-                    {genres.length > ITEMS_IN_ROW && (
-                        <span className="see-all" onClick={() => setIsGenresExpanded(!isGenresExpanded)}>
-                            {isGenresExpanded ? "ZWIŃ" : "POKAŻ WSZYSTKIE"}
-                        </span>
-                    )}
+                    <h2>
+                        Przeglądaj Gatunki
+                        <span className="section-count">({genres.length})</span>
+                    </h2>
                 </div>
                 <div className="genre-grid">
-                    {visibleGenres.map((genre) => (
+                    {genres.slice(0, genresLimit).map((genre) => (
                         <MediaCard
                             key={genre}
                             title={genre}
@@ -121,21 +162,25 @@ function HomePage() {
                         />
                     ))}
                 </div>
+                <ExpandControls
+                    totalCount={genres.length}
+                    currentLimit={genresLimit}
+                    initialLimit={ITEMS_IN_ROW}
+                    onUpdate={setGenresLimit}
+                />
             </section>
 
             {/* 3. SEKCJA: WSZYSTKIE UTWORY */}
             <section className="home-section">
                 <div className="section-header">
-                    <h2>Wszystkie Utwory</h2>
-                    {allSongs.length > ITEMS_IN_ROW && (
-                        <span className="see-all" onClick={() => setIsSongsExpanded(!isSongsExpanded)}>
-                            {isSongsExpanded ? "ZWIŃ" : "POKAŻ WSZYSTKIE"}
-                        </span>
-                    )}
+                    <h2>
+                        Wszystkie Utwory
+                        <span className="section-count">({allSongs.length})</span>
+                    </h2>
                 </div>
                 <div className="genre-grid">
-                    {visibleSongs.length > 0 ? (
-                        visibleSongs.map((song) => (
+                    {allSongs.length > 0 ? (
+                        allSongs.slice(0, songsLimit).map((song) => (
                             <MediaCard
                                 key={song.id}
                                 title={song.title}
@@ -148,21 +193,25 @@ function HomePage() {
                         <p style={{color: '#aaa'}}>Brak utworów w bazie.</p>
                     )}
                 </div>
+                <ExpandControls
+                    totalCount={allSongs.length}
+                    currentLimit={songsLimit}
+                    initialLimit={ITEMS_IN_ROW}
+                    onUpdate={setSongsLimit}
+                />
             </section>
 
             {/* 4. SEKCJA: WSZYSTKIE ALBUMY */}
             <section className="home-section">
                 <div className="section-header">
-                    <h2>Wszystkie Albumy</h2>
-                    {allAlbums.length > ITEMS_IN_ROW && (
-                        <span className="see-all" onClick={() => setIsAlbumsExpanded(!isAlbumsExpanded)}>
-                            {isAlbumsExpanded ? "ZWIŃ" : "POKAŻ WSZYSTKIE"}
-                        </span>
-                    )}
+                    <h2>
+                        Wszystkie Albumy
+                        <span className="section-count">({allAlbums.length})</span>
+                    </h2>
                 </div>
                 <div className="genre-grid">
-                    {visibleAlbums.length > 0 ? (
-                        visibleAlbums.map((album) => (
+                    {allAlbums.length > 0 ? (
+                        allAlbums.slice(0, albumsLimit).map((album) => (
                             <MediaCard
                                 key={album.id}
                                 title={album.title}
@@ -175,21 +224,25 @@ function HomePage() {
                         <p style={{color: '#aaa'}}>Brak albumów w bazie.</p>
                     )}
                 </div>
+                <ExpandControls
+                    totalCount={allAlbums.length}
+                    currentLimit={albumsLimit}
+                    initialLimit={ITEMS_IN_ROW}
+                    onUpdate={setAlbumsLimit}
+                />
             </section>
 
             {/* 5. SEKCJA: PLAYLISTY */}
             <section className="home-section">
                 <div className="section-header">
-                    <h2>Playlisty Społeczności</h2>
-                    {allPlaylists.length > ITEMS_IN_ROW && (
-                        <span className="see-all" onClick={() => setIsPlaylistsExpanded(!isPlaylistsExpanded)}>
-                            {isPlaylistsExpanded ? "ZWIŃ" : "POKAŻ WSZYSTKIE"}
-                        </span>
-                    )}
+                    <h2>
+                        Playlisty Społeczności
+                        <span className="section-count">({allPlaylists.length})</span>
+                    </h2>
                 </div>
                 <div className="genre-grid">
-                    {visiblePlaylists.length > 0 ? (
-                        visiblePlaylists.map((playlist) => (
+                    {allPlaylists.length > 0 ? (
+                        allPlaylists.slice(0, playlistsLimit).map((playlist) => (
                             <MediaCard
                                 key={playlist.id}
                                 title={playlist.title}
@@ -202,6 +255,12 @@ function HomePage() {
                         <p style={{color: '#aaa', gridColumn: '1 / -1'}}>Brak publicznych playlist.</p>
                     )}
                 </div>
+                <ExpandControls
+                    totalCount={allPlaylists.length}
+                    currentLimit={playlistsLimit}
+                    initialLimit={ITEMS_IN_ROW}
+                    onUpdate={setPlaylistsLimit}
+                />
             </section>
 
         </div>
