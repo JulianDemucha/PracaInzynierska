@@ -6,8 +6,9 @@ import { useAuth } from '../context/useAuth.js';
 import { getSongById, deleteSong } from '../services/songService.js';
 import { getImageUrl } from '../services/imageService.js';
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
+import EditSongModal from '../components/song/EditSongModal.jsx';
+import editIcon from '../assets/images/edit.png';
 
-import defaultAvatar from '../assets/images/default-avatar.png';
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';
 import pauseIcon from '../assets/images/pause.png';
@@ -30,9 +31,8 @@ function SongPage() {
     const [error, setError] = useState(null);
 
     const [isQueuedAnim, setIsQueuedAnim] = useState(false);
-    const [commentSort, setCommentSort] = useState('popular');
-    const [visibleComments, setVisibleComments] = useState(10);
-    const [commentLikes, setCommentLikes] = useState({});
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const navigate = useNavigate();
     const { currentUser } = useAuth();
@@ -80,16 +80,20 @@ function SongPage() {
 
     // --- 3. LOGIKA UI ---
 
-    const sortedComments = useMemo(() => {
-        if (!song || !song.comments) return [];
-        const sorted = [...song.comments];
-        if (commentSort === 'popular') {
-            sorted.sort((a, b) => b.likes - a.likes);
-        } else {
-            sorted.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const handleSongUpdated = async () => {
+        try {
+            // Pobieramy ponownie dane piosenki
+            const data = await getSongById(id);
+            const mappedSong = {
+                ...data,
+                artist: { id: data.authorId, name: data.authorUsername },
+                coverArtUrl: getImageUrl(data.coverStorageKeyId),
+            };
+            setSong(mappedSong);
+        } catch (err) {
+            console.error("Błąd odświeżania po edycji:", err);
         }
-        return sorted;
-    }, [song, commentSort]);
+    };
 
     const isThisSongActive = currentSong?.id === song?.id;
     const isThisSongPlaying = isThisSongActive && isPlaying;
@@ -228,9 +232,20 @@ function SongPage() {
                     </button>
                 </div>
                 {isOwner && (
-                    <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
-                        <img src={binIcon} alt="Usuń" />
-                    </button>
+                    <>
+                        <button
+                            className="song-control-button icon-btn"
+                            onClick={() => setIsEditModalOpen(true)}
+                            title="Edytuj utwór"
+                            style={{marginLeft: 'auto', marginRight: '10px'}} // Odstęp od kosza
+                        >
+                            <img src={editIcon} alt="Edytuj" style={{width: '24px', height: '24px'}} />
+                        </button>
+
+                        <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
+                            <img src={binIcon} alt="Usuń" />
+                        </button>
+                    </>
                 )}
             </section>
 
@@ -263,6 +278,12 @@ function SongPage() {
                 isOpen={isPlaylistModalOpen}
                 onClose={() => setIsPlaylistModalOpen(false)}
                 songToAdd={song}
+            />
+            <EditSongModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                songToEdit={song}
+                onSongUpdated={handleSongUpdated}
             />
         </div>
     );
