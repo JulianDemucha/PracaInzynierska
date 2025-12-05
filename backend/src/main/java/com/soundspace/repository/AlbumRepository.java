@@ -15,10 +15,40 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
 
     Album getAlbumById(Long id);
 
-    List<Album> findAllByAuthorId(Long authorId);
+    @Query("""
+            SELECT DISTINCT a
+            FROM Album a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.coverStorageKey
+            LEFT JOIN FETCH a.songs
+            JOIN a.genres g
+            WHERE a.author.id = :authorId
+            """)
+    List<Album> findAllByAuthorId(@Param("userId") Long authorId);
 
-    @Query("SELECT a FROM Album a JOIN a.genres g WHERE g = :genre")
-    List<Album> findAllByGenre(@Param("genre") Genre genre);
+    @Query("""
+            SELECT DISTINCT a
+            FROM Album a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.coverStorageKey
+            LEFT JOIN FETCH a.songs
+            JOIN a.genres g
+            WHERE a.author.id = :authorId
+            AND a.publiclyVisible = true
+            """)
+    List<Album> findPublicByAuthorId(@Param("userId") Long authorId);
+
+    @Query("""
+            SELECT DISTINCT a
+            FROM Album a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.coverStorageKey
+            LEFT JOIN FETCH a.songs
+            JOIN a.genres g
+            WHERE g = :genre
+            AND a.publiclyVisible = true
+            """)
+    List<Album> findPublicByGenre(@Param("genre") Genre genre);
 
     @Query("""
             SELECT DISTINCT a FROM Album a
@@ -26,7 +56,28 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             LEFT JOIN FETCH a.coverStorageKey
             WHERE a.publiclyVisible = true
             """)
-    List<Album> findAllWithDetails();
+    List<Album> findAllPublic();
+
+    @Query("""
+            SELECT DISTINCT a
+            FROM Album a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.coverStorageKey
+            LEFT JOIN FETCH a.songs
+            JOIN a.genres g
+            WHERE g = :genre
+            AND a.author.email = :userId
+            """)
+    List<Album> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userEmail") String userEmail);
+
+    @Query("""
+            SELECT DISTINCT a FROM Album a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.coverStorageKey
+            WHERE a.author.email = :userEmail
+            OR a.publiclyVisible = true
+            """)
+    List<Album> findAllPublicOrOwnedByUser(@Param("userEmail") String userEmail);
 
     /// bulk delete wszystkich albumow nalezacych do usera - do bulk delete calego usera.
     /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow albumow, ani piosenek,

@@ -36,6 +36,7 @@ public class SecurityConfig {
                                 , "/api/auth/authenticate", "/api/auth/refreshToken").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/playlists/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/songs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/albums/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(e -> e

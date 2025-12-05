@@ -1,4 +1,5 @@
 package com.soundspace.service;
+
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
@@ -18,11 +19,10 @@ import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,56 +57,82 @@ public class AlbumService {
         return albumRepository.findById(id);
     }
 
-    public AlbumDto getAlbumById(Long id, String userEmail) {
+    public AlbumDto getAlbumById(Long id, UserDetails userDetails) {
         Album album = findById(id).orElseThrow(
                 () -> new AlbumNotFoundException(id));
 
+        if(album.getPubliclyVisible()) return AlbumDto.toDto(album);
+
+
         // jeżeli requestujący user nie jest autorem albumu i album jest prywatny - throw
-        if (userEmail == null || (
-                !album.getPubliclyVisible()
-                        &&
-                        !appUserService.getUserByEmail(userEmail).getId().equals(album.getAuthor().getId())
+        if (userDetails == null || (
+                        !appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(album.getAuthor().getId())
         )) throw new AccessDeniedException("Brak uprawnień");
 
         return AlbumDto.toDto(album);
     }
 
-    public List<SongDto> getSongs(Long albumId, String userEmail) {
-        List<SongProjection> songsProjection = songRepository.findSongsByAlbumNative(albumId);
+    public List<SongDto> getSongs(Long albumId, UserDetails userDetails) {
         Album album = albumRepository.getAlbumById(albumId);
-        if (album == null) throw new AlbumNotFoundException(albumId);
+        List<SongDto> songs = songRepository.findSongsByAlbumNative(albumId)
+                .stream()
+                .map(SongDto::toDto)
+                .toList();
 
-        // jezeli album jest prywatny i requestujacy user nie jest autorem albumu - throw
-        if (!album.getPubliclyVisible() && !appUserService.getUserByEmail(userEmail).getId()
-                .equals(album.getAuthor().getId()))
+        // jesli publiczny to ok
+        if(album.getPubliclyVisible())
+            return songs;
+
+        // jezeli nie-publiczny i niezalogowany -> throw
+        if (userDetails == null)
             throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
 
-        return getSongsFromSongProjection(songsProjection);
+        // jezeli nie-publiczny, zalogowany ale nie jest ownerem playlisty
+        if(!appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(album.getAuthor().getId()))
+            throw new AccessDeniedException("Ten album jest prywatny. Brak uprawnień");
+
+        // jesli jest ownerem
+        return songs;
     }
 
-    public List<AlbumDto> findAllAlbumsByUserId(Long userId, String userEmail) {
-        if (userEmail == null) throw new UsernameNotFoundException("Brak uprawnień");
+    public List<AlbumDto> findAllAlbumsByUserId(Long userId, UserDetails userDetails) {
+        if (userDetails == null)
+            return albumRepository.findPublicByAuthorId(userId)
+                    .stream()
+                    .map(AlbumDto::toDto)
+                    .toList();
 
-        List<AlbumDto> albums = new java.util.ArrayList<>(albumRepository.findAllByAuthorId(userId)
+            // if userId == requesting user id
+        else if (appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(userId))
+            return albumRepository.findAllByAuthorId(userId)
+                    .stream()
+                    .map(AlbumDto::toDto)
+                    .toList();
+
+        return albumRepository.findPublicByAuthorId(userId)
                 .stream()
-                .map(AlbumDto::toDto)
-                .toList());
-
-        // jeżeli requestujący user nie jest tym samym co user w request'cie - remove niepubliczne utwory
-        if (!userId.equals(appUserService.getUserByEmail(userEmail).getId()))
-            albums.removeIf(album -> !album.publiclyVisible());
-
-        return albums;
-    }
-
-    public List<AlbumDto> getPublicAlbumsByGenre(String genreName) {
-        Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
-
-        return albumRepository.findAllByGenre(genre)
-                .stream()
-                .filter(Album::getPubliclyVisible)
                 .map(AlbumDto::toDto)
                 .toList();
+    }
+
+    public List<AlbumDto> getPublicAlbumsByGenre(String genreName, UserDetails userDetails) {
+        try {
+            Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
+
+            if (userDetails == null)
+                return albumRepository.findPublicByGenre(genre)
+                        .stream()
+                        .map(AlbumDto::toDto)
+                        .toList();
+
+            else return albumRepository.findPublicOrOwnedByUserByGenre(genre, userDetails.getUsername())
+                    .stream()
+                    .map(AlbumDto::toDto)
+                    .toList();
+
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
+        }
     }
 
     @Transactional
@@ -118,9 +144,9 @@ public class AlbumService {
         Path tmpCoverPath = null;
         StorageKey coverStorageKeyEntity = null;
 
-        try{
+        try {
             MultipartFile coverFile = request.getCoverFile();
-            if(coverFile == null || coverFile.isEmpty()){
+            if (coverFile == null || coverFile.isEmpty()) {
                 coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
 
             } else {
@@ -128,7 +154,6 @@ public class AlbumService {
 
                 coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, author);
             }
-
 
 
             List<Genre> validatedGenres = parseGenres(request.getGenre());
@@ -187,7 +212,7 @@ public class AlbumService {
             throw new AccessDeniedException("Brak uprawnień");
 
         List<SongProjection> albumSongs = songRepository.findSongsByAlbumNative(albumId);
-        for(SongProjection song : albumSongs){
+        for (SongProjection song : albumSongs) {
             songCoreService.deleteSongById(song.getId(), userEmail);
         }
         StorageKey coverKey = album.getCoverStorageKey();
@@ -295,8 +320,13 @@ public class AlbumService {
 
     // todo switch to PAGINATION
     @Transactional(readOnly = true)
-    public List<AlbumDto> getAllAlbums() {
-        return albumRepository.findAllWithDetails()
+    public List<AlbumDto> getAllAlbums(UserDetails userDetails) {
+        if (userDetails == null) return albumRepository.findAllPublic()
+                .stream()
+                .map(AlbumDto::toDto)
+                .toList();
+
+        else return albumRepository.findAllPublicOrOwnedByUser(userDetails.getUsername())
                 .stream()
                 .map(AlbumDto::toDto)
                 .toList();

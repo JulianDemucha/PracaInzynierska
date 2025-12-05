@@ -10,6 +10,7 @@ import com.soundspace.service.SongUploadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -29,22 +30,22 @@ public class AlbumController {
     @PostMapping(value = "/create", consumes = "multipart/form-data")
     public ResponseEntity<AlbumDto> createAlbum(@ModelAttribute @Valid CreateAlbumRequest createAlbumRequest,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
-        AlbumDto albumDto = albumService.createAlbum(createAlbumRequest, extractUserEmail(userDetails));
+        AlbumDto albumDto = albumService.createAlbum(createAlbumRequest, userDetails.getUsername());
         return ResponseEntity.created(URI.create("/api/albums/" + albumDto.id())).body(albumDto);
     }
 
     @DeleteMapping("/{albumId}")
     public ResponseEntity<Void> deleteAlbum(@PathVariable Long albumId,
                                             @AuthenticationPrincipal UserDetails userDetails) {
-        albumService.deleteAlbum(albumId, extractUserEmail(userDetails));
+        albumService.deleteAlbum(albumId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 
 
     @GetMapping("/{albumId}")
     public ResponseEntity<AlbumDto> getAlbum(@PathVariable Long albumId,
-                                             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(albumService.getAlbumById(albumId, extractUserEmail(userDetails)));
+                                             Authentication authentication) {
+        return ResponseEntity.ok(albumService.getAlbumById(albumId, extractUserDetails(authentication)));
     }
 
     @PostMapping("/{albumId}/add")
@@ -52,41 +53,44 @@ public class AlbumController {
                                                   @ModelAttribute @Valid AlbumSongUploadRequest request,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(songUploadService.upload(albumId, request,
-                appUserService.getUserByEmail(extractUserEmail(userDetails))));
+                appUserService.getUserByEmail(userDetails.getUsername())));
     }
 
     @DeleteMapping("/{albumId}/remove/{songId}")
     public ResponseEntity<Void> removeSongFromAlbum(@PathVariable Long albumId,
                                                     @PathVariable Long songId,
                                                     @AuthenticationPrincipal UserDetails userDetails) {
-        albumService.removeAlbumSong(albumId, songId, extractUserEmail(userDetails));
+        albumService.removeAlbumSong(albumId, songId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{albumId}/songs")
     public ResponseEntity<List<SongDto>> getSongsByAlbumId(@PathVariable Long albumId,
-                                                           @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(albumService.getSongs(albumId, extractUserEmail(userDetails)));
+                                                           Authentication authentication) {
+        return ResponseEntity.ok(albumService.getSongs(albumId, extractUserDetails(authentication)));
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<AlbumDto>> getUserAlbums(@PathVariable Long userId,
-                                                        @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(albumService.findAllAlbumsByUserId(userId, extractUserEmail(userDetails)));
+                                                        Authentication authentication) {
+        return ResponseEntity.ok(albumService.findAllAlbumsByUserId(userId, extractUserDetails(authentication)));
     }
 
     @GetMapping("/genre/{genreName}")
-    public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName) {
-        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName));
+    public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName,
+                                                                 Authentication authentication) {
+        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName, extractUserDetails(authentication)));
     }
     @GetMapping
-    public ResponseEntity<List<AlbumDto>> getAllAlbums() {
-        return ResponseEntity.ok(albumService.getAllAlbums());
+    public ResponseEntity<List<AlbumDto>> getAllAlbums(Authentication authentication) {
+        return ResponseEntity.ok(albumService.getAllAlbums(extractUserDetails(authentication)));
     }
 
 
-    private String extractUserEmail(UserDetails userDetails) {
-        return (userDetails != null) ? userDetails.getUsername() : null;
+    private UserDetails extractUserDetails(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            return (UserDetails) authentication.getPrincipal();
+        } else return null;
     }
 
 
