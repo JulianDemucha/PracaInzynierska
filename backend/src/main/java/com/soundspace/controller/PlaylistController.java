@@ -6,6 +6,7 @@ import com.soundspace.dto.request.CreatePlaylistRequest;
 import com.soundspace.service.PlaylistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,8 @@ public class PlaylistController {
 
     @GetMapping("/{playlistId}")
     public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable Long playlistId,
-                                                   @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.getById(playlistId, userDetails));
+                                                   Authentication authentication) {
+        return ResponseEntity.ok(playlistService.getById(playlistId, extractUserDetails(authentication)));
     }
 
     @PostMapping("/create")
@@ -43,8 +44,8 @@ public class PlaylistController {
 
     @GetMapping("/{playlistId}/songs")
     public ResponseEntity<List<PlaylistSongViewDto>> getPlaylistSongs(@PathVariable Long playlistId,
-                                                                      @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.getSongs(playlistId, userDetails));
+                                                                      Authentication authentication) {
+        return ResponseEntity.ok(playlistService.getSongs(playlistId, extractUserDetails(authentication)));
     }
 
     @DeleteMapping("/{playlistId}")
@@ -64,8 +65,8 @@ public class PlaylistController {
 
     @GetMapping("/user/{appUserId}")
     public ResponseEntity<List<PlaylistDto>> getAllUserPlaylists(@PathVariable Long appUserId,
-                                                                 @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.getAllByUserId(appUserId, userDetails));
+                                                                 Authentication authentication) {
+        return ResponseEntity.ok(playlistService.getAllByUserId(appUserId, extractUserDetails(authentication)));
     }
 
     @PutMapping("/{playlistId}/changeSongPosition/{songId}/{newPosition}")
@@ -77,7 +78,16 @@ public class PlaylistController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<PlaylistDto>> getAllPlaylists(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(playlistService.getAllPlaylists(userDetails));
+    public ResponseEntity<List<PlaylistDto>> getAllPlaylists(Authentication authentication) {
+        return ResponseEntity.ok(playlistService.getAllPlaylists(extractUserDetails(authentication)));
+    }
+
+
+    // helpers
+
+    private UserDetails extractUserDetails(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            return (UserDetails) authentication.getPrincipal();
+        } else return null;
     }
 }
