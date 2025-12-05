@@ -60,8 +60,12 @@ public class SongCoreService {
                     .map(SongDto::toDto)
                     .toList();
 
-        //else
-        throw new AccessDeniedException("Brak dostępu do piosenki");
+//        //else
+//        throw new AccessDeniedException("Brak dostępu do piosenki");
+        return songRepository.findPublicSongsByUserNative(songsAuthorId)
+                .stream()
+                .map(SongDto::toDto)
+                .toList();
     }
 
     public List<SongDto> getSongsByGenre(String genreName, UserDetails userDetails) {
