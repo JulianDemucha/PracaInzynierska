@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers( "/api/auth/register"
                                 , "/api/auth/authenticate", "/api/auth/refreshToken").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/users/me","/api/playlists/**",
+                        .requestMatchers(HttpMethod.GET, "/api/users/**","/api/playlists/**",
                                 "/api/songs/**", "/api/albums/**", "/api/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
