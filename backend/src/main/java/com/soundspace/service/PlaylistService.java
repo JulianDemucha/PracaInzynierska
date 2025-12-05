@@ -151,7 +151,7 @@ public class PlaylistService {
     public PlaylistSongViewDto addSong(Long playlistId, Long songId, UserDetails userDetails) {
 
         String userEmail = userDetails.getUsername();
-        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+        if (userEmail == null) throw new AccessDeniedException("Użytkownik nie jest zalogowany");
 
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("Nie znaleziono playlisty o id: " + playlistId));
@@ -164,7 +164,7 @@ public class PlaylistService {
         }
 
         if (playlistEntryRepository.existsBySongIdAndPlaylistId(songId, playlistId))
-            throw new IllegalArgumentException("Piosenka już istnieje w albumie");
+            throw new IllegalArgumentException("Piosenka już istnieje w playlist'cie");
 
         // rzuci wyjatek jak piosenka nie istnieje, wiec nie potrzeba ponownej walidacji
         Song song = songCoreService.getSongById(songId);
@@ -172,13 +172,17 @@ public class PlaylistService {
 
         // jezeli song nie jest publiczny i:
         // - requestujacy nie jest jej autorem -> brak dostepu
-        // - requestujacy jest jej autorem i album jest publiczny -> zmiana prywatnosci songa na publiczny
+        // - piosenka jest w prywatnym albumie, a playlista jest publiczna -> throw
+        // - requestujacy jest jej autorem i playlista jest publiczna -> zmiana prywatnosci songa na publiczny
         if (!song.getPubliclyVisible()) {
 
             if (!requestingUser.getId().equals(song.getAuthor().getId())) {
                 throw new AccessDeniedException("Brak uprawnień do piosenki");
 
             } else if (playlist.getPubliclyVisible()) {
+                if(song.getAlbum() != null)
+                    throw new IllegalArgumentException("Piosenka należy do prywatnego albumu. Nie może istnieć w publicznej playlist'cie");
+
                 song.setPubliclyVisible(true);
                 songRepository.save(song);
                 log.info("Zmieniono prywatnosc piosenki (id: {}) na publiczny po dodaniu do publicznej playlisty (id: {})",
