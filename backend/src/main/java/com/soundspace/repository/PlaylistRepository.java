@@ -25,6 +25,16 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
             """)
     List<Playlist> getAllByCreatorId(@Param("userId") Long userId);
 
+    @Query("""
+            SELECT DISTINCT p
+            FROM Playlist p
+            LEFT JOIN FETCH p.creator
+            LEFT JOIN FETCH p.coverStorageKey
+            WHERE p.creator.id = :userId
+            AND p.publiclyVisible = true
+            """)
+    List<Playlist> getAllPublicByCreatorId(@Param("userId") Long userId);
+
     @Query(value = """
             SELECT
             p.id AS id,
@@ -43,4 +53,44 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
             GROUP BY p.id, u.id, sk.id
             """)
     List<PlaylistProjection> findAllWithDetails();
+
+    @Query(value = """
+        SELECT
+        p.id AS id,
+        p.title AS title,
+        u.id AS creatorId,
+        u.login AS creatorUsername,
+        p.publiclyVisible AS publiclyVisible,
+        p.createdAt AS createdAt,
+        p.updatedAt AS updatedAt,
+        sk.id AS coverStorageKeyId,
+        CAST(COUNT(pe) AS int) AS songsCount
+        FROM Playlist p
+        LEFT JOIN p.creator u
+        LEFT JOIN p.coverStorageKey sk
+        LEFT JOIN p.songs pe
+        WHERE p.publiclyVisible = true OR u.id = :userId
+        GROUP BY p.id, u.id, sk.id
+        """)
+    List<PlaylistProjection> findAllPublicOrOwnedByUser(@Param("userId") Long userId);
+
+    @Query(value = """
+        SELECT
+        p.id AS id,
+        p.title AS title,
+        u.id AS creatorId,
+        u.login AS creatorUsername,
+        p.publiclyVisible AS publiclyVisible,
+        p.createdAt AS createdAt,
+        p.updatedAt AS updatedAt,
+        sk.id AS coverStorageKeyId,
+        CAST(COUNT(pe) AS int) AS songsCount
+        FROM Playlist p
+        LEFT JOIN p.creator u
+        LEFT JOIN p.coverStorageKey sk
+        LEFT JOIN p.songs pe
+        WHERE p.publiclyVisible = true
+        GROUP BY p.id, u.id, sk.id
+        """)
+    List<PlaylistProjection> findAllPublic();
 }

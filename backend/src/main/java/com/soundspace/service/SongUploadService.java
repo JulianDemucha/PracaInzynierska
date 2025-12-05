@@ -45,6 +45,7 @@ public class SongUploadService {
     private static final String COVERS_TARGET_DIRECTORY = "songs/covers";
     private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tylko .m4a
     private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
+    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
 
     /// typowy upload piosenki poza albumem (singiel)
     @Transactional
@@ -64,11 +65,16 @@ public class SongUploadService {
             // docelowy zapis audio
             audioStorageKeyEntity = validateAndSaveAudioFile(tmpAudioPath, appUser);
 
-            // resize i convert okladki i zapis do temp file
-            tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+            if(coverFile == null || coverFile.isEmpty()){
+                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
 
-            // docelowy zapis okladki
-            coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, appUser);
+            } else {
+                // resize, convert i zapis cover image do temp file
+                tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+
+                // docelowy zapis cover image
+                coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, appUser);
+            }
 
             Song s = validateAndBuildSong(
                     request,

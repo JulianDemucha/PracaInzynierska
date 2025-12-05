@@ -25,6 +25,5 @@ public class CreateAlbumRequest {
     @Size(min=1, max = 3)
     private List<String> genre;
 
-    @NotNull(message = "Plik okładki jest wymagany")
     private MultipartFile coverFile;
 }

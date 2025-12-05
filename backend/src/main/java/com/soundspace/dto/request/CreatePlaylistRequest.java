@@ -14,6 +14,5 @@ public record CreatePlaylistRequest(
         @NotNull(message = "Widoczność musi być określona")
         Boolean publiclyVisible,
 
-        @NotNull(message = "Plik okładki jest wymagany")
         MultipartFile coverFile
 ) {}

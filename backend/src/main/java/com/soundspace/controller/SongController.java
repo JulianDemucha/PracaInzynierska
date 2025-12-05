@@ -1,4 +1,5 @@
 package com.soundspace.controller;
+
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.SongUploadRequest;
 import com.soundspace.service.*;
@@ -6,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -32,8 +35,8 @@ public class SongController {
     private final SongCoreService songCoreService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long id) {
-        return ResponseEntity.ok(songCoreService.getSongDtoById(id));
+    public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(songCoreService.getSong(id, extractUserDetails(authentication)));
     }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
@@ -53,12 +56,11 @@ public class SongController {
     public ResponseEntity<ResourceRegion> streamSong(
             @PathVariable Long id,
             @RequestHeader(value = "Range", required = false) String rangeHeader,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Authentication authentication) {
 
         try {
-            String email = (userDetails != null) ? userDetails.getUsername() : null;
 
-            ResourceRegion region = songStreamingService.getSongRegion(id, rangeHeader, email);
+            ResourceRegion region = songStreamingService.getSongRegion(id, rangeHeader, extractUserDetails(authentication));
             String mimeType = songStreamingService.getSongMimeType(id);
 
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
@@ -74,9 +76,8 @@ public class SongController {
 
     @GetMapping("/user/{id}")
     public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long id,
-                                                          @AuthenticationPrincipal UserDetails userDetails) {
-        String email = (userDetails != null) ? userDetails.getUsername() : null;
-        return ResponseEntity.ok(songCoreService.getSongsByUserId(id, email));
+                                                          Authentication authentication) {
+        return ResponseEntity.ok(songCoreService.getSongsByUserId(id, extractUserDetails(authentication)));
     }
 
     @DeleteMapping("/{id}")
@@ -88,12 +89,19 @@ public class SongController {
     }
 
     @GetMapping("/genre/{genreName}")
-    public ResponseEntity<List<SongDto>> getSongsByGenre(@PathVariable String genreName) {
-        return ResponseEntity.ok(songCoreService.getSongsByGenre(genreName));
+    public ResponseEntity<List<SongDto>> getSongsByGenre(@PathVariable String genreName,
+                                                         Authentication authentication) {
+        return ResponseEntity.ok(songCoreService.getSongsByGenre(genreName, extractUserDetails(authentication)));
     }
 
     @GetMapping
-    public ResponseEntity<List<SongDto>> getAllSongs() {
-        return ResponseEntity.ok(songCoreService.getAllSongs());
+    public ResponseEntity<List<SongDto>> getAllSongs(Authentication authentication) {
+        return ResponseEntity.ok(songCoreService.getAllSongs(extractUserDetails(authentication)));
+    }
+
+    private UserDetails extractUserDetails(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            return (UserDetails) authentication.getPrincipal();
+        } else return null;
     }
 }

@@ -121,12 +121,15 @@ public class AlbumService {
         try{
             MultipartFile coverFile = request.getCoverFile();
             if(coverFile == null || coverFile.isEmpty()){
-                throw new IllegalArgumentException("Plik okładki jest wymagany");
+                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
+
+            } else {
+                tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+
+                coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, author);
             }
 
-            tmpCoverPath = processCoverAndSaveToTemp(coverFile);
 
-            coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, author);
 
             List<Genre> validatedGenres = parseGenres(request.getGenre());
 

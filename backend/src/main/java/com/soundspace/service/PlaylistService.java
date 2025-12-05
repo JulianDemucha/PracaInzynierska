@@ -44,36 +44,50 @@ public class PlaylistService {
     private final SongRepository songRepository;
     private final PlaylistEntryRepository playlistEntryRepository;
 
+
     public List<PlaylistDto> getAllPlaylists(UserDetails userDetails) {
-        return playlistRepository.findAllWithDetails().stream()
-                .map(PlaylistDto::toDto)
-                .filter(p -> isUserAuthorizedToGetPlaylist(p, userDetails)).toList();
+        List<PlaylistDto> playlists;
+
+        if (userDetails != null) {
+            Long loggedInUserId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
+            playlists = playlistRepository.findAllPublicOrOwnedByUser(loggedInUserId).stream()
+                    .map(PlaylistDto::toDto).toList();
+
+        } else playlists = playlistRepository.findAllPublic().stream().map(PlaylistDto::toDto).toList();
+
+        return playlists;
     }
+
 
     @Transactional(readOnly = true)
     public List<PlaylistDto> getAllByUserId(Long userId, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
-        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
-        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
+        List<Playlist> playlists;
 
-        List<Playlist> playlists = playlistRepository.getAllByCreatorId(userId);
-        if (!userId.equals(requestingUserId)) {
-            playlists.removeIf(playlist -> !playlist.getPubliclyVisible());
+        boolean isOwner = false;
+        // jezeli jest null (niezalogowany) to tak samo jak dla zalogowanego nie-ownera
+        if (userDetails != null) {
+            Long loggedInUserId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
+            isOwner = userId.equals(loggedInUserId);
         }
+
+        if (isOwner) {
+            playlists = playlistRepository.getAllByCreatorId(userId);
+        } else {
+            playlists = playlistRepository.getAllPublicByCreatorId(userId);
+        }
+
         return playlists.stream().map(PlaylistDto::toDto).toList();
     }
 
+
     public PlaylistDto getById(Long playlistId, UserDetails userDetails) {
-
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        validateUserPermissionForPlaylist(playlist, userDetails);
-
+        ensureUserCanView(playlist, userDetails);
         return PlaylistDto.toDto(playlist);
     }
 
     public List<PlaylistSongViewDto> getSongs(Long playlistId, UserDetails userDetails) {
-        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        validateUserPermissionForPlaylist(playlist, userDetails);
+        ensureUserCanView(playlistRepository.findById(playlistId).orElseThrow(), userDetails);
 
         return playlistEntryRepository.findAllSongsInPlaylist(playlistId)
                 .stream().map(PlaylistSongViewDto::toDto).toList();
@@ -91,15 +105,16 @@ public class PlaylistService {
 
         try {
             MultipartFile coverFile = request.coverFile();
-            if (coverFile == null || coverFile.isEmpty()) {
-                throw new IllegalArgumentException("Plik okładki jest wymagany");
+            if(coverFile == null || coverFile.isEmpty()){
+                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
+
+            } else {
+                // resize, convert i zapis cover image do temp file
+                tmpCoverPath = processCoverAndSaveToTemp(coverFile);
+
+                // docelowy zapis cover image
+                coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, creator);
             }
-
-            // resize, convert i zapis cover image do temp file
-            tmpCoverPath = processCoverAndSaveToTemp(coverFile);
-
-            // docelowy zapis cover image
-            coverStorageKeyEntity = processAndSaveCoverFile(tmpCoverPath, creator);
 
             Playlist playlist = new Playlist();
             playlist.setTitle(request.title());
@@ -136,7 +151,7 @@ public class PlaylistService {
     public PlaylistSongViewDto addSong(Long playlistId, Long songId, UserDetails userDetails) {
 
         String userEmail = userDetails.getUsername();
-        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
+        if (userEmail == null) throw new AccessDeniedException("Użytkownik nie jest zalogowany");
 
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("Nie znaleziono playlisty o id: " + playlistId));
@@ -149,7 +164,7 @@ public class PlaylistService {
         }
 
         if (playlistEntryRepository.existsBySongIdAndPlaylistId(songId, playlistId))
-            throw new IllegalArgumentException("Piosenka już istnieje w albumie");
+            throw new IllegalArgumentException("Piosenka już istnieje w playlist'cie");
 
         // rzuci wyjatek jak piosenka nie istnieje, wiec nie potrzeba ponownej walidacji
         Song song = songCoreService.getSongById(songId);
@@ -157,13 +172,17 @@ public class PlaylistService {
 
         // jezeli song nie jest publiczny i:
         // - requestujacy nie jest jej autorem -> brak dostepu
-        // - requestujacy jest jej autorem i album jest publiczny -> zmiana prywatnosci songa na publiczny
+        // - piosenka jest w prywatnym albumie, a playlista jest publiczna -> throw
+        // - requestujacy jest jej autorem i playlista jest publiczna -> zmiana prywatnosci songa na publiczny
         if (!song.getPubliclyVisible()) {
 
             if (!requestingUser.getId().equals(song.getAuthor().getId())) {
                 throw new AccessDeniedException("Brak uprawnień do piosenki");
 
             } else if (playlist.getPubliclyVisible()) {
+                if(song.getAlbum() != null)
+                    throw new IllegalArgumentException("Piosenka należy do prywatnego albumu. Nie może istnieć w publicznej playlist'cie");
+
                 song.setPubliclyVisible(true);
                 songRepository.save(song);
                 log.info("Zmieniono prywatnosc piosenki (id: {}) na publiczny po dodaniu do publicznej playlisty (id: {})",
@@ -188,7 +207,7 @@ public class PlaylistService {
     @Transactional
     public void delete(Long playlistId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        validateUserPermissionForPlaylist(playlist, userDetails);
+        ensureUserCanView(playlist, userDetails);
 
         playlistEntryRepository.deleteAllByPlaylistId(playlistId);
 
@@ -224,7 +243,7 @@ public class PlaylistService {
     @Transactional
     public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        validateUserPermissionForPlaylist(playlist, userDetails);
+        ensureUserIsOwner(playlist, userDetails);
         playlistEntryRepository.deleteBySongIdAndPlaylistId(songId, playlistId);
         playlistEntryRepository.renumberPlaylist(playlistId);
     }
@@ -234,7 +253,7 @@ public class PlaylistService {
                                                   Integer position,
                                                   UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        validateUserPermissionForPlaylist(playlist, userDetails);
+        ensureUserIsOwner(playlist, userDetails);
 
         PlaylistEntry playlistEntry = playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId);
 
@@ -242,30 +261,33 @@ public class PlaylistService {
         return PlaylistSongViewDto.toDto(playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId));
     }
 
-    /// //////////////////////////////////** HELPERY *//////////////////////////////////////
 
-    private void validateUserPermissionForPlaylist(Playlist playlist, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
-        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
-        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
+    /////////////////////////////////////** HELPERY *//////////////////////////////////////
 
-        if (!requestingUserId.equals(playlist.getCreator().getId()) && !playlist.getPubliclyVisible()) {
-            throw new AccessDeniedException("Access denied");
+    private void ensureUserCanView(Playlist playlist, UserDetails userDetails) {
+        if (!canView(playlist, userDetails)) {
+            throw new AccessDeniedException("Brak dostępu do playlisty.");
         }
     }
 
-    private boolean isUserAuthorizedToGetPlaylist(Playlist playlist, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
-        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
-        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
-        return (requestingUserId.equals(playlist.getCreator().getId()) || playlist.getPubliclyVisible());
+    private boolean canView(Playlist playlist, UserDetails userDetails) {
+        if (playlist.getPubliclyVisible()) {
+            return true;
+        }
+
+        if (userDetails == null) {
+            return false;
+        }
+
+        Long requestingUserId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
+
+        return requestingUserId.equals(playlist.getCreator().getId());
     }
 
-    private boolean isUserAuthorizedToGetPlaylist(PlaylistDto playlist, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
-        if (userEmail == null) throw new AccessDeniedException("User is not logged in");
-        Long requestingUserId = appUserService.getUserByEmail(userEmail).getId();
-        return (requestingUserId.equals(playlist.creatorId()) || playlist.publiclyVisible());
+    private void ensureUserIsOwner(Playlist playlist, UserDetails userDetails) {
+        Long requestingUserId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
+        if(!requestingUserId.equals(playlist.getCreator().getId()))
+            throw new AccessDeniedException("Brak dostępu do playlisty.");
     }
 
     // resize i convert
