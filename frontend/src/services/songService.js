@@ -41,4 +41,5 @@ export const updateSong = async (songId, songData) => {
             "content-type": "multipart/form-data",
         },
     });
+    return response.data;
 };
