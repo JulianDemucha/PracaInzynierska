@@ -8,6 +8,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.http.HttpRange;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +28,11 @@ public class SongStreamingService {
     private static final long CHUNK_SIZE = 1024 * 1024; // 1MB
 
     @Transactional(readOnly = true)
-    public ResourceRegion getSongRegion(Long songId, String rangeHeader, String requesterEmail) throws IOException {
+    public ResourceRegion getSongRegion(Long songId, String rangeHeader, UserDetails userDetails) throws IOException {
         Song song = songRepository.findById(songId)
                 .orElseThrow(() -> new NoSuchElementException("Piosenka nie istnieje"));
 
-        validateAccess(song, requesterEmail);
+        validateAccess(song, userDetails);
 
         StorageKey audioKey = song.getAudioStorageKey();
         if (audioKey == null || audioKey.getKey() == null || audioKey.getKey().isBlank()) {
@@ -64,20 +65,23 @@ public class SongStreamingService {
         }
     }
 
-    private void validateAccess(Song song, String email) {
+    private void validateAccess(Song song, UserDetails userDetails) {
         if (Boolean.TRUE.equals(song.getPubliclyVisible())) {
             return;
         }
-            String authorEmail = song.getAuthor().getEmail();
 
-        if (!authorEmail.equals(email)) {
+        if (userDetails == null) throw new AccessDeniedException("Brak dostępu do piosenki");
+
+        String authorEmail = song.getAuthor().getEmail();
+
+        if (!authorEmail.equals(userDetails.getUsername())) {
             throw new AccessDeniedException("Brak dostępu");
         }
     }
 
     public String getSongMimeType(Long songId) {
         return songRepository.findById(songId)
-                .map(s ->  s.getAudioStorageKey().getMimeType())
+                .map(s -> s.getAudioStorageKey().getMimeType())
                 .orElse("application/octet-stream"); //fallback
     }
 }

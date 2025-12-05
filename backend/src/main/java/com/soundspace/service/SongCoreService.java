@@ -2,7 +2,6 @@ package com.soundspace.service;
 
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
-import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.entity.StorageKey;
@@ -13,8 +12,10 @@ import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.enums.Genre;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Slf4j
@@ -36,27 +37,68 @@ public class SongCoreService {
         );
     }
 
-    public SongDto getSongDtoById(Long id) {
-        return SongDto.toDto(getSongById(id));
+    public SongDto getSong(Long songId, UserDetails userDetails) {
+        SongDto song = getSongDtoById(songId);
+        if (song.publiclyVisible()) return song;
+        if (!appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(song.authorId()))
+            throw new AccessDeniedException("Brak dostępu do piosenki");
+
+        return song;
     }
 
-    public List<SongDto> getSongsByUserId(Long songsAuthorId, String userEmail) {
-        List<SongProjection> songsProjection = songRepository.findSongsByUserNative(songsAuthorId);
+    public List<SongDto> getSongsByUserId(Long songsAuthorId, UserDetails userDetails) {
+        if (userDetails == null)
+            return songRepository.findPublicSongsByUserNative(songsAuthorId)
+                    .stream()
+                    .map(SongDto::toDto)
+                    .toList();
 
-        boolean isRequestingUserAuthorOfSongs = appUserService.getUserByEmail(userEmail).getId().equals(songsAuthorId);
+        AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
+        if (appUser.getId().equals(songsAuthorId))
+            return songRepository.findSongsByUserNative(songsAuthorId)
+                    .stream()
+                    .map(SongDto::toDto)
+                    .toList();
 
-        List<SongDto> songs = getSongsFromSongProjection(songsProjection);
-
-        // usuwa piosenki z listy jezeli sa prywatne, a requestujacy user nie jest autorem piosenek
-        if (!isRequestingUserAuthorOfSongs)
-            songs.removeIf(song -> !song.publiclyVisible());
-
-        return songs;
+        //else
+        throw new AccessDeniedException("Brak dostępu do piosenki");
     }
 
-    private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
-        return songsProjection.stream()
-                .map(SongDto::toDto).toList();
+    public List<SongDto> getSongsByGenre(String genreName, UserDetails userDetails) {
+        try {
+            Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
+
+
+            if (userDetails == null)
+                return songRepository.findPublicByGenre(genre).stream()
+                        .map(SongDto::toDto)
+                        .toList();
+
+            else return songRepository.findPublicOrOwnedByUserByGenre(
+                            genre,
+                            appUserService.getUserByEmail(userDetails.getUsername()).getId()
+                    ).stream()
+                    .map(SongDto::toDto)
+                    .toList();
+
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
+        }
+
+    }
+
+    @Transactional
+    public List<SongDto> getAllSongs(UserDetails userDetails) {
+        if (userDetails == null)
+            return songRepository.findAllPublic()
+                    .stream()
+                    .map(SongDto::toDto)
+                    .toList();
+
+        else return songRepository.findAllPublicOrOwnedByUser(
+                        appUserService.getUserByEmail(userDetails.getUsername()).getId()).stream()
+                        .map(SongDto::toDto)
+                        .toList();
     }
 
     @Transactional
@@ -103,8 +145,6 @@ public class SongCoreService {
                 }
             }
 
-
-
         } catch (AccessDeniedException e) {
             log.info(e.getMessage());
             throw e;
@@ -114,23 +154,16 @@ public class SongCoreService {
         }
     }
 
-    public List<SongDto> getSongsByGenre(String genreName) {
-        try {
-            Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
-            return songRepository.findAllByGenre(genre)
-                    .stream()
-                    .map(SongDto::toDto)
-                    .toList();
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
-        }
+
+    /// HELPERY
+
+    private SongDto getSongDtoById(Long id) {
+        return SongDto.toDto(getSongById(id));
     }
 
-    @Transactional
-    public List<SongDto> getAllSongs() {
-        return songRepository.findAllWithDetails()
-                .stream()
-                .map(SongDto::toDto)
-                .toList();
+    private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
+        return songsProjection.stream()
+                .map(SongDto::toDto).toList();
     }
+
 }
