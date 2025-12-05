@@ -77,7 +77,7 @@ public class PlaylistController {
         return ResponseEntity.ok(playlistService.changeSongPosition(playlistId, songId, newPosition, userDetails));
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<PlaylistDto>> getAllPlaylists(Authentication authentication) {
         return ResponseEntity.ok(playlistService.getAllPlaylists(extractUserDetails(authentication)));
     }
