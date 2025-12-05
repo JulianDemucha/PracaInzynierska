@@ -92,10 +92,28 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """)
     List<Song> findAllPublicOrOwnedByUser(@Param("userId") Long userId);
 
-    @Query("SELECT s FROM Song s JOIN s.genres g WHERE g = :genre AND (s.author.id = :userId OR s.publiclyVisible = true)")
+    @Query("""
+        SELECT DISTINCT s
+        FROM Song s
+        LEFT JOIN FETCH s.author
+        LEFT JOIN FETCH s.coverStorageKey
+        LEFT JOIN FETCH s.album
+        JOIN s.genres g
+        WHERE g = :genre
+          AND (s.author.id = :userId OR s.publiclyVisible = true)
+    """)
     List<Song> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userId") Long userId);
-
-    @Query("SELECT s FROM Song s JOIN s.genres g WHERE g = :genre AND s.publiclyVisible = true")
+    
+    @Query("""
+        SELECT DISTINCT s
+        FROM Song s
+        LEFT JOIN FETCH s.author
+        LEFT JOIN FETCH s.coverStorageKey
+        LEFT JOIN FETCH s.album
+        JOIN s.genres g
+        WHERE g = :genre
+          AND s.publiclyVisible = true
+    """)
     List<Song> findPublicByGenre(@Param("genre") Genre genre);
 
     /// bulk delete wszystkich songow nalezacych do usera - do bulk delete calego usera.
