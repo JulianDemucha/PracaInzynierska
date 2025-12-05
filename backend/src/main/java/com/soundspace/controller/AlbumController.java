@@ -3,7 +3,7 @@ package com.soundspace.controller;
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.AlbumSongUploadRequest;
-import com.soundspace.dto.request.CreateAlbumRequest;
+import com.soundspace.dto.request.AlbumCreateRequest;
 import com.soundspace.service.AlbumService;
 import com.soundspace.service.AppUserService;
 import com.soundspace.service.SongUploadService;
@@ -28,9 +28,9 @@ public class AlbumController {
     private final AppUserService appUserService;
 
     @PostMapping(value = "/create", consumes = "multipart/form-data")
-    public ResponseEntity<AlbumDto> createAlbum(@ModelAttribute @Valid CreateAlbumRequest createAlbumRequest,
+    public ResponseEntity<AlbumDto> createAlbum(@ModelAttribute @Valid AlbumCreateRequest albumCreateRequest,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
-        AlbumDto albumDto = albumService.createAlbum(createAlbumRequest, userDetails.getUsername());
+        AlbumDto albumDto = albumService.createAlbum(albumCreateRequest, userDetails.getUsername());
         return ResponseEntity.created(URI.create("/api/albums/" + albumDto.id())).body(albumDto);
     }
 

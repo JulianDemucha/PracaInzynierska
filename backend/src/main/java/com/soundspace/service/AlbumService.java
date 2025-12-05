@@ -4,7 +4,7 @@ import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
-import com.soundspace.dto.request.CreateAlbumRequest;
+import com.soundspace.dto.request.AlbumCreateRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
@@ -136,7 +136,7 @@ public class AlbumService {
     }
 
     @Transactional
-    public AlbumDto createAlbum(CreateAlbumRequest request, String userEmail) {
+    public AlbumDto createAlbum(AlbumCreateRequest request, String userEmail) {
 
         AppUser author = appUserService.getUserByEmail(userEmail);
 

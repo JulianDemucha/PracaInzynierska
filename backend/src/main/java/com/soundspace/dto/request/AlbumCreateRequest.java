@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Data
-public class CreateAlbumRequest {
+public class AlbumCreateRequest {
     @NotBlank(message = "Tytuł jest wymagany")
     @Size(min = 2,max = 64, message = "Tytuł jest za długi")
     private String title;
