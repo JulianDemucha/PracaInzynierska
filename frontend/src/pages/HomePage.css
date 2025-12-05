@@ -21,19 +21,14 @@
     margin: 0;
 }
 
-.see-all {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #b3b3b3;
-    cursor: pointer;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: color 0.2s;
+/* Styl dla licznika (12) */
+.section-count {
+    font-size: 1.2rem;
+    color: #888;
+    font-weight: normal;
+    margin-left: 10px;
 }
-.see-all:hover {
-    color: white;
-    text-decoration: underline;
-}
+
 
 /* --- SIATKA GATUNKÓW (Zawsze Grid) --- */
 .genre-grid {
@@ -41,4 +36,51 @@
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 24px;
     width: 100%;
+}
+
+/* --- KONTROLKI ROZWIJANIA (Nowe style) --- */
+.expand-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.expand-btn {
+    background: transparent;
+    border: none;
+    color: #b3b3b3;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.expand-btn:hover {
+    color: white;
+    text-decoration: underline;
+    transform: scale(1.05);
+}
+
+/* Responsywność dla HomePage (z poprzedniej konwersacji) */
+@media (max-width: 768px) {
+    .genre-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .section-header h2 {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .genre-grid {
+        grid-template-columns: 1fr 1fr; /* Dwie kolumny na telefonie */
+        gap: 10px;
+    }
 }
