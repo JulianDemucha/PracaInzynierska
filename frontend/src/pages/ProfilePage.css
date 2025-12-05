@@ -145,6 +145,14 @@
     padding-bottom: 8px;
 }
 
+/* NOWE: STYL DLA LICZNIKA */
+.section-count {
+    font-size: 1.1rem;
+    color: #888;
+    font-weight: normal;
+    margin-left: 10px;
+}
+
 .media-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -156,6 +164,34 @@
     color: #b3b3b3;
     font-style: italic;
     padding: 1rem 0;
+}
+
+/* --- KONTROLKI ROZWIJANIA --- */
+.expand-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.expand-btn {
+    background: transparent;
+    border: none;
+    color: #b3b3b3;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.expand-btn:hover {
+    color: white;
+    text-decoration: underline;
+    transform: scale(1.05);
 }
 
 /* Przycisk Usuń Konto */

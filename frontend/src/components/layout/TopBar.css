@@ -8,7 +8,8 @@
 
     display: flex;
     align-items: center;
-    padding: 1rem;
+    padding: 0 1rem;
+    gap: 10px;
 }
 
 @keyframes gradient {
@@ -107,4 +108,24 @@
     border-radius: 50%;
     cursor: pointer;
     background-color: #8A2BE2;
+}
+@media (max-width: 768px) {
+    .topbar {
+        grid-column: 1 / -1;
+    }
+
+    .topbar-search {
+        max-width: 150px;
+        padding: 6px 8px;
+    }
+
+    .topbar-search input {
+        font-size: 0.85rem;
+    }
+
+    .login-button {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        margin: 0;
+    }
 }

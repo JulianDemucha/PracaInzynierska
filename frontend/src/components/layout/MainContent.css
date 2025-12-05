@@ -1,7 +1,14 @@
 .main-content {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
-    background-color: #282828;
+    background-color: #121212;
     padding: 0;
     overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-column: 1 / -1;
+        padding-bottom: 20px;
+    }
 }

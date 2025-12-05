@@ -17,16 +17,57 @@ import { getUserPlaylists } from '../services/playlistService.js';
 import { getImageUrl } from "../services/imageService.js";
 import { deleteUserAccount } from "../services/userService.js";
 
-// --- DANE TESTOWE ---
-const mockOtherContent = {
-    comments: [
-        { id: 1, text: "Mój komentarz 1..." }
-    ]
+// Stałe do limitów
+const ITEMS_PER_ROW = 7;
+const SONGS_INITIAL_LIMIT = ITEMS_PER_ROW * 2; // 2 rzędy (14)
+const OTHERS_INITIAL_LIMIT = ITEMS_PER_ROW; // 1 rząd (7)
+
+// Pomocniczy komponent do przycisków rozwijania
+const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) => {
+    if (totalCount <= initialLimit) return null;
+
+    return (
+        <div className="expand-controls">
+            {currentLimit < totalCount && (
+                <>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(Math.min(currentLimit + ITEMS_PER_ROW, totalCount))}
+                    >
+                        Pokaż 7 więcej
+                    </button>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(totalCount)}
+                    >
+                        Pokaż wszystkie
+                    </button>
+                </>
+            )}
+
+            {currentLimit > initialLimit && (
+                <>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(Math.max(currentLimit - ITEMS_PER_ROW, initialLimit))}
+                    >
+                        Pokaż 7 mniej
+                    </button>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(initialLimit)}
+                    >
+                        Zwiń
+                    </button>
+                </>
+            )}
+        </div>
+    );
 };
 
 function ProfilePage() {
     const { currentUser, logout, loading } = useAuth();
-    const navigate = useNavigate(); // Hook do nawigacji
+    const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -37,9 +78,15 @@ function ProfilePage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Dane
     const [userSongs, setUserSongs] = useState([]);
     const [userAlbums, setUserAlbums] = useState([]);
     const [userPlaylists, setUserPlaylists] = useState([]);
+
+    // Limity wyświetlania
+    const [songsLimit, setSongsLimit] = useState(SONGS_INITIAL_LIMIT);
+    const [albumsLimit, setAlbumsLimit] = useState(OTHERS_INITIAL_LIMIT);
+    const [playlistsLimit, setPlaylistsLimit] = useState(OTHERS_INITIAL_LIMIT);
 
     const fetchSongs = useCallback(async () => {
         if (!currentUser?.id) return;
@@ -139,10 +186,8 @@ function ProfilePage() {
                     <button className="add-album-button" onClick={() => setIsCreateAlbumModalOpen(true)}>Dodaj album</button>
                     <button className="edit-profile-button" onClick={() => setIsEditModalOpen(true)}>Edytuj profil</button>
 
-                    {/* PRZYCISK WYLOGUJ */}
                     <Link to="/" className="logout-button" onClick={logout}>Wyloguj</Link>
 
-                    {/* PRZYCISK: USUŃ KONTO */}
                     <button className="delete-account-button" onClick={() => setIsDeleteModalOpen(true)}>
                         Usuń konto
                     </button>
@@ -155,10 +200,13 @@ function ProfilePage() {
                 {/* --- Pokaż "Własne utwory" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
                     <div className="content-section">
-                        <h2>Własne utwory</h2>
+                        <h2>
+                            Własne utwory
+                            <span className="section-count">({userSongs.length})</span>
+                        </h2>
                         <div className="media-grid">
                             {userSongs.length > 0 ? (
-                                userSongs.map(song => (
+                                userSongs.slice(0, songsLimit).map(song => (
                                     <MediaCard
                                         key={song.id}
                                         linkTo={`/song/${song.id}`}
@@ -172,16 +220,26 @@ function ProfilePage() {
                                 <p className="empty-tab-message">Nie dodałeś jeszcze żadnych utworów.</p>
                             )}
                         </div>
+                        {/* KONTROLKI ROZWIJANIA UTWORÓW */}
+                        <ExpandControls
+                            totalCount={userSongs.length}
+                            currentLimit={songsLimit}
+                            initialLimit={SONGS_INITIAL_LIMIT}
+                            onUpdate={setSongsLimit}
+                        />
                     </div>
                 )}
 
                 {/* --- Sekcja Albumy --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
-                        <h2>Albumy</h2>
+                        <h2>
+                            Albumy
+                            <span className="section-count">({userAlbums.length})</span>
+                        </h2>
                         <div className="media-grid">
                             {userAlbums.length > 0 ? (
-                                userAlbums.map(album => (
+                                userAlbums.slice(0, albumsLimit).map(album => (
                                     <MediaCard
                                         key={album.id}
                                         linkTo={`/album/${album.id}`}
@@ -194,16 +252,26 @@ function ProfilePage() {
                                 <p className="empty-tab-message">Nie dodałeś jeszcze żadnych albumów.</p>
                             )}
                         </div>
+                        {/* KONTROLKI ROZWIJANIA ALBUMÓW */}
+                        <ExpandControls
+                            totalCount={userAlbums.length}
+                            currentLimit={albumsLimit}
+                            initialLimit={OTHERS_INITIAL_LIMIT}
+                            onUpdate={setAlbumsLimit}
+                        />
                     </div>
                 )}
 
                 {/* --- Sekcja Playlisty --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
-                        <h2>Playlisty</h2>
+                        <h2>
+                            Playlisty
+                            <span className="section-count">({userPlaylists.length})</span>
+                        </h2>
                         <div className="media-grid">
                             {userPlaylists.length > 0 ? (
-                                userPlaylists.map(playlist => (
+                                userPlaylists.slice(0, playlistsLimit).map(playlist => (
                                     <MediaCard
                                         key={playlist.id}
                                         linkTo={`/playlist/${playlist.id}`}
@@ -216,11 +284,16 @@ function ProfilePage() {
                                 <p className="empty-tab-message">Nie stworzyłeś jeszcze żadnych playlist.</p>
                             )}
                         </div>
+                        <ExpandControls
+                            totalCount={userPlaylists.length}
+                            currentLimit={playlistsLimit}
+                            initialLimit={OTHERS_INITIAL_LIMIT}
+                            onUpdate={setPlaylistsLimit}
+                        />
                     </div>
                 )}
             </section>
 
-            {/* Modale */}
             <EditProfileModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)} />

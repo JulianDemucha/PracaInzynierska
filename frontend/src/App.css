@@ -1,12 +1,17 @@
 .app-container {
     display: grid;
     grid-template-columns: 240px 1fr;
-    grid-template-rows: 60px 1fr 60px;
-
+    grid-template-rows: 60px 1fr 90px;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-
     background-color: #000000;
     color: white;
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 60px 1fr 80px;
+    }
 }

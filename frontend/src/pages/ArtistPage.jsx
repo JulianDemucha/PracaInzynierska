@@ -18,6 +18,53 @@ const translateSex = (sex) => {
     return 'Inna';
 };
 
+// --- LOGIKA LIMITÓW (Zwijanie/Rozwijanie) ---
+const ITEMS_PER_ROW = 7;
+const SONGS_INITIAL_LIMIT = ITEMS_PER_ROW * 2; // 14
+const OTHERS_INITIAL_LIMIT = ITEMS_PER_ROW * 1; // 7
+
+const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) => {
+    if (totalCount <= initialLimit) return null;
+
+    return (
+        <div className="expand-controls">
+            {currentLimit < totalCount && (
+                <>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(Math.min(currentLimit + ITEMS_PER_ROW, totalCount))}
+                    >
+                        Pokaż 7 więcej
+                    </button>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(totalCount)}
+                    >
+                        Pokaż wszystkie
+                    </button>
+                </>
+            )}
+
+            {currentLimit > initialLimit && (
+                <>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(Math.max(currentLimit - ITEMS_PER_ROW, initialLimit))}
+                    >
+                        Pokaż 7 mniej
+                    </button>
+                    <button
+                        className="expand-btn"
+                        onClick={() => onUpdate(initialLimit)}
+                    >
+                        Zwiń
+                    </button>
+                </>
+            )}
+        </div>
+    );
+};
+
 function ArtistPage() {
     const {id} = useParams()
     const [artist, setArtist] = useState(null);
@@ -29,26 +76,70 @@ function ArtistPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Stany limitów wyświetlania
+    const [songsLimit, setSongsLimit] = useState(SONGS_INITIAL_LIMIT);
+    const [albumsLimit, setAlbumsLimit] = useState(OTHERS_INITIAL_LIMIT);
+    const [playlistsLimit, setPlaylistsLimit] = useState(OTHERS_INITIAL_LIMIT);
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Pobieranie danych artysty, piosenek i albumów
-                const [userRes, songsRes, albumsRes] = await Promise.all([
-                    api.get(`/users/${id}`),
+                // 1. Pobieranie danych artysty
+                const userRes = await api.get(`/users/${id}`);
+                setArtist(userRes.data);
+
+                // 2. Pobieranie kolekcji przy użyciu Promise.allSettled
+                // Dzięki temu błąd w jednym endpoincie (np. 403 na playlistach) nie wywala całości.
+                const results = await Promise.allSettled([
                     api.get(`/songs/user/${id}`),
-                    api.get(`/albums/user/${id}`)
+                    api.get(`/albums/user/${id}`),
+                    api.get(`/playlists/user/${id}`)
                 ]);
 
-                setArtist(userRes.data);
-                setSongs(songsRes.data);
-                setAlbums(albumsRes.data);
+                // Funkcja pomocnicza do wyciągania danych z Promise.allSettled
+                const getData = (result) => {
+                    if (result.status === 'fulfilled') {
+                        return result.value.data || [];
+                    } else {
+                        console.warn("Nie udało się pobrać kolekcji:", result.reason);
+                        return [];
+                    }
+                };
 
-                // TODO: fetchowanie playlist, gdy backend będzie gotowy
+                const rawSongs = getData(results[0]);
+                const rawAlbums = getData(results[1]);
+                const rawPlaylists = getData(results[2]);
+
+                // --- FUNKCJA FILTRUJĄCA (PUBLICZNE) ---
+                // Kluczowa zmiana: Jeśli brak flagi (undefined/null), traktujemy jako PUBLICZNE.
+                // Ukrywamy tylko to, co jest jawnie 'false'.
+                const isPublic = (item) => {
+                    const val = item.publiclyVisible;
+                    if (val === false || val === "false") return false; // Tylko jawne false ukrywa
+                    return true; // true, "true", null, undefined -> pokazuje
+                };
+
+                const publicSongs = rawSongs.filter(isPublic);
+                const publicAlbums = rawAlbums.filter(isPublic);
+                const publicPlaylists = rawPlaylists.filter(isPublic);
+
+                // DEBUGOWANIE: Zobacz w konsoli F12, co przychodzi
+                console.log("ArtistPage Songs (Raw):", rawSongs);
+                console.log("ArtistPage Songs (Public):", publicSongs);
+
+                setSongs(publicSongs);
+                setAlbums(publicAlbums);
+                setPlaylists(publicPlaylists);
 
             } catch (err) {
                 console.error("Błąd pobierania danych profilu:", err);
-                setError("Nie udało się załadować profilu artysty.");
+                if(err.response && err.response.status === 404) {
+                    setError("Nie znaleziono artysty.");
+                } else {
+                    // Jeśli userRes się udał, a reszta padła, to i tak coś pokażemy (z pustymi listami)
+                    // ale tutaj catch łapie głównie błąd userRes.
+                }
             } finally {
                 setLoading(false);
             }
@@ -72,7 +163,6 @@ function ArtistPage() {
 
             <header className="profile-header">
                 <img
-                    // Używamy helpera do pobrania zdjęcia
                     src={getImageUrl(artist.avatarStorageKeyId ?? artist.avatarId)}
                     alt="Awatar artysty"
                     className="profile-avatar"
@@ -131,34 +221,45 @@ function ArtistPage() {
                 {/* --- Pokaż "Utwory" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
                     <div className="content-section">
-                        <h2>Utwory</h2>
+                        <h2>
+                            Utwory
+                            <span className="section-count">({songs.length})</span>
+                        </h2>
                         <div className="media-grid">
                             {songs && songs.length > 0 ? (
-                                songs.map(song => (
+                                songs.slice(0, songsLimit).map(song => (
                                     <MediaCard
                                         key={song.id}
                                         linkTo={`/song/${song.id}`}
                                         imageUrl={getImageUrl(song.coverStorageKeyId)}
                                         title={song.title}
                                         subtitle={`${getYearFromDate(song.createdAt)} • Utwór`}
-                                        // NAPRAWA: Dodano prop data={song}, aby przycisk Play się pojawił
                                         data={song}
                                     />
                                 ))
                             ) : (
-                                <p className="empty-tab-message">Ten artysta nie udostępnił jeszcze żadnych utworów.</p>
+                                <p className="empty-tab-message">Ten artysta nie udostępnił jeszcze żadnych utworów publicznie.</p>
                             )}
                         </div>
+                        <ExpandControls
+                            totalCount={songs.length}
+                            currentLimit={songsLimit}
+                            initialLimit={SONGS_INITIAL_LIMIT}
+                            onUpdate={setSongsLimit}
+                        />
                     </div>
                 )}
 
                 {/* --- Pokaż "Albumy" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
-                        <h2>Albumy</h2>
+                        <h2>
+                            Albumy
+                            <span className="section-count">({albums.length})</span>
+                        </h2>
                         <div className="media-grid">
                             {albums && albums.length > 0 ? (
-                                albums.map(album => (
+                                albums.slice(0, albumsLimit).map(album => (
                                     <MediaCard
                                         key={album.id}
                                         linkTo={`/album/${album.id}`}
@@ -168,23 +269,32 @@ function ArtistPage() {
                                     />
                                 ))
                             ) : (
-                                <p className="empty-tab-message">Ten artysta nie udostępnił jeszcze żadnych albumów.</p>
+                                <p className="empty-tab-message">Ten artysta nie udostępnił jeszcze żadnych albumów publicznie.</p>
                             )}
                         </div>
+                        <ExpandControls
+                            totalCount={albums.length}
+                            currentLimit={albumsLimit}
+                            initialLimit={OTHERS_INITIAL_LIMIT}
+                            onUpdate={setAlbumsLimit}
+                        />
                     </div>
                 )}
 
                 {/* --- Pokaż "Playlisty" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
-                        <h2>Playlisty</h2>
+                        <h2>
+                            Playlisty
+                            <span className="section-count">({playlists.length})</span>
+                        </h2>
                         <div className="media-grid">
                             {playlists && playlists.length > 0 ? (
-                                playlists.map(playlist => (
+                                playlists.slice(0, playlistsLimit).map(playlist => (
                                     <MediaCard
                                         key={playlist.id}
                                         linkTo={`/playlist/${playlist.id}`}
-                                        imageUrl={defaultAvatar}
+                                        imageUrl={playlist.coverStorageKeyId ? getImageUrl(playlist.coverStorageKeyId) : defaultAvatar}
                                         title={playlist.title}
                                         subtitle={`• Playlista`}
                                     />
@@ -193,6 +303,12 @@ function ArtistPage() {
                                 <p className="empty-tab-message">Brak publicznych playlist.</p>
                             )}
                         </div>
+                        <ExpandControls
+                            totalCount={playlists.length}
+                            currentLimit={playlistsLimit}
+                            initialLimit={OTHERS_INITIAL_LIMIT}
+                            onUpdate={setPlaylistsLimit}
+                        />
                     </div>
                 )}
             </section>
