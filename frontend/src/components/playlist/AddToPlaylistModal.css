@@ -166,12 +166,14 @@
 }
 
 /* === FORMULARZ TWORZENIA === */
+/* Zmniejszamy ogólny odstęp między elementami formularza */
 .create-playlist-form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1.0rem; /* Zmieniono z 1.2rem na 1.0rem */
     padding-top: 10px;
 }
+
 
 .form-group {
     display: flex;
@@ -269,38 +271,49 @@
     font-weight: bold;
 }
 
-/* Actions */
 .form-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 0.5rem;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    width: 100%;
+}
+
+.save-button,
+.cancel-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
 .save-button {
-    flex: 1;
     background: linear-gradient(to right, #8A2BE2, #6a1b9a);
     color: white;
     border: none;
-    padding: 12px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s;
+    order: 1;
 }
-.save-button:hover { transform: scale(1.02); }
-.save-button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.save-button:hover {
+    transform: scale(1.02);
+}
 
 .cancel-btn {
-    flex: 1;
-    background: transparent;
+    background-color: transparent;
     border: 1px solid #555;
-    color: #aaa;
-    padding: 12px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
+    color: #ccc;
+    margin-top: 0; /
+    order: 2;
 }
-.cancel-btn:hover { background: #1A1A1A; color: white; }
+
+.cancel-btn:hover {
+    border-color: #fff;
+    color: white;
+}
 
 /* Błędy */
 .error-border {
