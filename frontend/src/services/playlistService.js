@@ -49,6 +49,6 @@ export const changeSongPosition = async (playlistId, songId, newPosition) => {
 };
 
 export const getAllPlaylists = async () => {
-    const response = await api.get('/playlists/');
+    const response = await api.get('/playlists');
     return response.data;
 };
