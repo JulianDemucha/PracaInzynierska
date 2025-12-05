@@ -1,9 +1,11 @@
 package com.soundspace.service;
 
+import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.PlaylistSongViewDto;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.request.PlaylistCreateRequest;
+import com.soundspace.dto.request.PlaylistUpdateRequest;
 import com.soundspace.entity.*;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
@@ -35,8 +37,8 @@ public class PlaylistService {
     private final StorageKeyRepository storageKeyRepository;
     private final SongCoreService songCoreService;
 
-    private static final String COVERS_TARGET_DIRECTORY = "playlists/covers";
-    private static final String TARGET_COVER_EXTENSION = "jpg";
+    private static final String COVER_TARGET_DIRECTORY = "playlists/covers";
+    private static final String COVER_TARGET_EXTENSION = "jpg";
     private static final int COVER_WIDTH = 1200;
     private static final int COVER_HEIGHT = 1200;
     private static final double COVER_QUALITY = 0.85;
@@ -205,6 +207,14 @@ public class PlaylistService {
     }
 
     @Transactional
+    public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
+        ensureUserIsOwner(playlist, userDetails);
+        playlistEntryRepository.deleteBySongIdAndPlaylistId(songId, playlistId);
+        playlistEntryRepository.renumberPlaylist(playlistId);
+    }
+
+    @Transactional
     public void delete(Long playlistId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
         ensureUserCanView(playlist, userDetails);
@@ -241,11 +251,42 @@ public class PlaylistService {
     }
 
     @Transactional
-    public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
-        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        ensureUserIsOwner(playlist, userDetails);
-        playlistEntryRepository.deleteBySongIdAndPlaylistId(songId, playlistId);
-        playlistEntryRepository.renumberPlaylist(playlistId);
+    public PlaylistDto update(Long playlistId, PlaylistUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
+        Playlist updatedPlaylist = playlistRepository.findById(playlistId).orElseThrow(); //narazie wszytkie pola takie same, a pozniej beda zmieniane zeby zapisac po update
+
+        AppUser user = appUserService.getUserByEmail(userDetails.getUsername());
+        if (!updatedPlaylist.getCreator().getId().equals(user.getId()))
+            throw new AccessDeniedException("Brak dostępu do edycji piosenki");
+
+        MultipartFile coverFile = request.coverFile();
+        StorageKey storageKeyToDelete = null;
+        if (coverFile != null && !coverFile.isEmpty()) {
+            storageKeyToDelete = updatedPlaylist.getCoverStorageKey();
+            updatedPlaylist.setCoverStorageKey(imageService.processAndSaveNewImage(
+                    coverFile,
+                    user,
+                    COVER_WIDTH,
+                    COVER_HEIGHT,
+                    COVER_QUALITY,
+                    COVER_TARGET_EXTENSION,
+                    COVER_TARGET_DIRECTORY,
+                    "cover"
+            ));
+        }
+
+        if (request.title() != null) {
+            updatedPlaylist.setTitle(request.title());
+        }
+
+        if (request.publiclyVisible() != null) {
+            updatedPlaylist.setPubliclyVisible(request.publiclyVisible());
+        }
+
+        playlistRepository.save(updatedPlaylist);
+        if (storageKeyToDelete != null) {
+            imageService.cleanUpOldImage(storageKeyToDelete, "cover");
+        }
+        return PlaylistDto.toDto(updatedPlaylist);
     }
 
     @Transactional
@@ -296,11 +337,11 @@ public class PlaylistService {
                 coverFile,
                 COVER_WIDTH,
                 COVER_HEIGHT,
-                TARGET_COVER_EXTENSION,
+                COVER_TARGET_EXTENSION,
                 COVER_QUALITY
         );
 
-        Path tmpCoverPath = Files.createTempFile("playlist-cover-", "." + TARGET_COVER_EXTENSION);
+        Path tmpCoverPath = Files.createTempFile("playlist-cover-", "." + COVER_TARGET_EXTENSION);
         Files.write(tmpCoverPath, processedCover.bytes());
         return tmpCoverPath;
     }
@@ -308,13 +349,13 @@ public class PlaylistService {
     //  zapis pliku z temp file, utworzenie i zapisanie opdpowiadajacej plikowi encji StorageKey
     private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
         long coverFileSize = Files.size(tmpCoverPath);
-        String mimeType = "image/" + TARGET_COVER_EXTENSION;
+        String mimeType = "image/" + COVER_TARGET_EXTENSION;
 
         String coverStorageKeyString = storageService.saveFromPath(
                 tmpCoverPath,
                 appUser.getId(),
-                TARGET_COVER_EXTENSION,
-                COVERS_TARGET_DIRECTORY
+                COVER_TARGET_EXTENSION,
+                COVER_TARGET_DIRECTORY
         );
         log.info("Zapisano okładkę playlisty: key={}", coverStorageKeyString);
 
