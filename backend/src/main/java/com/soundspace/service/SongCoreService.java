@@ -2,11 +2,11 @@ package com.soundspace.service;
 
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
+import com.soundspace.dto.request.SongUpdateRequest;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.entity.StorageKey;
 import com.soundspace.exception.*;
-import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.enums.Genre;
@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,14 +23,19 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class SongCoreService {
-    public final SongRepository songRepository;
+    private final SongRepository songRepository;
     private final AppUserService appUserService;
-    private final AlbumRepository albumRepository;
     private final StorageService storageService;
     private final StorageKeyRepository storageKeyRepository;
+    private final ImageService imageService;
 
     private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
     private static final Long DEFAULT_AUDIO_STORAGE_KEY_ID = 5000L;
+    private static final String COVER_TARGET_DIRECTORY = "songs/covers";
+    private static final String COVER_TARGET_EXTENSION = "jpg";
+    private static final int COVER_WIDTH = 1200;
+    private static final int COVER_HEIGHT = 1200;
+    private static final double COVER_QUALITY = 0.80;
 
     public Song getSongById(Long id) {
         return songRepository.findById(id).orElseThrow(
@@ -152,6 +158,45 @@ public class SongCoreService {
             log.info("Błąd podczas usuwania pliku/storage: {}", e.getMessage());
             throw new StorageException(e.getMessage());
         }
+    }
+
+    @Transactional
+    public SongDto updateSong(Long songId, SongUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
+        Song updatedSong = getSongById(songId); //narazie wszytkie pola takie same, a pozniej beda zmieniane zeby zapisac po update
+
+        AppUser user = appUserService.getUserByEmail(userDetails.getUsername());
+        if (!updatedSong.getAuthor().getId().equals(user.getId()))
+            throw new AccessDeniedException("Brak dostępu do edycji piosenki");
+
+        MultipartFile coverFile = request.coverFile();
+        StorageKey storageKeyToDelete = null;
+        if (coverFile != null && !coverFile.isEmpty() && updatedSong.getAlbum() == null) {
+            storageKeyToDelete = updatedSong.getCoverStorageKey();
+            updatedSong.setCoverStorageKey(imageService.processAndSaveNewImage(
+                    coverFile,
+                    user,
+                    COVER_WIDTH,
+                    COVER_HEIGHT,
+                    COVER_QUALITY,
+                    COVER_TARGET_EXTENSION,
+                    COVER_TARGET_DIRECTORY,
+                    "cover"
+            ));
+        }
+
+        if(request.title() != null){
+            updatedSong.setTitle(request.title());
+        }
+
+        if(request.publiclyVisible() != null && updatedSong.getAlbum() == null){
+            updatedSong.setPubliclyVisible(request.publiclyVisible());
+        }
+
+        songRepository.save(updatedSong);
+        if(storageKeyToDelete != null){
+            imageService.cleanUpOldImage(storageKeyToDelete, "cover");
+        }
+        return SongDto.toDto(updatedSong);
     }
 
 
