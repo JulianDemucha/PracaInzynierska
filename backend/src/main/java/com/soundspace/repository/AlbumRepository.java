@@ -66,7 +66,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             LEFT JOIN FETCH a.songs
             JOIN a.genres g
             WHERE g = :genre
-            AND a.author.email = :userId
+            AND a.author.email = :userEmail
             """)
     List<Album> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userEmail") String userEmail);
 
