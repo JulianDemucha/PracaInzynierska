@@ -153,19 +153,17 @@ function SongPage() {
     };
 
     const handleRatingClick = async (type) => {
-        const previousRating = currentRating;
-
         rateSong(song.id, type);
 
         try {
             if (type === 'like') {
-                if (previousRating === 'like') {
+                if (currentRating === 'like') {
                     await removeLike(song.id);
                 } else {
                     await likeSong(song.id);
                 }
             } else if (type === 'dislike') {
-                if (previousRating === 'dislike') {
+                if (currentRating === 'dislike') {
                     await removeDislike(song.id);
                 } else {
                     await dislikeSong(song.id);
@@ -231,52 +229,56 @@ function SongPage() {
             </header>
 
             <section className="song-controls">
-                <button className="song-play-button" onClick={handlePlayPause}>
-                    <img src={isThisSongPlaying ? pauseIcon : playIcon} alt={isThisSongPlaying ? "Pauza" : "Odtwórz"} />
-                </button>
-
-                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={handleFavoriteClick}>
-                    <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
-                </button>
-
-                <button className={`song-control-button ${isQueuedAnim ? 'active' : ''}`} onClick={handleAddToQueue}>
-                    <img src={isQueuedAnim ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
-                </button>
-
-                <button className="song-control-button" onClick={() => setIsPlaylistModalOpen(true)} title="Dodaj do playlisty" >
-                    <img src={plusIcon} alt="Dodaj do playlisty" />
-                </button>
-
-                <div className="song-rating">
-                    <button
-                        className={`song-rating-button ${currentRating === 'like' ? 'active' : ''}`}
-                        onClick={() => handleRatingClick('like')}
-                    >
-                        <img src={currentRating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
+                <div className="controls-row-1">
+                    <button className="song-play-button" onClick={handlePlayPause}>
+                        <img src={isThisSongPlaying ? pauseIcon : playIcon} alt={isThisSongPlaying ? "Pauza" : "Odtwórz"} />
                     </button>
-                    <button
-                        className={`song-rating-button ${currentRating === 'dislike' ? 'active' : ''}`}
-                        onClick={() => handleRatingClick('dislike')}
-                    >
-                        <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
+
+                    <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={handleFavoriteClick}>
+                        <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                     </button>
+
+                    <div className="song-rating">
+                        <button
+                            className={`song-rating-button ${currentRating === 'like' ? 'active' : ''}`}
+                            onClick={() => handleRatingClick('like')}
+                        >
+                            <img src={currentRating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
+                        </button>
+                        <button
+                            className={`song-rating-button ${currentRating === 'dislike' ? 'active' : ''}`}
+                            onClick={() => handleRatingClick('dislike')}
+                        >
+                            <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
+                        </button>
+                    </div>
                 </div>
 
-                {isOwner && (
-                    <>
-                        <button
-                            className="song-control-button icon-btn push-right-btn"
-                            onClick={() => setIsEditModalOpen(true)}
-                            title="Edytuj utwór"
-                        >
-                            <img src={editIcon} alt="Edytuj" className="edit-icon-img" />
-                        </button>
+                <div className="controls-row-2">
+                    <button className={`song-control-button ${isQueuedAnim ? 'active' : ''}`} onClick={handleAddToQueue}>
+                        <img src={isQueuedAnim ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
+                    </button>
 
-                        <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
-                            <img src={binIcon} alt="Usuń" />
-                        </button>
-                    </>
-                )}
+                    <button className="song-control-button" onClick={() => setIsPlaylistModalOpen(true)} title="Dodaj do playlisty" >
+                        <img src={plusIcon} alt="Dodaj do playlisty" />
+                    </button>
+
+                    {isOwner && (
+                        <>
+                            <button
+                                className="song-control-button icon-btn"
+                                onClick={() => setIsEditModalOpen(true)}
+                                title="Edytuj utwór"
+                            >
+                                <img src={editIcon} alt="Edytuj" className="edit-icon-img" />
+                            </button>
+
+                            <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
+                                <img src={binIcon} alt="Usuń" />
+                            </button>
+                        </>
+                    )}
+                </div>
             </section>
 
             {isDeleteModalOpen && (

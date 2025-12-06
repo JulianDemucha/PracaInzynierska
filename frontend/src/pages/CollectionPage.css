@@ -8,7 +8,6 @@
     padding: 40px;
 }
 
-/* ===== 1. NAGŁÓWEK ===== */
 .song-header {
     display: flex;
     align-items: center;
@@ -88,12 +87,17 @@
     text-transform: uppercase;
 }
 
-/* ===== 2. KONTROLKI ===== */
 .song-controls {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
     margin-bottom: 2rem;
+}
+
+.collection-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
 }
 
 .song-play-button {
@@ -140,13 +144,10 @@
     opacity: 1;
 }
 
-/* Owner controls */
 .owner-controls {
-    margin-left: auto;
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding-right: 10px;
 }
 
 .edit-playlist-btn {
@@ -175,7 +176,6 @@
     opacity: 1;
 }
 
-/* ===== 3. LISTA UTWORÓW ===== */
 .song-list-container {
     border-top: 1px solid #282828;
     padding-top: 1rem;
@@ -232,7 +232,6 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Col 1: Number */
 .song-header-track {
     justify-self: center;
     text-align: center;
@@ -293,7 +292,6 @@
     color: #8A2BE2;
 }
 
-/* Col 2: Details */
 .song-item-details {
     display: flex;
     flex-direction: column;
@@ -321,7 +319,6 @@
     color: white;
 }
 
-/* Col 3: Actions */
 .song-item-actions {
     display: flex;
     align-items: center;
@@ -361,14 +358,12 @@
     opacity: 1;
 }
 
-/* Col 4: Duration */
 .song-item-duration {
     text-align: right;
     margin-right: 10px;
     font-variant-numeric: tabular-nums;
 }
 
-/* Col 5: Context Menu */
 .song-context-menu-wrapper {
     display: flex;
     justify-content: center;
@@ -512,4 +507,82 @@
 
 .save-btn {
     background-color: #8A2BE2;
+}
+
+@media (max-width: 768px) {
+    .collection-page {
+        padding: 1.5rem;
+        padding-bottom: 7rem;
+    }
+
+    .song-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .song-cover-art {
+        width: 200px;
+        height: 200px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .song-details h1 {
+        font-size: 2rem;
+    }
+
+    .song-meta {
+        justify-content: center;
+    }
+
+    .genre-tags {
+        justify-content: center;
+    }
+
+    .song-controls {
+        justify-content: center;
+    }
+
+    .collection-controls-row {
+        justify-content: center;
+    }
+
+    .song-list-header {
+        display: none;
+    }
+
+    .song-list-item {
+        grid-template-columns: 40px 1fr 50px;
+        padding: 0.8rem 0;
+        gap: 5px;
+    }
+
+    .song-item-actions {
+        display: none;
+    }
+
+    .song-item-duration {
+        display: none;
+    }
+
+    .song-track-number {
+        justify-self: center;
+    }
+
+    .song-context-menu-wrapper {
+        justify-self: end;
+        margin-right: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .song-details h1 {
+        font-size: 1.8rem;
+    }
+
+    .song-cover-art {
+        width: 160px;
+        height: 160px;
+    }
 }

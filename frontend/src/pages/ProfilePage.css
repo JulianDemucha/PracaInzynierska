@@ -18,6 +18,7 @@
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
 }
 
 .profile-info {
@@ -35,6 +36,7 @@
 .profile-username {
     font-size: 3rem;
     margin: 0.5rem 0;
+    line-height: 1;
 }
 
 .profile-bio-text {
@@ -55,7 +57,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid black;
+    border-bottom: 2px solid #282828;
     padding: 0 2rem;
     background-color: #121212;
     position: sticky;
@@ -75,6 +77,11 @@
     padding: 0;
     margin: 0;
     gap: 1.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.profile-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .profile-tabs li {
@@ -84,6 +91,7 @@
     padding: 1.5rem 0;
     cursor: pointer;
     border-bottom: 3px solid transparent;
+    white-space: nowrap;
 }
 
 .profile-tabs li:hover {
@@ -106,6 +114,9 @@
     cursor: pointer;
     font-weight: bold;
     text-decoration: none;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    text-align: center;
 }
 
 .add-song-button:hover,
@@ -124,6 +135,11 @@
     cursor: pointer;
     font-weight: bold;
     text-decoration: none;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .logout-button:hover {
@@ -142,6 +158,11 @@
     font-weight: bold;
     text-decoration: none;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .delete-account-button:hover {
@@ -162,6 +183,7 @@
     font-size: 1.5rem;
     border-bottom: 1px solid #404040;
     padding-bottom: 8px;
+    margin-top: 1rem;
 }
 
 .section-count {
@@ -235,6 +257,7 @@
     text-align: center;
     color: white;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 90%;
 }
 
 .delete-modal-description {
@@ -279,4 +302,79 @@
 
 .cancel-btn:hover {
     background-color: #333;
+}
+
+@media (max-width: 1200px) {
+    .profile-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-bottom: 1rem;
+    }
+
+    .profile-tabs {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .profile-nav-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 1rem;
+    }
+
+    .profile-info {
+        align-items: center;
+    }
+
+    .profile-username {
+        font-size: 2rem;
+    }
+
+    .profile-bio-text {
+        text-align: center;
+    }
+
+    .media-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+
+    .delete-modal-actions {
+        flex-direction: column;
+    }
+
+    .confirm-delete-btn, .cancel-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .profile-nav-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .delete-account-button {
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+
+    .profile-tabs li {
+        font-size: 0.9rem;
+    }
 }

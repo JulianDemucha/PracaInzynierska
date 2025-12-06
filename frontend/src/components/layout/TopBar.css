@@ -6,20 +6,16 @@
     animation: gradient 60s ease infinite;
     display: flex;
     align-items: center;
-    padding: 0 1rem;
-    gap: 10px;
+    padding: 0 1.5rem;
+    gap: 15px;
+    height: 64px;
+    z-index: 100;
 }
 
 @keyframes gradient {
-    0% {
-        background-position: 0 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0 50%;
-    }
+    0% { background-position: 0 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
 }
 
 .topbar-homepage-icon {
@@ -27,11 +23,12 @@
     width: 40px;
     background-color: #282828;
     border-radius: 50%;
-    display:flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: transform 0.5s ease;
+    flex-shrink: 0;
 }
 
 .topbar-homepage-icon:hover {
@@ -43,25 +40,23 @@
     width: 24px;
 }
 
-.topbar-search-icon {
-    height: 18px;
-    width: 18px;
-    margin-right: 8px;
-}
-
-.topbar-search-icon:hover {
-    transform: scale(1.1);
-}
-
 .topbar-search {
     display: flex;
     align-items: center;
     background-color: #282828;
     border-radius: 40px;
-    padding: 6px 12px;
+    padding: 8px 16px;
     flex-grow: 1;
     margin: 0 auto;
-    max-width: 400px;
+    max-width: 500px;
+    transition: all 0.3s ease;
+}
+
+.topbar-search-icon {
+    height: 18px;
+    width: 18px;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .topbar-search input {
@@ -74,26 +69,35 @@
 }
 
 .topbar-search input::placeholder {
-    color: white;
+    color: #ccc;
+}
+
+.topbar-profile {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .login-button {
     background-image: linear-gradient(to right, #000000 0%, #8A2BE2 51%, #000000 100%);
     background-size: 200% 200%;
     transition: 0.5s;
-    margin: 10px;
-    padding: 10px 25px;
+    padding: 8px 20px;
     text-align: center;
     text-transform: uppercase;
     color: white;
-    border-radius: 10px;
+    border-radius: 20px;
     text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .login-button:hover {
     background-position: right center;
     box-shadow: 0 0 15px white;
-    text-decoration: none;
 }
 
 .topbar-avatar {
@@ -101,26 +105,48 @@
     width: 40px;
     border-radius: 50%;
     cursor: pointer;
-    background-color: #8A2BE2;
+    object-fit: cover;
+    border: 2px solid #8A2BE2;
+}
+
+
+@media (max-width: 1200px) {
+    .topbar {
+        grid-column: 1 / -1;
+    }
 }
 
 @media (max-width: 768px) {
     .topbar {
-        grid-column: 1 / -1;
+        padding: 0 1rem;
     }
 
     .topbar-search {
-        max-width: 150px;
-        padding: 6px 8px;
+        max-width: none;
+        margin: 0 10px;
+        padding: 6px 12px;
     }
 
     .topbar-search input {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .login-button {
-        padding: 8px 12px;
+        padding: 6px 12px;
         font-size: 0.8rem;
-        margin: 0;
+    }
+
+    .topbar-homepage-icon {
+        height: 36px;
+        width: 36px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar-search input::placeholder {
+        color: transparent;
+    }
+    .topbar-search {
+        padding: 6px 10px;
     }
 }

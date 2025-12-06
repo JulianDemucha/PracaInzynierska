@@ -153,10 +153,6 @@ function ArtistPage() {
                 <div className="profile-info">
                     <div className="profile-username-wrapper">
                         <h1 className="profile-username">{artist.username}</h1>
-                        {artist.emailVerified && (
-                            <img src={verifiedBadge} alt="Zweryfikowany" className="verified-badge"
-                                 title="Zweryfikowany artysta" />
-                        )}
                     </div>
 
                     <p className="profile-bio">
@@ -184,8 +180,8 @@ function ArtistPage() {
                     <li onClick={() => setActiveTab('wszystko')}
                         className={activeTab === 'wszystko' ? 'active' : ''}>Wszystko
                     </li>
-                    <li onClick={() => setActiveTab('wlasne')} className={activeTab === 'wlasne' ? 'active' : ''}>Własne
-                        utwory
+                    <li onClick={() => setActiveTab('wlasne')}
+                        className={activeTab === 'wlasne' ? 'active' : ''}>Utwory
                     </li>
                     <li onClick={() => setActiveTab('albumy')}
                         className={activeTab === 'albumy' ? 'active' : ''}>Albumy

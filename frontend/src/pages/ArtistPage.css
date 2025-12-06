@@ -25,6 +25,7 @@
     object-fit: cover;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
     background-color: #333;
+    flex-shrink: 0;
 }
 
 .profile-info {
@@ -96,6 +97,8 @@
     padding: 0;
     margin: 0;
     gap: 2rem;
+    overflow-x: auto;
+    scrollbar-width: none;
 }
 
 .profile-tabs li {
@@ -108,6 +111,7 @@
     transition: color 0.2s, border-bottom-color 0.2s;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 .profile-tabs li:hover {
@@ -192,10 +196,20 @@
     .profile-avatar {
         width: 140px;
         height: 140px;
+        margin-bottom: 1rem;
+    }
+
+    .profile-info {
+        align-items: center;
     }
 
     .profile-username {
         font-size: 2.5rem;
+    }
+
+    .profile-bio {
+        font-size: 0.9rem;
+        text-align: center;
     }
 
     .profile-meta-details {
@@ -203,11 +217,32 @@
     }
 
     .profile-nav {
-        overflow-x: auto;
         padding: 0 1rem;
+        overflow-x: auto;
     }
 
     .profile-tabs {
         gap: 1.5rem;
+        width: 100%;
+    }
+
+    .profile-content {
+        padding: 1.5rem 1rem;
+    }
+
+    .media-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-username {
+        font-size: 2rem;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
     }
 }

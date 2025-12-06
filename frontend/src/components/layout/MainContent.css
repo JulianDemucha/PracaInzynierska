@@ -6,7 +6,7 @@
     overflow-y: auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
     .main-content {
         grid-column: 1 / -1;
         padding-bottom: 20px;

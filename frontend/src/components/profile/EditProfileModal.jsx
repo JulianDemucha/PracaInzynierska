@@ -65,7 +65,7 @@ function EditProfileModal({ isOpen, onClose }) {
 
     const handleBioChange = (e) => {
         const val = e.target.value;
-        if (val.length <= 1000) {
+        if (val.length <= 400) {
             setBio(val);
         }
     };
@@ -221,10 +221,10 @@ function EditProfileModal({ isOpen, onClose }) {
                                 rows="4"
                                 value={bio}
                                 onChange={handleBioChange}
-                                maxLength={1000}
+                                maxLength={400}
                             />
-                            <div className={`bio-char-count ${bio.length >= 1000 ? 'limit-reached' : ''}`}>
-                                {bio.length}/1000
+                            <div className={`bio-char-count ${bio.length >= 400 ? 'limit-reached' : ''}`}>
+                                {bio.length}/400
                             </div>
                         </div>
 

@@ -318,7 +318,6 @@ function CollectionPage() {
     };
 
     const handleRatingSongClick = async (songId, type) => {
-
         rateSong(songId, type);
 
         try {
@@ -383,37 +382,39 @@ function CollectionPage() {
             </header>
 
             <section className="song-controls">
-                <button className="song-play-button" onClick={handlePlayCollection}>
-                    <img src={showPauseOnHeader ? pauseIcon : playIcon} alt="Play/Pause" />
-                </button>
-
-                {isOwner && !isPlaylist && (
-                    <button
-                        className="add-song-circle-btn"
-                        onClick={() => setIsAddSongModalOpen(true)}
-                        title="Dodaj utwór"
-                    >
-                        <img src={plusIcon} alt="Dodaj do albumu" />
+                <div className="collection-controls-row">
+                    <button className="song-play-button" onClick={handlePlayCollection}>
+                        <img src={showPauseOnHeader ? pauseIcon : playIcon} alt="Play/Pause" />
                     </button>
-                )}
 
-                {isOwner && (
-                    <div className="owner-controls">
-                        {isPlaylist && (
-                            <button
-                                className="song-control-button icon-btn edit-playlist-btn"
-                                onClick={() => setIsEditModalOpen(true)}
-                                title="Edytuj playlistę"
-                            >
-                                <img src={editIcon} alt="Edytuj" className="icon-small" />
-                            </button>
-                        )}
-                        <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń">
-                            <img src={binIcon} alt="Usuń" />
+                    {isOwner && !isPlaylist && (
+                        <button
+                            className="add-song-circle-btn"
+                            onClick={() => setIsAddSongModalOpen(true)}
+                            title="Dodaj utwór"
+                        >
+                            <img src={plusIcon} alt="Dodaj do albumu" />
                         </button>
-                    </div>
-                )}
-                <ContextMenu options={headerMenuOptions} />
+                    )}
+
+                    {isOwner && (
+                        <div className="owner-controls">
+                            {isPlaylist && (
+                                <button
+                                    className="song-control-button icon-btn edit-playlist-btn"
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    title="Edytuj playlistę"
+                                >
+                                    <img src={editIcon} alt="Edytuj" className="icon-small" />
+                                </button>
+                            )}
+                            <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń">
+                                <img src={binIcon} alt="Usuń" />
+                            </button>
+                        </div>
+                    )}
+                    <ContextMenu options={headerMenuOptions} />
+                </div>
             </section>
 
             <section className="song-list-container">
