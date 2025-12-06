@@ -3,7 +3,9 @@ package com.soundspace.controller;
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.PlaylistSongViewDto;
 import com.soundspace.dto.request.PlaylistCreateRequest;
+import com.soundspace.dto.request.PlaylistUpdateRequest;
 import com.soundspace.service.PlaylistService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -82,7 +84,12 @@ public class PlaylistController {
         return ResponseEntity.ok(playlistService.getAllPlaylists(extractUserDetails(authentication)));
     }
 
-
+    @PutMapping("/{playlistId}")
+    public ResponseEntity<PlaylistDto> update(@ModelAttribute @Valid PlaylistUpdateRequest request,
+                                                  @PathVariable Long playlistId,
+                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(playlistService.update(playlistId, request, userDetails));
+    }
     // helpers
 
     private UserDetails extractUserDetails(Authentication authentication) {
