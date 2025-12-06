@@ -3,6 +3,7 @@ package com.soundspace.controller;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.SongUpdateRequest;
 import com.soundspace.dto.request.SongUploadRequest;
+import com.soundspace.enums.ReactionType;
 import com.soundspace.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -34,6 +35,7 @@ public class SongController {
     private final AppUserService appUserService;
     private final SongStreamingService songStreamingService;
     private final SongCoreService songCoreService;
+    private final ReactionService reactionService;
 
     @GetMapping("/{songId}")
     public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long songId, Authentication authentication) {
@@ -105,6 +107,26 @@ public class SongController {
                                                   @PathVariable Long songId,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(songCoreService.update(songId, request, userDetails));
+    }
+
+    /// SEKCJA REAKCJI
+
+    @PostMapping("/{songId}/like")
+    public ResponseEntity<Void> likeSong(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.addReaction(songId, ReactionType.LIKE, userDetails);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{songId}/dislike")
+    public ResponseEntity<Void> dislikeSong(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.addReaction(songId, ReactionType.DISLIKE, userDetails);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{songId}/favourite")
+    public ResponseEntity<Void> favouriteSong(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.addReaction(songId, ReactionType.FAVOURITE, userDetails);
+        return ResponseEntity.ok().build();
     }
 
 
