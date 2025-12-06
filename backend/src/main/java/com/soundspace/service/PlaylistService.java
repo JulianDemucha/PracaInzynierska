@@ -108,7 +108,7 @@ public class PlaylistService {
         try {
             MultipartFile coverFile = request.coverFile();
             if(coverFile == null || coverFile.isEmpty()){
-                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
+                coverStorageKeyEntity = storageKeyRepository.getReferenceById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID);
 
             } else {
                 // resize, convert i zapis cover image do temp file

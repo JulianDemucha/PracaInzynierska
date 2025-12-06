@@ -45,6 +45,10 @@ public class SongCoreService {
         );
     }
 
+    public Song getReferenceById(Long id) {
+        return songRepository.getReferenceById(id);
+    }
+
     public SongDto getSong(Long songId, UserDetails userDetails) {
         SongDto song = getSongDtoById(songId);
         if (song.publiclyVisible()) return song;

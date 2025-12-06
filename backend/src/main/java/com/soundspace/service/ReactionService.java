@@ -46,7 +46,7 @@ public class ReactionService {
         if (songReactionOpt.isEmpty()) {
             songReaction = new SongReaction();
             songReaction.setReactionType(requestReactionType);
-            songReaction.setSong(songCoreService.getSongById(songId));
+            songReaction.setSong(songCoreService.getReferenceById(songId));
             songReaction.setUser(appUser);
             // reactedAt automatycznie sie ustawi
             songReactionRepository.save(songReaction);
