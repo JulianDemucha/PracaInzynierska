@@ -52,8 +52,8 @@ public record SongDto(
                 p.getPubliclyVisible(),
                 p.getCreatedAt() == null ? null : p.getCreatedAt().toString(),
                 p.getCoverStorageKeyId(),
-                p.getLikesCount(),
-                p.getDislikesCount()
+                (p.getLikesCount() == null ? 0 : p.getLikesCount()),
+                (p.getDislikesCount() == null ? 0 : p.getDislikesCount())
         );
     }
 
