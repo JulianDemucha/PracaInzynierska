@@ -4,13 +4,25 @@
     padding-bottom: 5rem;
 }
 
-/* ===== 1. NAGŁÓWEK ===== */
+.song-loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+}
+
+.back-link {
+    color: #8A2BE2;
+}
+
+/* Header */
 .song-header {
     display: flex;
     align-items: center;
     gap: 2rem;
     margin-bottom: 2rem;
 }
+
 .song-cover-art {
     width: 250px;
     height: 250px;
@@ -18,20 +30,24 @@
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
+
 .song-details {
     display: flex;
     flex-direction: column;
 }
+
 .song-type {
     font-size: 0.9rem;
     font-weight: bold;
     text-transform: uppercase;
     color: #b3b3b3;
 }
+
 .song-details h1 {
     font-size: 3rem;
     margin: 0.5rem 0;
 }
+
 .song-meta {
     display: flex;
     align-items: center;
@@ -39,20 +55,24 @@
     color: #b3b3b3;
     font-size: 0.9rem;
 }
+
 .song-artist {
     color: white;
     text-decoration: none;
     font-weight: bold;
 }
+
 .song-artist:hover {
     text-decoration: underline;
 }
+
 .genre-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 1rem;
 }
+
 .genre-pill {
     background-color: #282828;
     color: #b3b3b3;
@@ -62,13 +82,27 @@
     font-weight: bold;
 }
 
-/* ===== 2. KONTROLKI ===== */
+.private-badge-wrapper {
+    margin-top: 10px;
+}
+
+.private-badge {
+    border: 1px solid #666;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+/* Controls */
 .song-controls {
     display: flex;
     align-items: center;
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
+
 .song-play-button {
     background-color: #8A2BE2;
     border: none;
@@ -81,96 +115,111 @@
     cursor: pointer;
     transition: transform 0.2s ease;
 }
+
 .song-play-button:hover {
     transform: scale(1.05);
 }
+
 .song-play-button img {
     width: 24px;
     height: 24px;
 }
+
 .song-control-button {
     background: none;
     border: none;
     cursor: pointer;
 }
+
 .song-control-button img {
     width: 28px;
     height: 28px;
     opacity: 0.7;
     transition: opacity 0.2s ease;
 }
+
 .song-control-button:hover img {
     opacity: 1;
 }
+
 .song-control-button.active img {
     opacity: 1;
 }
+
+/* Edit & Delete Buttons */
+.push-right-btn {
+    margin-left: auto;
+    margin-right: 10px;
+}
+
+.edit-icon-img {
+    width: 24px;
+    height: 24px;
+}
+
+.delete-song-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.delete-song-button img {
+    width: 24px;
+    height: 24px;
+    display: block;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.delete-song-button:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    transform: scale(1.1);
+}
+
+.delete-song-button:hover img {
+    opacity: 1;
+}
+
+.delete-song-button:active {
+    transform: scale(0.95);
+}
+
+/* Ratings */
 .song-rating {
     display: flex;
     gap: 1rem;
     border-left: 1px solid #404040;
     padding-left: 1.5rem;
 }
+
 .song-rating-button {
     background: none;
     border: none;
     cursor: pointer;
 }
+
 .song-rating-button img {
     width: 24px;
     height: 24px;
     opacity: 0.7;
     transition: opacity 0.2s ease;
 }
+
 .song-rating-button:hover img {
     opacity: 1;
 }
+
 .song-rating-button.active img {
     opacity: 1;
 }
 
-
-
-/* --- Przycisk Usuń (Ikona Kosza) --- */
-.delete-song-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px; /* Trochę "oddechu" wokół ikony dla łatwiejszego klikania */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%; /* Okrągłe tło po najechaniu */
-    transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-/* Stylizacja samej ikony wewnątrz przycisku */
-.delete-song-button img {
-    width: 24px; /* Dostosuj rozmiar ikony do swoich potrzeb */
-    height: 24px;
-    display: block;
-    /* Opcjonalnie: jeśli Twoja ikona bin.png jest biała, możesz ją pokolorować na czerwono filtrem CSS (jeśli jest czarna/kolorowa, usuń tę linię) */
-    /* filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%); */
-    opacity: 0.7; /* Lekko przygaszona domyślnie */
-    transition: opacity 0.2s ease;
-}
-
-/* Efekt po najechaniu myszką */
-.delete-song-button:hover {
-    background-color: rgba(255, 68, 68, 0.1); /* Delikatne czerwone tło */
-    transform: scale(1.1); /* Lekkie powiększenie całego przycisku */
-}
-
-.delete-song-button:hover img {
-    opacity: 1; /* Pełna widoczność ikony */
-}
-
-/* Efekt kliknięcia */
-.delete-song-button:active {
-    transform: scale(0.95);
-}
-
-/* --- MODAL POTWIERDZENIA --- */
+/* Modal */
 .delete-modal-backdrop {
     position: fixed;
     top: 0;
@@ -220,6 +269,7 @@
     border-radius: 8px;
     cursor: pointer;
 }
+
 .cancel-btn:hover {
     background-color: #333;
 }
@@ -233,6 +283,7 @@
     cursor: pointer;
     font-weight: bold;
 }
+
 .confirm-delete-btn:hover {
     background-color: #cc0000;
 }

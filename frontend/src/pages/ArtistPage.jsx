@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
-import {useParams} from 'react-router-dom';
-import './ArtistPage.css';
-import defaultAvatar from '../assets/images/default-avatar.png';
-import verifiedBadge from '../assets/images/verified.png';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import MediaCard from '../components/cards/MediaCard.jsx';
 import api from '../context/axiosClient.js';
-import {getImageUrl} from '../services/imageService.js';
+import { getImageUrl } from '../services/imageService.js';
+import defaultAvatar from '../assets/images/default-avatar.png';
+import verifiedBadge from '../assets/images/verified.png';
+import './ArtistPage.css';
 
 const getYearFromDate = (dateString) => {
     if (!dateString) return '';
@@ -18,10 +18,9 @@ const translateSex = (sex) => {
     return 'Inna';
 };
 
-// --- LOGIKA LIMITÓW (Zwijanie/Rozwijanie) ---
 const ITEMS_PER_ROW = 7;
-const SONGS_INITIAL_LIMIT = ITEMS_PER_ROW * 2; // 14
-const OTHERS_INITIAL_LIMIT = ITEMS_PER_ROW * 1; // 7
+const SONGS_INITIAL_LIMIT = ITEMS_PER_ROW * 2;
+const OTHERS_INITIAL_LIMIT = ITEMS_PER_ROW;
 
 const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) => {
     if (totalCount <= initialLimit) return null;
@@ -66,7 +65,7 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
 };
 
 function ArtistPage() {
-    const {id} = useParams()
+    const { id } = useParams();
     const [artist, setArtist] = useState(null);
     const [songs, setSongs] = useState([]);
     const [albums, setAlbums] = useState([]);
@@ -76,7 +75,6 @@ function ArtistPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Stany limitów wyświetlania
     const [songsLimit, setSongsLimit] = useState(SONGS_INITIAL_LIMIT);
     const [albumsLimit, setAlbumsLimit] = useState(OTHERS_INITIAL_LIMIT);
     const [playlistsLimit, setPlaylistsLimit] = useState(OTHERS_INITIAL_LIMIT);
@@ -85,24 +83,19 @@ function ArtistPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // 1. Pobieranie danych artysty
                 const userRes = await api.get(`/users/${id}`);
                 setArtist(userRes.data);
 
-                // 2. Pobieranie kolekcji przy użyciu Promise.allSettled
-                // Dzięki temu błąd w jednym endpoincie (np. 403 na playlistach) nie wywala całości.
                 const results = await Promise.allSettled([
                     api.get(`/songs/user/${id}`),
                     api.get(`/albums/user/${id}`),
                     api.get(`/playlists/user/${id}`)
                 ]);
 
-                // Funkcja pomocnicza do wyciągania danych z Promise.allSettled
                 const getData = (result) => {
                     if (result.status === 'fulfilled') {
                         return result.value.data || [];
                     } else {
-                        console.warn("Nie udało się pobrać kolekcji:", result.reason);
                         return [];
                     }
                 };
@@ -111,22 +104,15 @@ function ArtistPage() {
                 const rawAlbums = getData(results[1]);
                 const rawPlaylists = getData(results[2]);
 
-                // --- FUNKCJA FILTRUJĄCA (PUBLICZNE) ---
-                // Kluczowa zmiana: Jeśli brak flagi (undefined/null), traktujemy jako PUBLICZNE.
-                // Ukrywamy tylko to, co jest jawnie 'false'.
                 const isPublic = (item) => {
                     const val = item.publiclyVisible;
-                    if (val === false || val === "false") return false; // Tylko jawne false ukrywa
-                    return true; // true, "true", null, undefined -> pokazuje
+                    return !(val === false || val === "false");
+
                 };
 
                 const publicSongs = rawSongs.filter(isPublic);
                 const publicAlbums = rawAlbums.filter(isPublic);
                 const publicPlaylists = rawPlaylists.filter(isPublic);
-
-                // DEBUGOWANIE: Zobacz w konsoli F12, co przychodzi
-                console.log("ArtistPage Songs (Raw):", rawSongs);
-                console.log("ArtistPage Songs (Public):", publicSongs);
 
                 setSongs(publicSongs);
                 setAlbums(publicAlbums);
@@ -134,11 +120,8 @@ function ArtistPage() {
 
             } catch (err) {
                 console.error("Błąd pobierania danych profilu:", err);
-                if(err.response && err.response.status === 404) {
+                if (err.response && err.response.status === 404) {
                     setError("Nie znaleziono artysty.");
-                } else {
-                    // Jeśli userRes się udał, a reszta padła, to i tak coś pokażemy (z pustymi listami)
-                    // ale tutaj catch łapie głównie błąd userRes.
                 }
             } finally {
                 setLoading(false);
@@ -150,30 +133,29 @@ function ArtistPage() {
         }
     }, [id]);
 
-    if(loading){
-        return <div className="profile-page" style={{padding: '2rem'}}>Ładowanie profilu...</div>;
+    if (loading) {
+        return <div className="profile-page page-message">Ładowanie profilu...</div>;
     }
 
     if (error || !artist) {
-        return <div className="profile-page" style={{padding: '2rem'}}>{error || "Nie znaleziono artysty."}</div>;
+        return <div className="profile-page page-message">{error || "Nie znaleziono artysty."}</div>;
     }
 
     return (
         <div className="profile-page">
-
             <header className="profile-header">
                 <img
                     src={getImageUrl(artist.avatarStorageKeyId ?? artist.avatarId)}
                     alt="Awatar artysty"
                     className="profile-avatar"
-                    onError={(e) => {e.target.src = defaultAvatar}}
+                    onError={(e) => { e.target.src = defaultAvatar }}
                 />
                 <div className="profile-info">
                     <div className="profile-username-wrapper">
                         <h1 className="profile-username">{artist.username}</h1>
                         {artist.emailVerified && (
                             <img src={verifiedBadge} alt="Zweryfikowany" className="verified-badge"
-                                 title="Zweryfikowany artysta"/>
+                                 title="Zweryfikowany artysta" />
                         )}
                     </div>
 
@@ -215,10 +197,7 @@ function ArtistPage() {
                 <div className="profile-nav-actions-placeholder"></div>
             </nav>
 
-            {/* ===== ZAWARTOŚĆ ===== */}
             <section className="profile-content">
-
-                {/* --- Pokaż "Utwory" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
                     <div className="content-section">
                         <h2>
@@ -250,7 +229,6 @@ function ArtistPage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Albumy" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
                         <h2>
@@ -281,7 +259,6 @@ function ArtistPage() {
                     </div>
                 )}
 
-                {/* --- Pokaż "Playlisty" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
                         <h2>

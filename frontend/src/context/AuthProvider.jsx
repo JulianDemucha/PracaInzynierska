@@ -1,18 +1,19 @@
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import api from "./axiosClient.js";
 import { AuthContext } from "./authContext.js";
 
-export default function AuthProvider({children}) {
-    const [currentUser, setCurrentUser] = useState(null)
+export default function AuthProvider({ children }) {
+    const [currentUser, setCurrentUser] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalView, setModalView] = useState('login');
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const openModal = (view = 'login') => {
         setModalView(view);
         setIsModalOpen(true);
     };
+
     const closeModal = () => { setIsModalOpen(false); };
     const switchToRegister = () => setModalView('register');
     const switchToLogin = () => setModalView('login');
@@ -23,20 +24,18 @@ export default function AuthProvider({children}) {
         try {
             const res = await api.get("/users/me");
             setCurrentUser(res.data);
-
         } catch (err) {
-            setCurrentUser(null)
+            setCurrentUser(null);
             if (err.response && err.response.status !== 401) {
-                setError(err.response?.data?.message || "niespodziewany blad podczas sprawdzania 'sesji'");
+                setError(err.response?.data?.message || "Niespodziewany błąd podczas sprawdzania sesji");
             }
-
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        void fetchCurrentUser(); //jak error to setCurrentUser(null)
+        void fetchCurrentUser();
     }, []);
 
     const login = async (credentials) => {
@@ -48,7 +47,7 @@ export default function AuthProvider({children}) {
             closeModal();
             return { ok: true };
         } catch (err) {
-            const msg = err.response?.data?.message || "Authentication failed";
+            const msg = err.response?.data?.message || "Logowanie nieudane";
             setError(msg);
             setLoading(false);
             return { ok: false, error: msg };
@@ -64,7 +63,7 @@ export default function AuthProvider({children}) {
             closeModal();
             return { ok: true };
         } catch (err) {
-            const msg = err.response?.data?.message || "Registration failed";
+            const msg = err.response?.data?.message || "Rejestracja nieudana";
             setError(msg);
             setLoading(false);
             return { ok: false, error: msg };
@@ -72,8 +71,13 @@ export default function AuthProvider({children}) {
     };
 
     const logout = async () => {
+        try {
             await api.post("/auth/logout");
+        } catch (e) {
+            console.error("Błąd wylogowania", e);
+        } finally {
             setCurrentUser(null);
+        }
     };
 
     const value = {
@@ -91,19 +95,11 @@ export default function AuthProvider({children}) {
         loading,
         error,
         isAuthenticated: !!currentUser,
-    }
+    };
 
     return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
-    )
+    );
 }
-
-// TODO: jak przeczytasz to usun
-// Komentarz wyłączający regułę ESLint dla tej linii
-// eslint-disable-next-line react-refresh/only-export-components
-// jaka sigma XD ten useauth wystarczy exportowac w innym pliku, nie ignoruj tak bledow
-// export function useAuth() {
-//     return useContext(AuthContext);
-// }

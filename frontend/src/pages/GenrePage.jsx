@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './GenrePage.css';
 import MediaCard from '../components/cards/MediaCard.jsx';
 import { getSongsByGenre } from '../services/songService.js';
 import { getAlbumsByGenre } from '../services/albumService.js';
 import { getImageUrl } from "../services/imageService.js";
-import { useAuth } from "../context/useAuth.js"; // 1. Importujemy kontekst autoryzacji
-
+import { useAuth } from "../context/useAuth.js";
+import './GenrePage.css';
 
 function stringToColor(str) {
-    if(!str) return '#8A2BE2';
+    if (!str) return '#8A2BE2';
     let hash = 0;
     for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
     let color = '#';
@@ -23,22 +22,18 @@ function stringToColor(str) {
 function GenrePage() {
     const { genreName } = useParams();
     const navigate = useNavigate();
-    const { currentUser } = useAuth(); // 2. Pobieramy aktualnego użytkownika
-    const [activeTab, setActiveTab] = useState('wszystko');
+    const { currentUser } = useAuth();
 
-    // --- STANY DANYCH ---
+    const [activeTab, setActiveTab] = useState('wszystko');
     const [genreSongs, setGenreSongs] = useState([]);
     const [genreAlbums, setGenreAlbums] = useState([]);
-
-    // --- STANY UI ---
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     const [showAllSongs, setShowAllSongs] = useState(false);
     const [showAllAlbums, setShowAllAlbums] = useState(false);
+
     const MAX_ITEMS_PER_SECTION = 7;
 
-    // --- POBIERANIE DANYCH Z API ---
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -48,7 +43,6 @@ function GenrePage() {
                     getSongsByGenre(genreName),
                     getAlbumsByGenre(genreName)
                 ]);
-
 
                 const filteredSongs = songsData.filter(song =>
                     song.publiclyVisible || (currentUser && currentUser.id === song.authorId)
@@ -80,9 +74,23 @@ function GenrePage() {
     if (loading) {
         return (
             <div className="genre-page loading-state">
-                <div style={{ padding: '50px', textAlign: 'center', color: 'white' }}>
+                <div className="loading-content">
                     <h2>Ładowanie...</h2>
                 </div>
+            </div>
+        );
+    }
+    if (error) {
+        return (
+            <div className="genre-page" style={{ padding: '50px', textAlign: 'center', color: 'white' }}>
+                <h2>Wystąpił błąd</h2>
+                <p>{error}</p>
+                <button
+                    className="modal-button"
+                    onClick={() => window.location.reload()}
+                >
+                    Spróbuj ponownie
+                </button>
             </div>
         );
     }
@@ -102,7 +110,7 @@ function GenrePage() {
     return (
         <div className="genre-page">
             <header className="genre-header">
-                <div className="genre-banner" style={{backgroundColor: stringToColor(genreName)}}>
+                <div className="genre-banner" style={{ backgroundColor: stringToColor(genreName) }}>
                     <h1>{formattedGenreTitle}</h1>
                 </div>
                 <div className="genre-info">
@@ -121,7 +129,6 @@ function GenrePage() {
             </nav>
 
             <section className="genre-content">
-                {/* --- SEKCJA UTWORÓW --- */}
                 {(activeTab === 'wszystko' || activeTab === 'utwory') && genreSongs.length > 0 && (
                     <div className="content-section">
                         <h2>Utwory</h2>
@@ -145,7 +152,6 @@ function GenrePage() {
                     </div>
                 )}
 
-                {/* --- SEKCJA ALBUMÓW --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && genreAlbums.length > 0 && (
                     <div className="content-section">
                         <h2>Albumy</h2>

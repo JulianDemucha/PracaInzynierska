@@ -5,7 +5,6 @@ import '../../index.css';
 import '../common/ContextMenu.css';
 import ContextMenu from '../common/ContextMenu.jsx';
 import { usePlayer } from '../../context/PlayerContext.js';
-
 import playIcon from '../../assets/images/play.png';
 import pauseIcon from '../../assets/images/pause.png';
 import prevIcon from '../../assets/images/previous.png';
@@ -152,14 +151,11 @@ function PlayerBar() {
     const songTitle = currentSong?.title || "Wybierz utwór";
     const coverArt = currentSong?.coverArtUrl || albumArtPlaceholder;
 
-    // --- OBLICZANIE PROCENTÓW DLA SUWAKÓW ---
     const progressPercent = duration ? (currentTime / duration) * 100 : 0;
     const volumePercent = uiVolumePercent;
 
     return (
         <footer className="player-bar">
-
-            {/* ========= SEKCJA LEWA (Informacje) ========== */}
             <div className="player-section-left">
                 <img src={coverArt} alt="Okładka albumu" className="player-album-art" />
                 <div className="player-song-details">
@@ -181,10 +177,8 @@ function PlayerBar() {
                 </button>
             </div>
 
-            {/* ========= SEKCJA ŚRODKOWA (Kontrolki) ======= */}
             <div className="player-section-middle">
                 <div className="player-controls">
-
                     <button className="control-button prev">
                         <img src={prevIcon} alt="Poprzedni" />
                     </button>
@@ -205,7 +199,6 @@ function PlayerBar() {
                         <img src={nextIcon} alt="Następny" />
                     </button>
 
-                    {/* Pasek postępu */}
                     <div className="progress-bar-container">
                         <span className="time-current">{formatTime(currentTime)}</span>
                         <input
@@ -247,11 +240,8 @@ function PlayerBar() {
                 </div>
             </div>
 
-            {/* ========= SEKCJA PRAWA (Głośność) =========== */}
             <div className="player-section-right">
-
                 <ContextMenu options={playerMenuOptions} />
-
                 <button
                     className={`control-button queue-button ${isQueueVisible ? 'active' : ''}`}
                     onClick={() => {setIsQueueVisible(!isQueueVisible)}}
@@ -266,7 +256,6 @@ function PlayerBar() {
                     {getVolumeIcon()}
                 </div>
 
-                {/* Suwak głośności */}
                 <input
                     type="range"
                     className="volume-slider"

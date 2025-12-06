@@ -1,10 +1,10 @@
-import React, {useState, useRef, useEffect} from 'react';
-import ReactCrop, {centerCrop, makeAspectCrop} from "react-image-crop";
+import React, { useState, useRef, useEffect } from 'react';
+import ReactCrop, { centerCrop, makeAspectCrop } from "react-image-crop";
 import { createAlbum, addSongToAlbum } from '../../services/albumService.js';
 import { useAuth } from '../../context/useAuth.js';
+import defaultAvatar from '../../assets/images/default-avatar.png';
 import 'react-image-crop/dist/ReactCrop.css';
 import './CreateAlbumModal.css';
-import defaultAvatar from '../../assets/images/default-avatar.png';
 
 const genres = [
     "POP", "ROCK", "JAZZ", "BLUES", "HIP_HOP", "RNB", "ELECTRONIC",
@@ -12,50 +12,38 @@ const genres = [
     "PUNK", "FUNK", "TRAP", "SOUL", "LATIN", "K_POP", "INDIE", "ALTERNATIVE"
 ];
 
-// DODANO: prop existingAlbumId oraz onAlbumUpdate
-function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdate, onSongsUpdate}) {
+function CreateAlbumModal({ isOpen, onClose, existingAlbumId = null, onAlbumUpdate, onSongsUpdate }) {
     const { currentUser } = useAuth();
-
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-
-    // --- WALIDACJA ---
     const [showValidation, setShowValidation] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
-    // Dane Albumu
     const [albumTitle, setAlbumTitle] = useState("");
     const [selectedGenres, setSelectedGenres] = useState([]);
     const [isPublic, setIsPublic] = useState(false);
 
-    // Obrazek
     const [imgSrc, setImgSrc] = useState(defaultAvatar);
     const [crop, setCrop] = useState();
     const imgRef = useRef(null);
 
-    // Wynik kroku 1
     const [createdAlbumId, setCreatedAlbumId] = useState(null);
 
-    // Dane Piosenki
     const [songTitle, setSongTitle] = useState("");
     const [audioFile, setAudioFile] = useState(null);
     const [addedSongsCount, setAddedSongsCount] = useState(0);
 
-    // Resetowanie i ustawianie trybu
     useEffect(() => {
         if (isOpen) {
-            // Zmiana: Jeśli mamy existingAlbumId, wchodzimy od razu w krok 2
             if (existingAlbumId) {
                 setStep(2);
                 setCreatedAlbumId(existingAlbumId);
-                // Resetujemy pola piosenki, ale nie albumu (bo album już jest)
                 setSongTitle("");
                 setAudioFile(null);
                 setAddedSongsCount(0);
                 setShowValidation(false);
                 setErrorMessage("");
             } else {
-                // Tryb tworzenia nowego albumu
                 setStep(1);
                 setAlbumTitle("");
                 setSelectedGenres([]);
@@ -80,23 +68,15 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
         const cropSize = smallestDimension * 0.9;
 
         const crop = centerCrop(
-            makeAspectCrop(
-                {
-                    unit: 'px',
-                    width: cropSize,
-                },
-                1,
-                width,
-                height
-            ),
+            makeAspectCrop({ unit: 'px', width: cropSize }, 1, width, height),
             width,
             height
         );
         setCrop(crop);
     }
+
     if (!isOpen) return null;
 
-    // --- PLIKI ---
     const handleFileChange = (e, type) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -138,7 +118,6 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
         else alert("Max 3 gatunki");
     };
 
-    // --- KROK 1: TWORZENIE ALBUMU ---
     const handleCreateAlbum = async () => {
         const isTitleMissing = !albumTitle.trim();
         const isCoverMissing = imgSrc === defaultAvatar || !crop;
@@ -179,7 +158,6 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
         }
     };
 
-    // --- KROK 2: DODAWANIE PIOSENKI ---
     const handleAddSong = async () => {
         const isSongTitleMissing = !songTitle.trim();
         const isAudioMissing = !audioFile;
@@ -204,7 +182,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
             setSongTitle("");
             setAudioFile(null);
             const fileInput = document.getElementById('song-upload-step2');
-            if(fileInput) fileInput.value = null;
+            if (fileInput) fileInput.value = null;
 
             setAddedSongsCount(prev => prev + 1);
 
@@ -217,15 +195,12 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
     };
 
     const handleFinish = () => {
-        // Jeśli jesteśmy w trybie edycji, pozwalamy wyjść nawet jak dodano 0 (bo może użytkownik się rozmyślił)
-        // Jeśli tworzymy nowy album, wymuszamy 1 piosenkę.
         if (!existingAlbumId && addedSongsCount === 0) {
             setShowValidation(true);
             setErrorMessage("Album musi zawierać przynajmniej jedną piosenkę!");
             return;
         }
 
-        // Wywołaj callback odświeżania danych w rodzicu
         if (onAlbumUpdate) onAlbumUpdate();
         if (onSongsUpdate) onSongsUpdate();
         onClose();
@@ -237,7 +212,6 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
                 <button className="close-button" onClick={onClose}>×</button>
 
                 {step === 1 ? (
-                    /* --- KROK 1: DANE ALBUMU (Tylko przy tworzeniu nowego) --- */
                     <>
                         <h2>Stwórz Album (1/2)</h2>
                         <div className="edit-form">
@@ -247,7 +221,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
                                 value={albumTitle}
                                 onChange={e => {
                                     setAlbumTitle(e.target.value);
-                                    if(showValidation) setErrorMessage("");
+                                    if (showValidation) setErrorMessage("");
                                 }}
                                 className={showValidation && !albumTitle.trim() ? 'error-border' : ''}
                             />
@@ -313,13 +287,12 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
                         </div>
                     </>
                 ) : (
-                    /* --- KROK 2: PIOSENKI (Tworzenie i Edycja) --- */
                     <>
                         <h2>{existingAlbumId ? 'Dodaj utwory do albumu' : 'Dodaj utwory do albumu'}</h2>
                         <div className="edit-form">
                             {!existingAlbumId && (
                                 <div className="info-text">
-                                    Album utworzony! Teraz dodaj do niego piosenki.<br/>
+                                    Album utworzony! Teraz dodaj do niego piosenki.<br />
                                 </div>
                             )}
                             {existingAlbumId && (
@@ -334,7 +307,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
                                 value={songTitle}
                                 onChange={e => {
                                     setSongTitle(e.target.value);
-                                    if(showValidation) setErrorMessage("");
+                                    if (showValidation) setErrorMessage("");
                                 }}
                                 className={showValidation && !songTitle.trim() ? 'error-border' : ''}
                             />
@@ -353,7 +326,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
 
                             {errorMessage && <div className="validation-message">{errorMessage}</div>}
 
-                            <div style={{display:'flex', gap:'10px', marginTop:'20px'}}>
+                            <div className="form-actions-row">
                                 <button className="add-song-button-small" onClick={handleAddSong} disabled={isLoading}>
                                     {isLoading ? 'Dodawanie...' : '+ Dodaj utwór'}
                                 </button>

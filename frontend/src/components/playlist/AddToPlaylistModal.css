@@ -22,12 +22,11 @@
     border: 1px solid #282828;
     display: flex;
     flex-direction: column;
-    max-height: 90vh; /* Zabezpieczenie na małe ekrany */
+    max-height: 90vh;
     overflow-y: auto;
     transition: max-width 0.3s ease;
 }
 
-/* Szerszy modal przy tworzeniu, żeby zmieścić cropa */
 .playlist-modal-content.expanded {
     max-width: 450px;
 }
@@ -48,6 +47,12 @@
     padding-bottom: 1rem;
 }
 
+.song-preview-status {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 4px;
+}
+
 .close-button {
     position: absolute;
     top: 10px; right: 15px;
@@ -58,19 +63,15 @@
 }
 .close-button:hover { color: white; }
 
-/* ... (reszta stylów bez zmian) ... */
-
-/* === LISTA PLAYLIST === */
 .playlist-list-container {
     display: flex;
     flex-direction: column;
-    gap: 0; /* Zmieniamy gap na 0, bo sterujemy marginesami wewnątrz */
-    flex: 1; /* Żeby zajęło dostępną przestrzeń */
-    overflow: hidden; /* Ważne, żeby scroll był tylko wewnątrz listy */
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
 }
 
 .playlists-scroll-area {
-    /* Lista zajmuje dostępną przestrzeń, ale zostawia miejsce na guzik */
     flex: 1;
     max-height: 300px;
     overflow-y: auto;
@@ -78,17 +79,16 @@
     flex-direction: column;
     gap: 5px;
     padding-right: 5px;
-    margin-bottom: 10px; /* Odstęp od guzika Nowa Playlista */
+    margin-bottom: 10px;
 }
 .playlists-scroll-area::-webkit-scrollbar { width: 5px; }
 .playlists-scroll-area::-webkit-scrollbar-thumb { background: #404040; border-radius: 3px; }
 
-/* PRZYCISK NOWA PLAYLISTA - teraz na dole */
 .create-new-row {
     background: transparent;
     border: 1px solid #404040;
     color: #8A2BE2;
-    padding: 12px; /* Trochę większy padding */
+    padding: 12px;
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -98,14 +98,14 @@
     font-weight: bold;
     width: 100%;
     text-align: left;
-    margin-top: auto; /* Pcha guzik na sam dół kontenera jeśli jest miejsce */
+    margin-top: auto;
 }
 
-/* ... (reszta stylów bez zmian) ... */
 .create-new-row:hover {
     background: rgba(138, 43, 226, 0.1);
     border-color: #8A2BE2;
 }
+
 .plus-box {
     width: 30px; height: 30px;
     border-radius: 4px;
@@ -117,7 +117,7 @@
 .playlist-row {
     display: flex;
     align-items: center;
-    gap: 15px; /* Większy odstęp między ikoną a tekstem */
+    gap: 15px;
     padding: 12px;
     border-radius: 6px;
     cursor: pointer;
@@ -126,8 +126,13 @@
 }
 .playlist-row:hover { background-color: #1A1A1A; }
 
+.playlist-row.blocked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .playlist-cover-placeholder {
-    width: 48px; height: 48px; /* Nieco większa ikona */
+    width: 48px; height: 48px;
     background-color: #282828;
     color: #666;
     display: flex; align-items: center; justify-content: center;
@@ -136,12 +141,11 @@
     flex-shrink: 0;
 }
 
-/* Nowy kontener na tekst (nazwa + licznik w rzędzie) */
 .playlist-info-row {
     display: flex;
-    flex-direction: row; /* W jednym rzędzie */
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between; /* Rozsuwa nazwę i licznik na boki */
+    justify-content: space-between;
     width: 100%;
 }
 
@@ -152,10 +156,15 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 180px; /* Ograniczenie szerokości nazwy */
+    max-width: 180px;
 }
 
-/* Licznik jako "badge" lub szary tekst obok */
+.playlist-meta-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
 .playlist-count-badge {
     color: #888;
     font-size: 0.85rem;
@@ -165,15 +174,18 @@
     white-space: nowrap;
 }
 
-/* === FORMULARZ TWORZENIA === */
-/* Zmniejszamy ogólny odstęp między elementami formularza */
+.playlist-status {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 2px;
+}
+
 .create-playlist-form {
     display: flex;
     flex-direction: column;
-    gap: 1.0rem; /* Zmieniono z 1.2rem na 1.0rem */
+    gap: 1.0rem;
     padding-top: 10px;
 }
-
 
 .form-group {
     display: flex;
@@ -200,7 +212,6 @@
     border-color: #8A2BE2;
 }
 
-/* Przycisk wyboru pliku */
 .file-upload-button-small {
     background-color: #1A1A1A;
     border: 1px solid #404040;
@@ -216,7 +227,10 @@
     color: white;
 }
 
-/* Kontener Croppera */
+.hidden-input {
+    display: none;
+}
+
 .playlist-cropper-container {
     width: 200px;
     height: 200px;
@@ -234,7 +248,6 @@
     max-height: 100%;
 }
 
-/* Radio buttons (Widoczność) */
 .visibility-group .radio-options {
     display: flex;
     gap: 15px;
@@ -253,7 +266,6 @@
     color: #888;
 }
 
-/* Zostawiamy input widoczny, ale stylujemy label */
 .radio-label input {
     accent-color: #8A2BE2;
     cursor: pointer;
@@ -306,7 +318,7 @@
     background-color: transparent;
     border: 1px solid #555;
     color: #ccc;
-    margin-top: 0; /
+    margin-top: 0;
     order: 2;
 }
 
@@ -315,7 +327,6 @@
     color: white;
 }
 
-/* Błędy */
 .error-border {
     border: 1px solid #ff4444 !important;
 }
@@ -326,4 +337,15 @@
     text-align: center;
     margin-top: 10px;
     font-weight: bold;
+}
+
+.loading-msg {
+    color: #666;
+    text-align: center;
+}
+
+.no-playlists-msg {
+    color: #666;
+    text-align: center;
+    padding: 10px;
 }

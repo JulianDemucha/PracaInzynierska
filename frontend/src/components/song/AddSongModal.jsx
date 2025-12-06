@@ -1,8 +1,8 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import './AddSongModal.css';
 import api from "../../context/axiosClient.js";
+import './AddSongModal.css';
 
 const genres = [
     "POP", "ROCK", "JAZZ", "BLUES", "HIP_HOP", "RNB", "ELECTRONIC",
@@ -19,7 +19,6 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
     const [imgSrc, setImgSrc] = useState('');
     const [crop, setCrop] = useState();
     const imgRef = useRef(null);
-
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [showValidation, setShowValidation] = useState(false);
@@ -28,17 +27,8 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
         const { width, height } = e.currentTarget;
         const smallestDimension = Math.min(width, height);
         const cropSize = smallestDimension * 0.9;
-
         const crop = centerCrop(
-            makeAspectCrop(
-                {
-                    unit: 'px',
-                    width: cropSize,
-                },
-                1,
-                width,
-                height
-            ),
+            makeAspectCrop({ unit: 'px', width: cropSize }, 1, width, height),
             width,
             height
         );
@@ -55,7 +45,7 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
         setCrop(undefined);
         imgRef.current = null;
         setErrorMessage("");
-        setShowValidation(false)
+        setShowValidation(false);
 
         const songInput = document.getElementById('song-upload');
         if (songInput) songInput.value = null;
@@ -102,7 +92,6 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
                 e.target.value = null;
                 return;
             }
-
             setAudioFile(file);
             setSongFileName(file.name);
         } else if (type === 'cover') {
@@ -120,10 +109,8 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
         setImgSrc('');
         setCrop(undefined);
         imgRef.current = null;
-        const fileInput = document.getElementById('cover-art-upload').value = null;
-        if (fileInput) {
-            fileInput.value = null
-        }
+        const fileInput = document.getElementById('cover-art-upload');
+        if (fileInput) fileInput.value = null;
     };
 
     const getCroppedImg = (image, crop) => {
@@ -133,25 +120,10 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
         canvas.width = crop.width;
         canvas.height = crop.height;
         const ctx = canvas.getContext('2d');
-
-        ctx.drawImage(
-            image,
-            crop.x * scaleX,
-            crop.y * scaleY,
-            crop.width * scaleX,
-            crop.height * scaleY,
-            0,
-            0,
-            crop.width,
-            crop.height
-        );
-
+        ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, crop.width, crop.height);
         return new Promise((resolve, reject) => {
             canvas.toBlob(blob => {
-                if (!blob) {
-                    reject(new Error('Canvas is empty'));
-                    return;
-                }
+                if (!blob) { reject(new Error('Canvas is empty')); return; }
                 resolve(blob);
             }, 'image/jpeg', 0.95);
         });
@@ -181,26 +153,18 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
             if (!imgRef.current) throw new Error("Błąd ładowania obrazka");
 
             const croppedImageBlob = await getCroppedImg(imgRef.current, crop);
-
             const formData = new FormData();
 
             formData.append('audioFile', audioFile);
-
             formData.append('coverFile', croppedImageBlob, "cover.jpg");
-
             formData.append('title', title);
-
             selectedGenres.forEach(g => formData.append('genre', g));
-
             formData.append('publiclyVisible', isPublic.toString());
 
-            const response = await api.post("/songs/upload", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            })
+            await api.post("/songs/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
-            console.log("Server response:", response.data);
             if (onSongAdded) {
                 onSongAdded();
             }
@@ -228,8 +192,6 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
 
                 <div className="edit-form">
                     <div className="form-layout-container">
-
-                        {/* 3. KOLUMNA LEWA (MEDIA) */}
                         <div className="form-column-left">
                             <label>Okładka utworu</label>
                             <div className="cover-art-buttons">
@@ -239,7 +201,7 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
                                 <input
                                     type="file"
                                     id="cover-art-upload"
-                                    className="file-upload-input"
+                                    className="hidden-input"
                                     accept="image/png, image/jpeg, image/webp, image/avif"
                                     onChange={(e) => handleFileChange(e, 'cover')}
                                 />
@@ -251,17 +213,8 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
                             </div>
                             {imgSrc && (
                                 <div className="cropper-container">
-                                    <ReactCrop
-                                        crop={crop}
-                                        onChange={c => setCrop(c)}
-                                        aspect={1}
-                                    >
-                                        <img
-                                            ref={imgRef}
-                                            src={imgSrc}
-                                            alt="Podgląd okładki"
-                                            onLoad={onImageLoad}
-                                        />
+                                    <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1}>
+                                        <img ref={imgRef} src={imgSrc} alt="Podgląd okładki" onLoad={onImageLoad} />
                                     </ReactCrop>
                                 </div>
                             )}
@@ -273,13 +226,12 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
                             <input
                                 type="file"
                                 id="song-upload"
-                                className="file-upload-input"
+                                className="hidden-input"
                                 accept=".m4a"
                                 onChange={(e) => handleFileChange(e, 'song')}
                             />
                         </div>
 
-                        {/* 4. KOLUMNA PRAWA (INFO) */}
                         <div className="form-column-right">
                             <label htmlFor="song-title">Tytuł utworu</label>
                             <input
@@ -289,7 +241,7 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
                                 value={title}
                                 onChange={(e) => {
                                     setTitle(e.target.value);
-                                    if(showValidation) setErrorMessage("");
+                                    if (showValidation) setErrorMessage("");
                                 }}
                                 className={showValidation && !title.trim() ? 'error-border' : ''}
                             />
@@ -332,18 +284,9 @@ function AddSongModal({ isOpen, onClose, onSongAdded }) {
                         </div>
                     </div>
 
-                    {errorMessage && (
-                        <div className="validation-message">
-                            {errorMessage}
-                        </div>
-                    )}
+                    {errorMessage && <div className="validation-message">{errorMessage}</div>}
 
-                    {/* 5. PRZYCISK ZAPISU */}
-                    <button
-                        className="save-button"
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                    >
+                    <button className="save-button" onClick={handleSubmit} disabled={isLoading}>
                         {isLoading ? 'Wysyłanie...' : 'Prześlij utwór'}
                     </button>
                 </div>

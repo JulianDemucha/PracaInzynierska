@@ -36,27 +36,27 @@
     min-height: 60px;
     margin-top: 1rem;
 }
+
 .media-card-title {
     font-size: 1rem;
     font-weight: bold;
     color: white;
     margin: 0 0 0.25rem 0;
-
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .media-card-subtitle {
     font-size: 0.9rem;
     color: #b3b3b3;
     margin: 0;
-
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* ===  STYLE PRZYCISKU "Odtwórz" === */
+/* Play Button */
 .media-play-button {
     position: absolute;
     bottom: 0.75rem;
@@ -65,14 +65,11 @@
     border-radius: 50%;
     width: 45px;
     height: 45px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     cursor: pointer;
-
     opacity: 0;
     transform: translateY(8px);
     transition: all 0.2s ease-out;

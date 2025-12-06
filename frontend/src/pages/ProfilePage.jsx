@@ -1,28 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from "../context/useAuth.js";
-import { Link, useNavigate } from 'react-router-dom';
-import './ProfilePage.css';
+import { Link } from 'react-router-dom';
 import defaultAvatar from '../assets/images/default-avatar.png';
 
-// Komponenty
 import EditProfileModal from '../components/profile/EditProfileModal.jsx';
 import AddSongModal from '../components/song/AddSongModal.jsx';
 import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 import MediaCard from '../components/cards/MediaCard.jsx';
 
-// Serwisy
 import { getUserSongs } from '../services/songService.js';
 import { getUserAlbums } from '../services/albumService.js';
 import { getUserPlaylists } from '../services/playlistService.js';
 import { getImageUrl } from "../services/imageService.js";
 import { deleteUserAccount } from "../services/userService.js";
 
-// Stałe do limitów
-const ITEMS_PER_ROW = 7;
-const SONGS_INITIAL_LIMIT = ITEMS_PER_ROW * 2; // 2 rzędy (14)
-const OTHERS_INITIAL_LIMIT = ITEMS_PER_ROW; // 1 rząd (7)
+import './ProfilePage.css';
 
-// Pomocniczy komponent do przycisków rozwijania
+const ITEMS_PER_ROW = 7;
+const SONGS_INITIAL_LIMIT = ITEMS_PER_ROW * 2;
+const OTHERS_INITIAL_LIMIT = ITEMS_PER_ROW;
+
 const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) => {
     if (totalCount <= initialLimit) return null;
 
@@ -67,23 +64,18 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
 
 function ProfilePage() {
     const { currentUser, logout, loading } = useAuth();
-    const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('wszystko');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
-
-    // Modal usuwania konta
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Dane
     const [userSongs, setUserSongs] = useState([]);
     const [userAlbums, setUserAlbums] = useState([]);
     const [userPlaylists, setUserPlaylists] = useState([]);
 
-    // Limity wyświetlania
     const [songsLimit, setSongsLimit] = useState(SONGS_INITIAL_LIMIT);
     const [albumsLimit, setAlbumsLimit] = useState(OTHERS_INITIAL_LIMIT);
     const [playlistsLimit, setPlaylistsLimit] = useState(OTHERS_INITIAL_LIMIT);
@@ -136,7 +128,6 @@ function ProfilePage() {
             await deleteUserAccount();
             logout();
             window.location.href = '/';
-
         } catch (error) {
             console.error("Błąd usuwania konta:", error);
             alert("Nie udało się usunąć konta. Spróbuj ponownie.");
@@ -151,7 +142,6 @@ function ProfilePage() {
 
     return (
         <div className="profile-page">
-            {/* ===== NAGŁÓWEK ===== */}
             <header className="profile-header">
                 <img
                     src={getImageUrl(currentUser.avatarStorageKeyId) || defaultAvatar}
@@ -163,17 +153,16 @@ function ProfilePage() {
                         <h1 className="profile-username">{currentUser?.username || 'Nazwa Użytkownika'}</h1>
                     </div>
                     {currentUser?.bio && (
-                        <p className="profile-bio-text" style={{ color: '#b3b3b3', margin: '0.5rem 0', fontSize: '0.95rem', maxWidth: '600px' }}>
+                        <p className="profile-bio-text">
                             {currentUser.bio}
                         </p>
                     )}
-                    <p className="profile-joined-date" style={{ color: '#aaa', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                    <p className="profile-joined-date">
                         Dołączył: {formattedJoinDate}
                     </p>
                 </div>
             </header>
 
-            {/* ===== NAWIGACJA ===== */}
             <nav className="profile-nav">
                 <ul className="profile-tabs">
                     <li onClick={() => setActiveTab('wszystko')} className={activeTab === 'wszystko' ? 'active' : ''}>Wszystko</li>
@@ -194,10 +183,7 @@ function ProfilePage() {
                 </div>
             </nav>
 
-            {/* ===== ZAWARTOŚĆ ===== */}
             <section className="profile-content">
-
-                {/* --- Pokaż "Własne utwory" --- */}
                 {(activeTab === 'wszystko' || activeTab === 'wlasne') && (
                     <div className="content-section">
                         <h2>
@@ -220,7 +206,6 @@ function ProfilePage() {
                                 <p className="empty-tab-message">Nie dodałeś jeszcze żadnych utworów.</p>
                             )}
                         </div>
-                        {/* KONTROLKI ROZWIJANIA UTWORÓW */}
                         <ExpandControls
                             totalCount={userSongs.length}
                             currentLimit={songsLimit}
@@ -230,7 +215,6 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Sekcja Albumy --- */}
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && (
                     <div className="content-section">
                         <h2>
@@ -252,7 +236,6 @@ function ProfilePage() {
                                 <p className="empty-tab-message">Nie dodałeś jeszcze żadnych albumów.</p>
                             )}
                         </div>
-                        {/* KONTROLKI ROZWIJANIA ALBUMÓW */}
                         <ExpandControls
                             totalCount={userAlbums.length}
                             currentLimit={albumsLimit}
@@ -262,7 +245,6 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- Sekcja Playlisty --- */}
                 {(activeTab === 'wszystko' || activeTab === 'playlisty') && (
                     <div className="content-section">
                         <h2>
@@ -310,14 +292,13 @@ function ProfilePage() {
                 onSongsUpdate={fetchSongs}
             />
 
-            {/* Modal usuwania konta */}
             {isDeleteModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
                     <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Usunąć konto?</h3>
-                        <p style={{color: '#b3b3b3', marginBottom: '1.5rem'}}>
+                        <p className="delete-modal-description">
                             Czy na pewno chcesz usunąć swoje konto? <br/>
-                            <span style={{color: '#ff4444', fontWeight: 'bold'}}>
+                            <span className="delete-modal-warning">
                                 Ta operacja jest nieodwracalna. Stracisz wszystkie swoje utwory, albumy i playlisty.
                             </span>
                         </p>

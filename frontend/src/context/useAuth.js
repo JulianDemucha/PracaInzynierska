@@ -3,6 +3,8 @@ import { AuthContext } from "./authContext.js";
 
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth musi byc wywolane w AuthProvider");
+    if (!context) {
+        throw new Error("useAuth musi byc wywołane w AuthProvider");
+    }
     return context;
 }

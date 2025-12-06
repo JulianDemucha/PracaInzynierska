@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import './SongPage.css';
 import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
 import { getSongById, deleteSong } from '../services/songService.js';
 import { getImageUrl } from '../services/imageService.js';
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 import EditSongModal from '../components/song/EditSongModal.jsx';
-import editIcon from '../assets/images/edit.png';
 
 import defaultCover from '../assets/images/default-avatar.png';
+import editIcon from '../assets/images/edit.png';
 import playIcon from '../assets/images/play.png';
 import pauseIcon from '../assets/images/pause.png';
 import heartIconOff from '../assets/images/favorites.png';
@@ -23,23 +22,20 @@ import dislikeIconOn from '../assets/images/disLikeOn.png';
 import binIcon from '../assets/images/bin.png';
 import plusIcon from '../assets/images/plus.png';
 
+import './SongPage.css';
+
 function SongPage() {
     const { id } = useParams();
+    const navigate = useNavigate();
+    const { currentUser } = useAuth();
 
     const [song, setSong] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     const [isQueuedAnim, setIsQueuedAnim] = useState(false);
-
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-    const navigate = useNavigate();
-    const { currentUser } = useAuth();
-
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-
     const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
 
     const {
@@ -48,11 +44,12 @@ function SongPage() {
         playSong,
         pause,
         addToQueue,
-        favorites, toggleFavorite,
-        ratings, rateSong
+        favorites,
+        toggleFavorite,
+        ratings,
+        rateSong
     } = usePlayer();
 
-    // --- 2. POBIERANIE DANYCH Z BACKENDU ---
     useEffect(() => {
         const fetchSongDetails = async () => {
             try {
@@ -78,11 +75,8 @@ function SongPage() {
         fetchSongDetails();
     }, [id]);
 
-    // --- 3. LOGIKA UI ---
-
     const handleSongUpdated = async () => {
         try {
-            // Pobieramy ponownie dane piosenki
             const data = await getSongById(id);
             const mappedSong = {
                 ...data,
@@ -123,11 +117,6 @@ function SongPage() {
         }
     };
 
-    const isOwner = currentUser && song && currentUser.id === song.artist.id;
-
-    const isFavorite = !!favorites[song?.id];
-    const currentRating = ratings[song?.id];
-
     const handleAddToQueue = () => {
         if (isQueuedAnim) return;
         addToQueue(song);
@@ -135,11 +124,13 @@ function SongPage() {
         setTimeout(() => setIsQueuedAnim(false), 1500);
     };
 
-    // --- 4. EKRANY ŁADOWANIA I BŁĘDU ---
+    const isOwner = currentUser && song && currentUser.id === song.artist.id;
+    const isFavorite = !!favorites[song?.id];
+    const currentRating = ratings[song?.id];
 
     if (loading) {
         return (
-            <div className="song-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+            <div className="song-page song-loading-container">
                 <h2>Ładowanie utworu...</h2>
             </div>
         );
@@ -150,16 +141,13 @@ function SongPage() {
             <div className="song-page">
                 <h2>404 - Błąd</h2>
                 <p>{error || "Nie znaleziono piosenki."}</p>
-                <Link to="/" style={{color: '#8A2BE2'}}>Wróć do strony głównej</Link>
+                <Link to="/" className="back-link">Wróć do strony głównej</Link>
             </div>
         );
     }
 
-    // --- 5. WŁAŚCIWY RENDER ---
-
     return (
         <div className="song-page">
-            {/* ===== NAGŁÓWEK ===== */}
             <header className="song-header">
                 <img
                     src={song.coverArtUrl}
@@ -176,7 +164,6 @@ function SongPage() {
                         <span className="song-date">{new Date(song.createdAt).getFullYear()}</span>
                     </div>
                     <div className="genre-tags">
-                        {/* ZMIANA: Użycie Link do nawigacji po gatunkach */}
                         {song.genres && song.genres.map(genre => (
                             <Link
                                 key={genre}
@@ -188,19 +175,13 @@ function SongPage() {
                         ))}
                     </div>
                     {!song.publiclyVisible && (
-                        <div style={{ marginTop: '10px' }}>
-                            <span style={{ border: '1px solid #666',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                fontSize: '0.7rem',
-                                color: '#aaa',
-                                textTransform: 'uppercase' }}>Prywatny</span>
+                        <div className="private-badge-wrapper">
+                            <span className="private-badge">Prywatny</span>
                         </div>
                     )}
                 </div>
             </header>
 
-            {/* ===== KONTROLKI ===== */}
             <section className="song-controls">
                 <button className="song-play-button" onClick={handlePlayPause}>
                     <img src={isThisSongPlaying ? pauseIcon : playIcon} alt={isThisSongPlaying ? "Pauza" : "Odtwórz"} />
@@ -213,6 +194,7 @@ function SongPage() {
                 <button className={`song-control-button ${isQueuedAnim ? 'active' : ''}`} onClick={handleAddToQueue}>
                     <img src={isQueuedAnim ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
                 </button>
+
                 <button className="song-control-button" onClick={() => setIsPlaylistModalOpen(true)} title="Dodaj do playlisty" >
                     <img src={plusIcon} alt="Dodaj do playlisty" />
                 </button>
@@ -231,15 +213,15 @@ function SongPage() {
                         <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
                     </button>
                 </div>
+
                 {isOwner && (
                     <>
                         <button
-                            className="song-control-button icon-btn"
+                            className="song-control-button icon-btn push-right-btn"
                             onClick={() => setIsEditModalOpen(true)}
                             title="Edytuj utwór"
-                            style={{marginLeft: 'auto', marginRight: '10px'}} // Odstęp od kosza
                         >
-                            <img src={editIcon} alt="Edytuj" style={{width: '24px', height: '24px'}} />
+                            <img src={editIcon} alt="Edytuj" className="edit-icon-img" />
                         </button>
 
                         <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
@@ -248,7 +230,6 @@ function SongPage() {
                     </>
                 )}
             </section>
-
 
             {isDeleteModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
@@ -274,11 +255,13 @@ function SongPage() {
                     </div>
                 </div>
             )}
+
             <AddToPlaylistModal
                 isOpen={isPlaylistModalOpen}
                 onClose={() => setIsPlaylistModalOpen(false)}
                 songToAdd={song}
             />
+
             <EditSongModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}

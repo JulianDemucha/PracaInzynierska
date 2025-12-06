@@ -5,7 +5,11 @@
     background-color: #121212;
 }
 
-/* ===== 1. NAGŁÓWEK ===== */
+.page-message {
+    padding: 2rem;
+}
+
+/* Header */
 .profile-header {
     display: flex;
     align-items: center;
@@ -56,7 +60,6 @@
     line-height: 1.5;
 }
 
-/* Nowe style dla metadanych (data, płeć) */
 .profile-meta-details {
     display: flex;
     align-items: center;
@@ -67,17 +70,17 @@
 }
 
 .meta-separator {
-    font-size: 0.5rem; /* Mała kropka */
+    font-size: 0.5rem;
 }
 
-/* ===== 2. NAWIGACJA (ZAKŁADKI) ===== */
+/* Navigation */
 .profile-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #333;
     padding: 0 2rem;
-    background-color: #121212; /* Sticky header background */
+    background-color: #121212;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -113,10 +116,10 @@
 
 .profile-tabs li.active {
     color: white;
-    border-bottom-color: #8A2BE2; /* Zielony akcent */
+    border-bottom-color: #8A2BE2;
 }
 
-/* ===== 3. ZAWARTOŚĆ (LISTY) ===== */
+/* Content */
 .profile-content {
     padding: 2rem 2rem;
 }
@@ -132,7 +135,6 @@
     color: #fff;
 }
 
-/* LICZNIK */
 .section-count {
     font-size: 1.1rem;
     color: #888;
@@ -140,21 +142,19 @@
     margin-left: 10px;
 }
 
-/* STYL DLA SIATKI KART */
 .media-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 24px;
 }
 
-/* Wiadomość, gdy artysta nic nie ma */
 .empty-tab-message {
     color: #b3b3b3;
     font-style: italic;
     padding: 1rem 0;
 }
 
-/* --- KONTROLKI ROZWIJANIA --- */
+/* Expand Controls */
 .expand-controls {
     display: flex;
     justify-content: center;
@@ -182,7 +182,6 @@
     transform: scale(1.05);
 }
 
-/* Responsywność */
 @media (max-width: 768px) {
     .profile-header {
         flex-direction: column;

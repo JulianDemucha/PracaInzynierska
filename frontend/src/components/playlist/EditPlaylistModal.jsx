@@ -1,32 +1,26 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import '../song/AddSongModal.css';
 import { updatePlaylist } from '../../services/playlistService.js';
-import { getImageUrl } from '../../services/imageService.js'; // Potrzebne do wyświetlenia starej okładki
+import { getImageUrl } from '../../services/imageService.js';
 
 function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated, playlistSongs = [] }) {
     const [title, setTitle] = useState("");
     const [isPublic, setIsPublic] = useState(false);
-
-    // Obrazek
     const [imgSrc, setImgSrc] = useState('');
     const [crop, setCrop] = useState();
     const [isNewImageSelected, setIsNewImageSelected] = useState(false);
     const imgRef = useRef(null);
-
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [showValidation, setShowValidation] = useState(false);
 
-    // --- PRE-FILLING DANYCH ---
     useEffect(() => {
         if (isOpen && playlistToEdit) {
             setTitle(playlistToEdit.title || playlistToEdit.name || "");
             const pubVisible = playlistToEdit.publiclyVisible === true || playlistToEdit.publiclyVisible === "true";
             setIsPublic(pubVisible);
-
-            // Reset obrazka
             setImgSrc('');
             setIsNewImageSelected(false);
             setErrorMessage("");
@@ -38,7 +32,6 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
         const { width, height } = e.currentTarget;
         const smallestDimension = Math.min(width, height);
         const cropSize = smallestDimension * 0.9;
-
         const crop = centerCrop(
             makeAspectCrop({ unit: 'px', width: cropSize }, 1, width, height),
             width,
@@ -64,7 +57,7 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
         setCrop(undefined);
         setIsNewImageSelected(false);
         const fileInput = document.getElementById('edit-pl-cover-upload');
-        if(fileInput) fileInput.value = null;
+        if (fileInput) fileInput.value = null;
     };
 
     const getCroppedImg = (image, crop) => {
@@ -93,24 +86,17 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
             return;
         }
 
-        // --- WALIDACJA PRYWATNOŚCI ---
-        // Jeśli próbujemy zmienić na PUBLICZNĄ, sprawdzamy zawartość
         if (isPublic) {
-            // Szukamy PIERWSZEJ piosenki, która jest prywatna
             const privateSong = playlistSongs.find(song => {
-                // Sprawdzamy czy flaga jest jawnie false
                 return song.publiclyVisible === false || song.publiclyVisible === "false";
             });
 
             if (privateSong) {
-                // Jeśli znaleziono, blokujemy zapis i wyświetlamy komunikat
-                // Sprawdzamy czy to przez album (jeśli mamy albumId)
                 const reason = privateSong.albumId
                     ? `jest częścią prywatnego albumu`
                     : `jest oznaczony jako prywatny`;
-
                 setErrorMessage(`Nie można zmienić playlisty na publiczną. Utwór "${privateSong.title}" ${reason}.`);
-                return; // STOP
+                return;
             }
         }
 
@@ -146,14 +132,13 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
 
     return (
         <div className="edit-modal-backdrop" onClick={onClose}>
-            <div className="edit-modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '450px'}}>
+            <div className="edit-modal-content small-modal-content" onClick={(e) => e.stopPropagation()}>
                 <button className="close-button" onClick={onClose}>×</button>
-                <h2 style={{textAlign: 'center', marginBottom: '1.5rem'}}>Edytuj playlistę</h2>
+                <h2 className="modal-title">Edytuj playlistę</h2>
 
-                <div className="edit-form" style={{display: 'flex', flexDirection: 'column', gap: '1.2rem'}}>
+                <div className="edit-form edit-form-stack">
 
-                    {/* 1. TYTUŁ */}
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                    <div className="form-group">
                         <label>Nazwa playlisty</label>
                         <input
                             type="text"
@@ -163,22 +148,19 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
                         />
                     </div>
 
-                    {/* 2. OKŁADKA */}
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                    <div className="form-group">
                         <label>Okładka</label>
 
-                        {/* WIDOK: STARA OKŁADKA (Jeśli nie wybrano nowej) */}
                         {!isNewImageSelected && playlistToEdit?.coverStorageKeyId && (
-                            <div style={{display: 'flex', justifyContent: 'center', marginBottom: '5px'}}>
+                            <div className="cover-preview-container">
                                 <img
                                     src={getImageUrl(playlistToEdit.coverStorageKeyId)}
                                     alt="Obecna okładka"
-                                    style={{width: '150px', height: '150px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #333'}}
+                                    className="cover-preview-img"
                                 />
                             </div>
                         )}
 
-                        {/* WIDOK: NOWA OKŁADKA (Cropper) */}
                         {isNewImageSelected && imgSrc && (
                             <div className="cropper-container">
                                 <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1}>
@@ -187,24 +169,22 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
                             </div>
                         )}
 
-                        <div className="cover-art-buttons" style={{display: 'flex', gap: '10px'}}>
-                            <label htmlFor="edit-pl-cover-upload" className={`file-upload-button`} style={{flex: 1, textAlign: 'center', cursor: 'pointer'}}>
+                        <div className="cover-art-buttons">
+                            <label htmlFor="edit-pl-cover-upload" className="file-upload-button full-width-label">
                                 {isNewImageSelected ? 'Zmień wybrane' : 'Zmień okładkę'}
                             </label>
                             <input
                                 type="file"
                                 id="edit-pl-cover-upload"
-                                className="file-upload-input"
+                                className="hidden-input"
                                 accept="image/*"
                                 onChange={handleFileChange}
-                                style={{display: 'none'}}
                             />
                             {isNewImageSelected && (
                                 <button
                                     type="button"
                                     onClick={handleRemoveNewImage}
                                     className="remove-image-button"
-                                    style={{padding: '10px 15px'}}
                                 >
                                     Przywróć
                                 </button>
@@ -212,10 +192,9 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
                         </div>
                     </div>
 
-                    {/* 3. WIDOCZNOŚĆ */}
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                        <fieldset className="visibility-selection" style={{justifyContent: 'center', marginTop: '5px'}}>
-                            <legend style={{textAlign: 'center'}}>Widoczność</legend>
+                    <div className="form-group">
+                        <fieldset className="visibility-selection centered-fieldset">
+                            <legend>Widoczność</legend>
                             <div className="visibility-option">
                                 <input type="radio" id="edit-pl-pub" checked={isPublic === true} onChange={() => setIsPublic(true)} />
                                 <label htmlFor="edit-pl-pub">Publiczna</label>
@@ -229,9 +208,9 @@ function EditPlaylistModal({ isOpen, onClose, playlistToEdit, onPlaylistUpdated,
 
                     {errorMessage && <div className="validation-message">{errorMessage}</div>}
 
-                    <div style={{display:'flex', gap:'10px', marginTop:'1rem'}}>
-                        <button className="cancel-btn" onClick={onClose} style={{flex:1}}>Anuluj</button>
-                        <button className="save-button" onClick={handleSubmit} disabled={isLoading} style={{flex:1, marginTop:0}}>
+                    <div className="modal-actions">
+                        <button className="cancel-btn" onClick={onClose}>Anuluj</button>
+                        <button className="save-button no-margin-top" onClick={handleSubmit} disabled={isLoading}>
                             {isLoading ? 'Zapisywanie...' : 'Zapisz zmiany'}
                         </button>
                     </div>

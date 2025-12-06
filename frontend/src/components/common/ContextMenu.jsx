@@ -8,6 +8,7 @@ function ContextMenu({ options }) {
     const [position, setPosition] = useState({});
     const menuRef = useRef(null);
     const triggerRef = useRef(null);
+
     const toggleMenu = (e) => {
         e.stopPropagation();
         if (!isVisible) {
@@ -22,6 +23,7 @@ function ContextMenu({ options }) {
             } else {
                 newPosition.top = '110%';
             }
+
             if (rect.left < (viewportWidth / 2)) {
                 newPosition.left = 0;
             } else {
@@ -31,16 +33,19 @@ function ContextMenu({ options }) {
         }
         setIsVisible(!isVisible);
     };
+
     const handleOptionClick = (optionOnClick) => {
         optionOnClick();
         setIsVisible(false);
     };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
                 setIsVisible(false);
             }
         };
+
         if (isVisible) {
             document.addEventListener('mousedown', handleClickOutside);
         }
@@ -57,17 +62,14 @@ function ContextMenu({ options }) {
                 ref={triggerRef}
             >
                 {isVisible ? (
-                    <img src={moreIconOn} alt="Więcej (Otwarte)" />
+                    <img src={moreIconOn} alt="Więcej" />
                 ) : (
-                    <img src={moreIcon} alt="Więcej (Zamknięte)" />
+                    <img src={moreIcon} alt="Więcej" />
                 )}
             </button>
 
             {isVisible && (
-                <ul
-                    className="context-menu-popup"
-                    style={position}
-                >
+                <ul className="context-menu-popup" style={position}>
                     {options.map((option, index) => (
                         <li
                             key={index}
@@ -82,4 +84,5 @@ function ContextMenu({ options }) {
         </div>
     );
 }
+
 export default ContextMenu;

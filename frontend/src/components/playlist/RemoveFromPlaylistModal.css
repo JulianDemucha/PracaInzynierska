@@ -68,7 +68,6 @@
 .playlists-scroll-area::-webkit-scrollbar { width: 5px; }
 .playlists-scroll-area::-webkit-scrollbar-thumb { background: #404040; border-radius: 3px; }
 
-/* Wiersz playlisty do usunięcia */
 .playlist-remove-row {
     display: flex;
     align-items: center;
@@ -114,6 +113,7 @@
     text-align: center;
     color: #888;
 }
+
 .close-modal-btn {
     margin-top: 15px;
     background: transparent;
@@ -124,3 +124,8 @@
     cursor: pointer;
 }
 .close-modal-btn:hover { background: #333; }
+
+.loading-text {
+    text-align: center;
+    color: #888;
+}

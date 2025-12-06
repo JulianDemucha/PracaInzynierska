@@ -6,6 +6,7 @@ import './TopBar.css'
 import {useAuth} from "../../context/useAuth.js";
 import {getImageUrl} from "../../services/imageService.js";
 import defaultAvatar from "../../assets/images/default-avatar.png";
+
 function TopBar() {
     const { currentUser, openModal } = useAuth();
     return (

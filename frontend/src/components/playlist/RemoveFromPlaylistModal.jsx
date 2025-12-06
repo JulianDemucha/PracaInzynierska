@@ -5,11 +5,9 @@ import './RemoveFromPlaylistModal.css';
 
 function RemoveFromPlaylistModal({ isOpen, onClose, songToRemove }) {
     const { currentUser } = useAuth();
-
-    const [playlists, setPlaylists] = useState([]); // Playlisty zawierające ten utwór
+    const [playlists, setPlaylists] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Reset i pobieranie danych przy otwarciu
     useEffect(() => {
         if (isOpen && currentUser && songToRemove) {
             findPlaylistsWithSong();
@@ -21,7 +19,6 @@ function RemoveFromPlaylistModal({ isOpen, onClose, songToRemove }) {
     const findPlaylistsWithSong = async () => {
         setLoading(true);
         try {
-            // 1. Pobierz wszystkie playlisty użytkownika
             const allPlaylists = await getUserPlaylists(currentUser.id);
 
             if (!allPlaylists || allPlaylists.length === 0) {
@@ -30,19 +27,11 @@ function RemoveFromPlaylistModal({ isOpen, onClose, songToRemove }) {
                 return;
             }
 
-            // 2. Sprawdź każdą playlistę, czy zawiera ten utwór
-            // Uwaga: To generuje dużo zapytań (N+1). Docelowo backend powinien mieć endpoint /api/songs/{id}/playlists
             const playlistsWithSong = [];
 
-            // Używamy Promise.all dla szybkości
             await Promise.all(allPlaylists.map(async (pl) => {
                 try {
                     const songsInPlaylist = await getPlaylistSongs(pl.id);
-                    // Sprawdzamy czy songToRemove.id znajduje się w tej playliście
-                    // Backend zwraca PlaylistSongViewDto, który ma pole 'song' lub 'songId' lub płaską strukturę.
-                    // Zakładam, że w liście jest obiekt, który ma id piosenki.
-                    // Jeśli PlaylistSongViewDto ma pole 'id' (wpisu) i 'songId' (piosenki), szukamy po songId.
-
                     const exists = songsInPlaylist.some(item => item.id === songToRemove.id || item.songId === songToRemove.id);
 
                     if (exists) {
@@ -67,10 +56,8 @@ function RemoveFromPlaylistModal({ isOpen, onClose, songToRemove }) {
         try {
             await removeSongFromPlaylist(playlistId, songToRemove.id);
             alert(`Usunięto z playlisty "${playlistName}".`);
-            // Odśwież listę w modalu (usuń tę playlistę z widoku)
             setPlaylists(prev => prev.filter(pl => pl.id !== playlistId));
 
-            // Jeśli to była ostatnia playlista, zamknij modal
             if (playlists.length <= 1) {
                 onClose();
             }
@@ -96,7 +83,7 @@ function RemoveFromPlaylistModal({ isOpen, onClose, songToRemove }) {
 
                 <div className="playlists-list-container">
                     {loading ? (
-                        <p style={{textAlign: 'center', color: '#888'}}>Sprawdzanie playlist...</p>
+                        <p className="loading-text">Sprawdzanie playlist...</p>
                     ) : (
                         playlists.length > 0 ? (
                             <div className="playlists-scroll-area">

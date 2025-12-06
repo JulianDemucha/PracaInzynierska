@@ -40,7 +40,6 @@ export const getAllAlbums = async () => {
 };
 export const getAlbumsByGenre = async (genreName) => {
     try {
-        // Używamy nowego endpointu backendowego
         const response = await api.get(`/albums/genre/${genreName}`);
         return response.data;
     } catch (error) {

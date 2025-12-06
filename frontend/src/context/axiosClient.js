@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const api = axios.create({
@@ -18,8 +17,9 @@ const processQueue = (error, result) => {
 };
 
 /*
-    jak response z backendu == 401 UNAUTHORIZED (czyli nie ma tokena jwt, albo jest expired)
-    to tu sie odpala refresh refreshtokena ktory ustawia nowy jwt
+    Interceptor odpowiedzi:
+    Gdy backend zwróci 401 UNAUTHORIZED (brak tokena lub expired),
+    próbuje odświeżyć token (refresh token) i ponowić zapytanie.
  */
 api.interceptors.response.use(
     (response) => response,
@@ -27,7 +27,7 @@ api.interceptors.response.use(
         const originalRequest = error.config;
 
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
-            // to na wszelki wypadek jakby refresh sie probowal zrobic jak juz jeden trwa
+            // Jeśli odświeżanie już trwa, dodaj zapytanie do kolejki
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });

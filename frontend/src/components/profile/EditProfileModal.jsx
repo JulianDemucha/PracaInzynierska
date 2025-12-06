@@ -1,14 +1,14 @@
-import React, {useEffect, useRef, useState} from 'react';
-import ReactCrop, {centerCrop, makeAspectCrop} from 'react-image-crop';
+import React, { useEffect, useRef, useState } from 'react';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import './EditProfileModal.css';
-import {useAuth} from "../../context/useAuth.js";
-import defaultAvatar from '../../assets/images/default-avatar.png';
+import { useAuth } from "../../context/useAuth.js";
 import api from "../../context/axiosClient.js";
-import {getImageUrl} from "../../services/imageService.js";
+import { getImageUrl } from "../../services/imageService.js";
+import defaultAvatar from '../../assets/images/default-avatar.png';
+import './EditProfileModal.css';
 
-function EditProfileModal({isOpen, onClose}) {
-    const {currentUser, fetchCurrentUser} = useAuth();
+function EditProfileModal({ isOpen, onClose }) {
+    const { currentUser, fetchCurrentUser } = useAuth();
 
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -31,15 +31,7 @@ function EditProfileModal({isOpen, onClose}) {
         const smallestDimension = Math.min(width, height);
         const cropSize = smallestDimension * 0.9;
         const crop = centerCrop(
-            makeAspectCrop(
-                {
-                    unit: 'px',
-                    width: cropSize,
-                },
-                1,
-                width,
-                height
-            ),
+            makeAspectCrop({ unit: 'px', width: cropSize }, 1, width, height),
             width,
             height
         );
@@ -48,7 +40,6 @@ function EditProfileModal({isOpen, onClose}) {
 
     useEffect(() => {
         if (isOpen && currentUser) {
-            // Wypełnianie danych tekstowych
             setUsername(currentUser.username ?? currentUser.login ?? "");
             setEmail(currentUser.email ?? "");
             setBio(currentUser.bio ?? "");
@@ -60,9 +51,7 @@ function EditProfileModal({isOpen, onClose}) {
             const currentAvatarUrl = avatarKey ? getImageUrl(avatarKey) : defaultAvatar;
 
             setImgSrc(currentAvatarUrl);
-
             setIsNewImageSelected(false);
-
             setErrors({});
             setSuccessMessage("");
         }
@@ -74,7 +63,6 @@ function EditProfileModal({isOpen, onClose}) {
 
     const validateEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-    // --- OBSŁUGA BIO (LIMIT 1000 ZNAKÓW) ---
     const handleBioChange = (e) => {
         const val = e.target.value;
         if (val.length <= 1000) {
@@ -82,7 +70,6 @@ function EditProfileModal({isOpen, onClose}) {
         }
     };
 
-    // --- FUNKCJE DLA OBRAZKA ---
     const getCroppedImg = (image, crop) => {
         const canvas = document.createElement('canvas');
         const scaleX = image.naturalWidth / image.width;
@@ -106,7 +93,7 @@ function EditProfileModal({isOpen, onClose}) {
             crop.height
         );
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             canvas.toBlob(blob => {
                 if (!blob) {
                     console.error('Canvas is empty');
@@ -137,7 +124,6 @@ function EditProfileModal({isOpen, onClose}) {
         if (input) input.value = null;
     };
 
-
     const handleSave = async (e) => {
         e.preventDefault();
         setErrors({});
@@ -157,7 +143,6 @@ function EditProfileModal({isOpen, onClose}) {
         setLoading(true);
         try {
             const formData = new FormData();
-
             formData.append("username", username);
             formData.append("email", email);
             formData.append("bio", bio);
@@ -175,29 +160,24 @@ function EditProfileModal({isOpen, onClose}) {
             }
 
             await api.put("/users/me", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+                headers: { "Content-Type": "multipart/form-data" },
             });
 
             await fetchCurrentUser();
-
             setSuccessMessage("Profil zaktualizowany pomyślnie.");
             setPassword("");
             setPasswordConfirm("");
             setIsNewImageSelected(false);
-
             onClose();
 
         } catch (err) {
             console.error("Update error:", err);
             const msg = err?.response?.data || err.message || "Błąd podczas zapisu";
-            setErrors({general: typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg))});
+            setErrors({ general: typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg)) });
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="edit-modal-backdrop" onClick={onClose}>
@@ -206,10 +186,7 @@ function EditProfileModal({isOpen, onClose}) {
                 <h2>Edytuj profil</h2>
 
                 <form className="edit-form" onSubmit={handleSave}>
-
                     <div className="form-layout-container">
-
-                        {/* ===== KOLUMNA LEWA (Zdjęcie i Bio) ===== */}
                         <div className="form-column-left">
                             <label>Zdjęcie profilowe</label>
                             <div className="cover-art-buttons">
@@ -232,17 +209,8 @@ function EditProfileModal({isOpen, onClose}) {
 
                             <div className="cropper-container">
                                 {imgSrc && (
-                                    <ReactCrop
-                                        crop={crop}
-                                        onChange={c => setCrop(c)}
-                                        aspect={1}
-                                    >
-                                        <img
-                                            ref={imgRef}
-                                            src={imgSrc}
-                                            alt="Podgląd awatara"
-                                            onLoad={onImageLoad}
-                                        />
+                                    <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1}>
+                                        <img ref={imgRef} src={imgSrc} alt="Podgląd awatara" onLoad={onImageLoad} />
                                     </ReactCrop>
                                 )}
                             </div>
@@ -255,13 +223,11 @@ function EditProfileModal({isOpen, onClose}) {
                                 onChange={handleBioChange}
                                 maxLength={1000}
                             />
-                            {/* Licznik znaków */}
-                            <div style={{ textAlign: 'right', fontSize: '0.8rem', color: bio.length >= 1000 ? '#e74c3c' : '#888' }}>
+                            <div className={`bio-char-count ${bio.length >= 1000 ? 'limit-reached' : ''}`}>
                                 {bio.length}/1000
                             </div>
                         </div>
 
-                        {/* ===== KOLUMNA PRAWA (Dane) ===== */}
                         <div className="form-column-right">
                             <label htmlFor="username">Nazwa użytkownika</label>
                             <input

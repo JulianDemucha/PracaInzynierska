@@ -1,10 +1,9 @@
-import React, {useEffect, useState} from "react";
-import {useAuth} from "../../context/useAuth.js";
-import './AuthModal.css';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/useAuth.js";
 import googleIcon from '../../assets/images/googleIcon.png';
+import './AuthModal.css';
 
 function AuthModal() {
-    // --- STANY ---
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -31,7 +30,6 @@ function AuthModal() {
         error: authError
     } = useAuth();
 
-    // --- RESETOWANIE PRZY OTWARCIU ---
     useEffect(() => {
         if (isModalOpen) {
             setEmail("");
@@ -39,14 +37,13 @@ function AuthModal() {
             setConfirmPassword("");
             setUsername("");
             setSex("MALE");
-            setErrors({username: "", email: "", password: "", confirmPassword: "", general: ""});
+            setErrors({ username: "", email: "", password: "", confirmPassword: "", general: "" });
         }
     }, [isModalOpen, modalView]);
 
-    // --- OBSŁUGA BŁĘDÓW ---
     useEffect(() => {
         if (authError) {
-            setErrors(prev => ({...prev, general: authError}));
+            setErrors(prev => ({ ...prev, general: authError }));
         }
     }, [authError]);
 
@@ -58,11 +55,9 @@ function AuthModal() {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     };
 
-    // --- LOGOWANIE ---
     const handleSubmitLogin = async (e) => {
         e.preventDefault();
 
-        // Reset błędów na start
         let newErrors = { email: "", password: "", general: "" };
         let hasError = false;
 
@@ -90,11 +85,10 @@ function AuthModal() {
         }
     };
 
-    // --- REJESTRACJA ---
     const handleSubmitRegister = async (e) => {
         e.preventDefault();
 
-        const newErrors = {username: "", email: "", password: "", confirmPassword: "", general: ""};
+        const newErrors = { username: "", email: "", password: "", confirmPassword: "", general: "" };
         let hasError = false;
 
         if (!username.trim()) {
@@ -140,7 +134,6 @@ function AuthModal() {
                 <button className="close-button" onClick={() => closeModal()}>X</button>
 
                 {modalView === 'login' ? (
-                    // --- FORMULARZ LOGOWANIA ---
                     <form className="auth-form" onSubmit={handleSubmitLogin} noValidate>
                         <h2>Zaloguj się</h2>
 
@@ -187,7 +180,6 @@ function AuthModal() {
                         </p>
                     </form>
                 ) : (
-                    // --- FORMULARZ REJESTRACJI ---
                     <form className="auth-form" onSubmit={handleSubmitRegister} noValidate>
                         <h2>Stwórz konto</h2>
 
@@ -241,7 +233,7 @@ function AuthModal() {
                         />
                         {errors.confirmPassword && <div className="field-error">{errors.confirmPassword}</div>}
 
-                        <label htmlFor="sex" style={{ fontSize: '0.9rem', color: '#b3b3b3', marginBottom: '-5px' }}>Płeć</label>
+                        <label htmlFor="sex" className="sex-label">Płeć</label>
                         <select
                             id="sex"
                             value={sex}

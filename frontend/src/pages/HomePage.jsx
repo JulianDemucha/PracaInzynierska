@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import './HomePage.css';
 import MediaCard from '../components/cards/MediaCard.jsx';
 import { getImageUrl } from '../services/imageService.js';
 import { getAllSongs } from '../services/songService.js';
 import { getAllAlbums } from '../services/albumService.js';
 import { getAllPlaylists } from '../services/playlistService.js';
+import './HomePage.css';
 
-// Lista wszystkich gatunków (statyczna)
 const genres = [
     "POP", "ROCK", "JAZZ", "BLUES", "HIP_HOP", "RNB", "ELECTRONIC",
     "DANCE", "METAL", "CLASSICAL", "REGGAE", "COUNTRY", "FOLK",
@@ -59,7 +57,6 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
 };
 
 function HomePage() {
-    // Stany limitów wyświetlania
     const [hitsLimit, setHitsLimit] = useState(ITEMS_IN_ROW);
     const [genresLimit, setGenresLimit] = useState(ITEMS_IN_ROW);
     const [songsLimit, setSongsLimit] = useState(ITEMS_IN_ROW);
@@ -71,7 +68,6 @@ function HomePage() {
     const [allPlaylists, setAllPlaylists] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Pobieranie danych z serwisów
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
@@ -90,7 +86,6 @@ function HomePage() {
 
                 const playlistsData = getData(results[2]);
                 if (playlistsData && Array.isArray(playlistsData)) {
-                    // Filtrujemy tylko publiczne playlisty na stronie głównej
                     const publicOnly = playlistsData.filter(p => p.publiclyVisible === true);
                     setAllPlaylists(publicOnly);
                 } else {
@@ -110,13 +105,12 @@ function HomePage() {
     const hitsSongs = allSongs.slice(0, 21);
 
     if (loading) {
-        return <div className="home-page" style={{display: 'flex', justifyContent: 'center', paddingTop: '50px'}}>Ładowanie...</div>;
+        return <div className="home-page loading-container">Ładowanie...</div>;
     }
 
     return (
         <div className="home-page">
 
-            {/* 1. SEKCJA: HITY */}
             <section className="home-section">
                 <div className="section-header">
                     <h2>
@@ -143,7 +137,6 @@ function HomePage() {
                 />
             </section>
 
-            {/* 2. SEKCJA: GATUNKI */}
             <section className="home-section">
                 <div className="section-header">
                     <h2>
@@ -170,7 +163,6 @@ function HomePage() {
                 />
             </section>
 
-            {/* 3. SEKCJA: WSZYSTKIE UTWORY */}
             <section className="home-section">
                 <div className="section-header">
                     <h2>
@@ -190,7 +182,7 @@ function HomePage() {
                             />
                         ))
                     ) : (
-                        <p style={{color: '#aaa'}}>Brak utworów w bazie.</p>
+                        <p className="empty-message">Brak utworów w bazie.</p>
                     )}
                 </div>
                 <ExpandControls
@@ -201,7 +193,6 @@ function HomePage() {
                 />
             </section>
 
-            {/* 4. SEKCJA: WSZYSTKIE ALBUMY */}
             <section className="home-section">
                 <div className="section-header">
                     <h2>
@@ -221,7 +212,7 @@ function HomePage() {
                             />
                         ))
                     ) : (
-                        <p style={{color: '#aaa'}}>Brak albumów w bazie.</p>
+                        <p className="empty-message">Brak albumów w bazie.</p>
                     )}
                 </div>
                 <ExpandControls
@@ -232,7 +223,6 @@ function HomePage() {
                 />
             </section>
 
-            {/* 5. SEKCJA: PLAYLISTY */}
             <section className="home-section">
                 <div className="section-header">
                     <h2>
@@ -252,7 +242,7 @@ function HomePage() {
                             />
                         ))
                     ) : (
-                        <p style={{color: '#aaa', gridColumn: '1 / -1'}}>Brak publicznych playlist.</p>
+                        <p className="empty-message full-width">Brak publicznych playlist.</p>
                     )}
                 </div>
                 <ExpandControls
@@ -267,7 +257,6 @@ function HomePage() {
     );
 }
 
-// Funkcja pomocnicza do kolorów
 function stringToColor(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {

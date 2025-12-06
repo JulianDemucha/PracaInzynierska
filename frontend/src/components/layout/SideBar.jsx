@@ -2,31 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from "../../context/useAuth.js";
 import './Sidebar.css';
-
-// Importy serwisów
 import { getUserAlbums } from '../../services/albumService.js';
 import { getUserPlaylists } from '../../services/playlistService.js';
-
-// Importy Modali
 import AddSongModal from '../song/AddSongModal.jsx';
 import CreateAlbumModal from '../album/CreateAlbumModal.jsx';
 
 function Sidebar() {
     const { currentUser, logout } = useAuth();
-
     const [userAlbums, setUserAlbums] = useState([]);
     const [userPlaylists, setUserPlaylists] = useState([]);
-
-    // Stany widoczności modali
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
     const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
 
-    // POBIERANIE DANYCH UŻYTKOWNIKA
     useEffect(() => {
         const fetchUserCollections = async () => {
             if (currentUser?.id) {
                 try {
-                    // Pobieramy Albumy i Playlisty równolegle
                     const [albumsData, playlistsData] = await Promise.all([
                         getUserAlbums(currentUser.id),
                         getUserPlaylists(currentUser.id)
@@ -52,8 +43,6 @@ function Sidebar() {
     return (
         <aside className="sidebar">
             <div className="sidebar-content">
-
-                {/* 1. SEKCJA: TWOJA BIBLIOTEKA (Stała) */}
                 <nav className="nav-section">
                     <p className="section-title">TWOJA BIBLIOTEKA</p>
                     <NavLink to="/favorites" className="nav-link">
@@ -64,7 +53,6 @@ function Sidebar() {
                     </NavLink>
                 </nav>
 
-                {/* 2. SEKCJA: PLAYLISTY (Oddzielna) */}
                 <nav className="nav-section">
                     <p className="section-title">TWOJE PLAYLISTY</p>
                     <div className="playlists-list">
@@ -79,19 +67,18 @@ function Sidebar() {
                         ))}
 
                         {userPlaylists.length === 0 && currentUser && (
-                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3', fontStyle: 'italic'}}>
+                            <span className="nav-link playlist-empty-msg">
                                 Brak playlist.
                             </span>
                         )}
                         {!currentUser && (
-                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>
+                            <span className="nav-link playlist-empty-msg">
                                 Zaloguj się.
                             </span>
                         )}
                     </div>
                 </nav>
 
-                {/* 3. SEKCJA: ALBUMY (Oddzielna) */}
                 <nav className="nav-section">
                     <p className="section-title">TWOJE ALBUMY</p>
                     <div className="playlists-list">
@@ -106,12 +93,12 @@ function Sidebar() {
                         ))}
 
                         {userAlbums.length === 0 && currentUser && (
-                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3', fontStyle: 'italic'}}>
+                            <span className="nav-link playlist-empty-msg">
                                 Brak albumów.
                             </span>
                         )}
                         {!currentUser && (
-                            <span className="nav-link" style={{fontSize: '0.8rem', color: '#b3b3b3'}}>
+                            <span className="nav-link playlist-empty-msg">
                                 Zaloguj się.
                             </span>
                         )}
@@ -119,10 +106,8 @@ function Sidebar() {
                 </nav>
             </div>
 
-            {/* 4. STOPKA */}
             <div className="sidebar-footer">
                 <div className="cta-container">
-                    {/* PRZYCISK: DODAJ UTWÓR */}
                     <button
                         className="upload-btn-large"
                         onClick={() => setIsAddSongModalOpen(true)}
@@ -132,7 +117,6 @@ function Sidebar() {
                         Dodaj Utwór
                     </button>
 
-                    {/* PRZYCISK: WYDAJ ALBUM */}
                     <button
                         className="upload-btn-large album-btn"
                         onClick={() => setIsCreateAlbumModalOpen(true)}
@@ -166,7 +150,6 @@ function Sidebar() {
                 )}
             </div>
 
-            {/* MODALE */}
             <AddSongModal
                 isOpen={isAddSongModalOpen}
                 onClose={() => setIsAddSongModalOpen(false)}
