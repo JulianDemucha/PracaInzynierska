@@ -27,7 +27,7 @@ import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 import RemoveFromPlaylistModal from '../components/playlist/RemoveFromPlaylistModal.jsx';
 import ContextMenu from '../components/common/ContextMenu.jsx';
-
+import EditPlaylistModal from '../components/playlist/EditPlaylistModal.jsx';
 // --- IKONY ---
 import binIcon from '../assets/images/bin.png';
 import defaultCover from '../assets/images/default-avatar.png';
@@ -39,7 +39,8 @@ import likeIcon from '../assets/images/like.png';
 import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
-import plusIcon from '../assets/images/plus.png'; // Ikona plusa
+import plusIcon from '../assets/images/plus.png';
+import editIcon from '../assets/images/edit.png';
 
 function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
@@ -74,6 +75,7 @@ function CollectionPage() {
     const [isRemovePlaylistModalOpen, setIsRemovePlaylistModalOpen] = useState(false);
     const [songToRemoveFromPlaylist, setSongToRemoveFromPlaylist] = useState(null);
 
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     // Zmiana kolejności
     const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
     const [songToReorder, setSongToReorder] = useState(null);
@@ -121,7 +123,9 @@ function CollectionPage() {
                             artist: { id: s.authorId, name: s.authorUsername || "Nieznany" },
                             coverArtUrl: getImageUrl(s.coverStorageKeyId),
                             genres: s.genres || [],
-                            position: item.positionInPlaylist
+                            position: item.positionInPlaylist,
+                            publiclyVisible: s.publiclyVisible,
+                            albumId: s.albumId
                         };
                     });
                 } catch (songErr) {
@@ -370,6 +374,16 @@ function CollectionPage() {
                 {/* Prawa strona (Kosz) */}
                 {isOwner && (
                     <div className="owner-controls">
+                        {isPlaylist && (
+                            <button
+                                className="song-control-button icon-btn"
+                                onClick={() => setIsEditModalOpen(true)}
+                                title="Edytuj playlistę"
+                                style={{marginRight: '10px'}}
+                            >
+                                <img src={editIcon} alt="Edytuj" style={{width: '24px', height: '24px'}} />
+                            </button>
+                        )}
                         <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń">
                             <img src={binIcon} alt="Usuń" />
                         </button>
@@ -495,6 +509,13 @@ function CollectionPage() {
                     </div>
                 </div>
             )}
+            <EditPlaylistModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                playlistToEdit={collection}
+                onPlaylistUpdated={fetchData}
+                playlistSongs={songs}
+            />
         </div>
     );
 }

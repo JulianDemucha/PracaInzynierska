@@ -52,3 +52,12 @@ export const getAllPlaylists = async () => {
     const response = await api.get('/playlists');
     return response.data;
 };
+
+export const updatePlaylist = async (playlistId, playlistData) => {
+    const response = await api.put(`/playlists/${playlistId}`, playlistData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return response.data;
+}

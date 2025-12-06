@@ -37,20 +37,13 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
         const cropSize = smallestDimension * 0.9;
 
         const crop = centerCrop(
-            makeAspectCrop(
-                {
-                    unit: 'px',
-                    width: cropSize,
-                },
-                1, // Aspect ratio
-                width,
-                height
-            ),
+            makeAspectCrop({ unit: 'px', width: cropSize }, 1, width, height),
             width,
             height
         );
         setCrop(crop);
     }
+
     const resetCreateForm = () => {
         setView('list');
         setNewPlaylistName("");
@@ -68,8 +61,6 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
         setLoading(true);
         try {
             const data = await getUserPlaylists(currentUser.id);
-            // Debug: Sprawdź w konsoli co dokładnie przychodzi z backendu
-            console.log("Pobrane playlisty:", data);
             setPlaylists(data || []);
         } catch (error) {
             console.error("Błąd pobierania playlist:", error);
@@ -86,9 +77,7 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
         setCrop(undefined);
         setImgSrc('');
         const reader = new FileReader();
-        reader.onload = () => {
-            setImgSrc(reader.result.toString() || '');
-        };
+        reader.onload = () => { setImgSrc(reader.result.toString() || ''); };
         reader.readAsDataURL(file);
     };
 
@@ -108,12 +97,21 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
         });
     };
 
-    const handleAddToExisting = async (playlistId, playlistName) => {
+    const handleAddToExisting = async (targetPlaylist) => {
         if (!songToAdd) return;
+
+        const isSongPrivate = songToAdd.publiclyVisible === false || songToAdd.publiclyVisible === "false";
+        const isPlaylistPublic = targetPlaylist.publiclyVisible === true || targetPlaylist.publiclyVisible === "true";
+
+        if (isSongPrivate && isPlaylistPublic) {
+            alert(`Nie można dodać prywatnego utworu "${songToAdd.title}" do publicznej playlisty "${targetPlaylist.title}"!`);
+            return;
+        }
+
         setLoading(true);
         try {
-            await addSongToPlaylist(playlistId, songToAdd.id);
-            alert(`Dodano "${songToAdd.title}" do playlisty "${playlistName}"`);
+            await addSongToPlaylist(targetPlaylist.id, songToAdd.id);
+            alert(`Dodano "${songToAdd.title}" do playlisty "${targetPlaylist.title || targetPlaylist.name}"`);
             onClose();
         } catch (error) {
             console.error("Błąd dodawania:", error);
@@ -121,7 +119,7 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
             const message = error.response?.data?.message || "";
 
             if (status === 409 || status === 400 || message.includes("duplicate") || message.includes("exists")) {
-                alert(`Ten utwór znajduje się już na playliście "${playlistName}"!`);
+                alert(`Ten utwór znajduje się już na tej playliście!`);
             } else {
                 alert("Nie udało się dodać utworu do playlisty.");
             }
@@ -140,18 +138,24 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
             return;
         }
 
+        if (songToAdd) {
+            const isSongPrivate = songToAdd.publiclyVisible === false || songToAdd.publiclyVisible === "false";
+
+            if (isSongPrivate && isPublic) {
+                setErrorMessage("Nie możesz stworzyć publicznej playlisty zawierającej prywatny utwór.");
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             const coverBlob = await getCroppedImg(imgRef.current, crop);
             const formData = new FormData();
-            // Tu też upewniamy się, że wysyłamy 'title' zgodnie z Twoim backendem
             formData.append('title', newPlaylistName);
             formData.append('publiclyVisible', isPublic.toString());
             formData.append('coverFile', coverBlob, "cover.jpg");
 
             const newPlaylist = await createPlaylist(formData);
-
-            // Tutaj też poprawka: backend pewnie zwraca 'title' w odpowiedzi
             const createdName = newPlaylist.title || newPlaylist.name || newPlaylistName;
 
             if (songToAdd && newPlaylist?.id) {
@@ -182,9 +186,12 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
 
                 <h2>Dodaj do playlisty</h2>
                 {songToAdd && view === 'list' && (
-                    <p className="song-preview-text">
+                    <div className="song-preview-text">
                         Wybrany utwór: <strong>{songToAdd.title}</strong>
-                    </p>
+                        <div style={{fontSize:'0.8rem', color:'#888', marginTop:'4px'}}>
+                            Status: {songToAdd.publiclyVisible === false ? "Prywatny" : "Publiczny"}
+                        </div>
+                    </div>
                 )}
 
                 {view === 'list' && (
@@ -194,23 +201,39 @@ function AddToPlaylistModal({ isOpen, onClose, songToAdd }) {
                                 <p style={{color:'#666', textAlign:'center'}}>Ładowanie...</p>
                             ) : (
                                 playlists.length > 0 ? (
-                                    playlists.map(pl => (
-                                        /* ZMIANA 1: Używamy pl.title w funkcji onClick
-                                           Dodatkowo dodałem fallback (pl.title || pl.name) na wszelki wypadek
-                                        */
-                                        <div key={pl.id} className="playlist-row" onClick={() => handleAddToExisting(pl.id, pl.title || pl.name)}>
-                                            <div className="playlist-cover-placeholder">♪</div>
+                                    playlists.map(pl => {
+                                        const isSongPrivate = songToAdd?.publiclyVisible === false;
+                                        const isPlPublic = pl.publiclyVisible === true;
+                                        const isBlocked = isSongPrivate && isPlPublic;
 
-                                            <div className="playlist-info-row">
-                                                {/* ZMIANA 2: Wyświetlanie pl.title zamiast pl.name */}
-                                                <span className="playlist-name">{pl.title || pl.name || "Bez tytułu"}</span>
+                                        return (
+                                            <div
+                                                key={pl.id}
+                                                className="playlist-row"
+                                                onClick={() => !isBlocked && handleAddToExisting(pl)}
+                                                style={{
+                                                    opacity: isBlocked ? 0.5 : 1,
+                                                    cursor: isBlocked ? 'not-allowed' : 'pointer'
+                                                }}
+                                            >
+                                                <div className="playlist-cover-placeholder">♪</div>
 
-                                                <span className="playlist-count-badge">
-                                                    {pl.songsCount} {pl.songsCount === 1 ? 'utwór' : 'utworów'}
-                                                </span>
+                                                <div className="playlist-info-row">
+                                                    <span className="playlist-name">{pl.title || pl.name || "Bez tytułu"}</span>
+
+                                                    <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end'}}>
+                                                        <span className="playlist-count-badge">
+                                                            {pl.songsCount} {pl.songsCount === 1 ? 'utwór' : 'utworów'}
+                                                        </span>
+                                                        {/* Pokazujemy status playlisty */}
+                                                        <span style={{fontSize:'0.7rem', color:'#666', marginTop:'2px'}}>
+                                                            {pl.publiclyVisible ? 'Publiczna' : 'Prywatna'}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <p style={{color:'#666', textAlign:'center', padding: '10px'}}>Brak playlist</p>
                                 )
