@@ -12,7 +12,7 @@ public record AlbumDto(
         String title,
         String description,
         Long authorId,
-        String authorName,
+        String authorUsername,
         boolean publiclyVisible,
         String createdAt,
         List<String> genres,
