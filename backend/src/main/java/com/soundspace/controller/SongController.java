@@ -129,6 +129,24 @@ public class SongController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{songId}/like")
+    public ResponseEntity<Void> deleteLike(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.deleteLikeOrDislike(songId, userDetails);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{songId}/dislike")
+    public ResponseEntity<Void> deleteDislike(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.deleteLikeOrDislike(songId, userDetails);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{songId}/favourite")
+    public ResponseEntity<Void> deleteFavourite(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.deleteFavourite(songId, userDetails);
+        return ResponseEntity.noContent().build();
+    }
+
 
     /// HELPERY
 

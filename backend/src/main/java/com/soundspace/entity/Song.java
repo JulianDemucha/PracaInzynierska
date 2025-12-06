@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -53,5 +54,19 @@ public class Song {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
+
+    @Formula("(SELECT count(*) FROM song_reactions r WHERE r.song_id = id AND r.reaction_type = 'LIKE')")
+    private Integer likesCount = 0;
+
+    @Formula("(SELECT count(*) FROM song_reactions r WHERE r.song_id = id AND r.reaction_type = 'DISLIKE')")
+    private Integer dislikesCount  = 0;
+
+    public int getLikesCount() {
+        return likesCount == null ? 0 : likesCount;
+    }
+
+    public int getDislikesCount() {
+        return dislikesCount == null ? 0 : dislikesCount;
+    }
 
 }

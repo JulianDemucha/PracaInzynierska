@@ -8,7 +8,8 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record PlaylistSongViewDto( // todo upewnic sie pozniej ze nie ma niepotrzebnych wartosci tutaj nieuzywanych na frontcie
+public record PlaylistSongViewDto(
+        // todo upewnic sie pozniej ze nie ma niepotrzebnych wartosci tutaj nieuzywanych na frontcie
         Long id,
         String title,
         Long authorId,
@@ -18,7 +19,9 @@ public record PlaylistSongViewDto( // todo upewnic sie pozniej ze nie ma niepotr
         boolean publiclyVisible,
         String createdAt,
         Long coverStorageKeyId,
-        int positionInPlaylist
+        int positionInPlaylist,
+        int likesCount,
+        int dislikesCount
 ) {
 
     public static PlaylistSongViewDto toDto(PlaylistSongProjection psp) {
@@ -32,7 +35,9 @@ public record PlaylistSongViewDto( // todo upewnic sie pozniej ze nie ma niepotr
                 psp.getPubliclyVisible(),
                 psp.getCreatedAt().toString(),
                 psp.getCoverStorageKeyId(),
-                psp.getPosition()
+                psp.getPosition(),
+                psp.getLikesCount(),
+                psp.getDislikesCount()
         );
     }
 
@@ -42,7 +47,7 @@ public record PlaylistSongViewDto( // todo upewnic sie pozniej ze nie ma niepotr
         Long albumId = song.getAlbum() == null ? null : song.getAlbum().getId();
 
         return new PlaylistSongViewDto(
-            song.getId(),
+                song.getId(),
                 song.getTitle(),
                 song.getAuthor().getId(),
                 song.getAuthor().getLogin(),
@@ -51,7 +56,9 @@ public record PlaylistSongViewDto( // todo upewnic sie pozniej ze nie ma niepotr
                 song.getPubliclyVisible(),
                 song.getCreatedAt().toString(),
                 song.getCoverStorageKey().getId(),
-                playlistEntry.getPosition()
+                playlistEntry.getPosition(),
+                song.getLikesCount(),
+                song.getDislikesCount()
         );
     }
 

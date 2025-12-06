@@ -2,6 +2,7 @@ package com.soundspace.repository;
 
 import com.soundspace.entity.SongReaction;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -31,4 +32,12 @@ public interface SongReactionRepository extends JpaRepository<SongReaction, Long
             AND s.reactionType = 'FAVOURITE'
             """)
     Optional<SongReaction> findFavoriteBySongIdAndUserId(@Param("songId")Long songId, @Param("userId")Long userId);
+
+    @Modifying
+    @Query("DELETE FROM SongReaction s WHERE s.song.id = :songId AND s.user.id = :userId AND s.reactionType IN ('LIKE', 'DISLIKE')")
+    void deleteLikeOrDislikeBySongIdAndUserId(@Param("songId") Long songId, @Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM SongReaction s WHERE s.song.id = :songId AND s.user.id = :userId AND s.reactionType = 'FAVOURITE'")
+    void deleteFavouriteBySongIdAndUserId(@Param("songId")Long songId, @Param("userId")Long userId);
 }

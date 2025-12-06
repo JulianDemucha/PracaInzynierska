@@ -18,7 +18,9 @@ public record SongDto(
         List<String> genres,
         boolean publiclyVisible,
         String createdAt,
-        Long coverStorageKeyId
+        Long coverStorageKeyId,
+        int likesCount,
+        int dislikesCount
 ) {
 
     public static SongDto toDto(Song song) {
@@ -33,7 +35,9 @@ public record SongDto(
                 song.getGenres() == null ? List.of() : song.getGenres().stream().map(Genre::toString).toList(),
                 song.getPubliclyVisible() != null && song.getPubliclyVisible(),
                 song.getCreatedAt().toString(),
-                song.getCoverStorageKey().getId()
+                song.getCoverStorageKey().getId(),
+                song.getLikesCount(),
+                song.getDislikesCount()
         );
     }
 
@@ -47,7 +51,9 @@ public record SongDto(
                 p.getGenres(),
                 p.getPubliclyVisible(),
                 p.getCreatedAt() == null ? null : p.getCreatedAt().toString(),
-                p.getCoverStorageKeyId()
+                p.getCoverStorageKeyId(),
+                p.getLikesCount(),
+                p.getDislikesCount()
         );
     }
 

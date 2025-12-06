@@ -8,7 +8,7 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
-@Table(name = "song_likes")
+@Table(name = "song_reactions")
 @Getter
 @Setter
 public class SongReaction {

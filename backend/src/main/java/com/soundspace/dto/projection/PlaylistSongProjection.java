@@ -14,6 +14,8 @@ public interface PlaylistSongProjection {
     Instant getCreatedAt();
     Long getCoverStorageKeyId();
     Integer getPosition();
+    int getLikesCount();
+    int getDislikesCount();
 
     default List<String> getGenres() {
         String raw = getGenresStr();

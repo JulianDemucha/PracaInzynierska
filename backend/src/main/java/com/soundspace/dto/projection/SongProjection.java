@@ -1,7 +1,4 @@
 package com.soundspace.dto.projection;
-
-import lombok.Value;
-
 import java.time.Instant;
 import java.util.List;
 
@@ -15,6 +12,8 @@ public interface SongProjection {
     boolean getPubliclyVisible();
     Instant getCreatedAt();
     Long getCoverStorageKeyId();
+    int getLikesCount();
+    int getDislikesCount();
 
     default List<String> getGenres() {
         String raw = getGenresStr();
