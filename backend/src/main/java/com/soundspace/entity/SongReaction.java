@@ -2,10 +2,15 @@ package com.soundspace.entity;
 
 import com.soundspace.enums.ReactionType;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.Instant;
 
 @Entity
 @Table(name = "song_likes")
+@Getter
+@Setter
 public class SongReaction {
 
     @Id
