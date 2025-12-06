@@ -5,6 +5,7 @@ import com.soundspace.dto.request.SongUpdateRequest;
 import com.soundspace.dto.request.SongUploadRequest;
 import com.soundspace.enums.ReactionType;
 import com.soundspace.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,13 @@ public class SongController {
     private final SongStreamingService songStreamingService;
     private final SongCoreService songCoreService;
     private final ReactionService reactionService;
+
+    private static final String[] IP_HEADERS = {
+            "X-Forwarded-For",
+            "Proxy-Client-IP",
+            "WL-Proxy-Client-IP"
+    };
+    private final ViewService viewService;
 
     @GetMapping("/{songId}")
     public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long songId, Authentication authentication) {
@@ -110,9 +118,22 @@ public class SongController {
     @PutMapping("/{songId}")
     public ResponseEntity<SongDto> updateSongById(@ModelAttribute @Valid SongUpdateRequest request,
                                                   @PathVariable Long songId,
-                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(songCoreService.update(songId, request, userDetails));
+                                                  Authentication authentication) {
+        return ResponseEntity.ok(songCoreService.update(songId, request, extractUserDetails(authentication)));
     }
+
+    @PostMapping("/{songId}/registerView")
+    public ResponseEntity<Void> registerView(@PathVariable Long songId,
+                                             @AuthenticationPrincipal UserDetails userDetails,
+                                             HttpServletRequest request
+    ) {
+        String clientIp = extractClientIp(request);
+
+        boolean isNewViewRegistered = viewService.registerView(songId, userDetails, clientIp);
+
+        return ( isNewViewRegistered ? ResponseEntity.ok() : ResponseEntity.noContent() ).build();
+    }
+
 
     /// SEKCJA REAKCJI
 
@@ -155,9 +176,22 @@ public class SongController {
 
     /// HELPERY
 
+    // anonymousUser jest Stringiem, wiec zwroci null do pozniejszej obslugi
     private UserDetails extractUserDetails(Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
             return (UserDetails) authentication.getPrincipal();
         } else return null;
     }
+
+    private String extractClientIp(HttpServletRequest request) {
+        for (String header : IP_HEADERS) {
+            String ip = request.getHeader(header);
+
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+                return ip.split(",")[0].trim();
+            }
+        }
+        return request.getRemoteAddr();
+    }
+
 }

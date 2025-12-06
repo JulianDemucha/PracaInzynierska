@@ -20,7 +20,8 @@ public record SongDto(
         String createdAt,
         Long coverStorageKeyId,
         int likesCount,
-        int dislikesCount
+        int dislikesCount,
+        Long viewCount
 ) {
 
     public static SongDto toDto(Song song) {
@@ -37,7 +38,8 @@ public record SongDto(
                 song.getCreatedAt().toString(),
                 song.getCoverStorageKey().getId(),
                 song.getLikesCount(),
-                song.getDislikesCount()
+                song.getDislikesCount(),
+                song.getViewCount()
         );
     }
 
@@ -53,7 +55,8 @@ public record SongDto(
                 p.getCreatedAt() == null ? null : p.getCreatedAt().toString(),
                 p.getCoverStorageKeyId(),
                 (p.getLikesCount() == null ? 0 : p.getLikesCount()),
-                (p.getDislikesCount() == null ? 0 : p.getDislikesCount())
+                (p.getDislikesCount() == null ? 0 : p.getDislikesCount()),
+                (p.getViewCount() == null ? 0 : p.getViewCount())
         );
     }
 

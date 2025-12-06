@@ -134,6 +134,10 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """) // LIMIT I OFFSET AUTOMATYCZNIE POBIERA SIE Z PAGEABLE
     List<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
 
+    @Modifying(clearAutomatically = true) // czyszczenie cachu hibernate
+    @Query("UPDATE Song s SET s.viewCount = s.viewCount + :count WHERE s.id = :id")
+    void incrementViewCountBy(@Param("id") Long id, @Param("count") Long count);
+
     /// bulk delete wszystkich songow nalezacych do usera - do bulk delete calego usera.
     /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow piosenek
     @Modifying
