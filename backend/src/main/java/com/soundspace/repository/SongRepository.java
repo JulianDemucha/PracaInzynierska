@@ -3,11 +3,13 @@ package com.soundspace.repository;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface SongRepository extends JpaRepository<Song, Long> {
@@ -105,16 +107,32 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<Song> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userId") Long userId);
     
     @Query("""
-        SELECT DISTINCT s
-        FROM Song s
-        LEFT JOIN FETCH s.author
-        LEFT JOIN FETCH s.coverStorageKey
-        LEFT JOIN FETCH s.album
-        JOIN s.genres g
-        WHERE g = :genre
-          AND s.publiclyVisible = true
-    """)
+            SELECT DISTINCT s
+            FROM Song s
+            LEFT JOIN FETCH s.author
+            LEFT JOIN FETCH s.coverStorageKey
+            LEFT JOIN FETCH s.album
+            JOIN s.genres g
+            WHERE g = :genre
+              AND s.publiclyVisible = true
+            """)
     List<Song> findPublicByGenre(@Param("genre") Genre genre);
+
+    //todo zmienic s.createdAt na s.viewCount po dodaniu wyswietlen
+    @Query("""
+            SELECT s
+            FROM Song s
+            LEFT JOIN FETCH s.author
+            LEFT JOIN FETCH s.coverStorageKey
+            LEFT JOIN FETCH s.album
+            JOIN SongReaction r ON r.song.id = s.id
+            WHERE r.reactionType = 'LIKE'
+              AND r.reactedAt > :cutoffDate
+              AND s.publiclyVisible = true
+            GROUP BY s, s.author, s.coverStorageKey, s.album
+            ORDER BY COUNT(r) DESC, s.createdAt DESC
+            """) // LIMIT I OFFSET AUTOMATYCZNIE POBIERA SIE Z PAGEABLE
+    List<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
 
     /// bulk delete wszystkich songow nalezacych do usera - do bulk delete calego usera.
     /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow piosenek

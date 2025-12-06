@@ -83,6 +83,11 @@ public class SongController {
         return ResponseEntity.ok(songCoreService.getSongsByUserId(userId, extractUserDetails(authentication)));
     }
 
+    @GetMapping("/top10")
+    public ResponseEntity<List<SongDto>> getTop10Songs() {
+        return ResponseEntity.ok(songCoreService.getTop10Liked());
+    }
+
     @DeleteMapping("/{songId}")
     public ResponseEntity<Void> deleteSongById(@PathVariable Long songId,
                                                @AuthenticationPrincipal UserDetails userDetails) {
@@ -127,6 +132,24 @@ public class SongController {
     public ResponseEntity<Void> favouriteSong(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
         reactionService.addReaction(songId, ReactionType.FAVOURITE, userDetails);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{songId}/like")
+    public ResponseEntity<Void> deleteLike(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.deleteLikeOrDislike(songId, userDetails);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{songId}/dislike")
+    public ResponseEntity<Void> deleteDislike(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.deleteLikeOrDislike(songId, userDetails);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{songId}/favourite")
+    public ResponseEntity<Void> deleteFavourite(@PathVariable Long songId, @AuthenticationPrincipal UserDetails userDetails) {
+        reactionService.deleteFavourite(songId, userDetails);
+        return ResponseEntity.noContent().build();
     }
 
 

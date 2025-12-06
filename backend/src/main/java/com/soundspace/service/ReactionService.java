@@ -69,6 +69,23 @@ public class ReactionService {
 
     }
 
+    @Transactional
+    public void deleteLikeOrDislike(Long songId, UserDetails userDetails) {
+        AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
+        Long appUserId = appUser.getId();
+        songReactionRepository.deleteLikeOrDislikeBySongIdAndUserId(songId, appUserId);
+    }
+
+    @Transactional
+    public void deleteFavourite(Long songId, UserDetails userDetails) {
+        AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
+        Long appUserId = appUser.getId();
+        songReactionRepository.deleteFavouriteBySongIdAndUserId(songId, appUserId);
+    }
+
+
+    /// helpers
+
     private ReactionType revertReactionType(ReactionType reactionType) {
         return switch (reactionType) {
             case LIKE -> ReactionType.DISLIKE;

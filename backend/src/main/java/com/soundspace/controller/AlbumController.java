@@ -53,8 +53,9 @@ public class AlbumController {
     public ResponseEntity<SongDto> addSongToAlbum(@PathVariable Long albumId,
                                                   @ModelAttribute @Valid AlbumSongUploadRequest request,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(songUploadService.upload(albumId, request,
-                appUserService.getUserByEmail(userDetails.getUsername())));
+        SongDto createdSong = songUploadService.upload(albumId, request,
+                appUserService.getUserByEmail(userDetails.getUsername()));
+        return ResponseEntity.created(URI.create("/api/albums/"+createdSong.id())).body(createdSong);
     }
 
     @DeleteMapping("/{albumId}/remove/{songId}")

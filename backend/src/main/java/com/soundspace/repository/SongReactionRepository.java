@@ -2,16 +2,11 @@ package com.soundspace.repository;
 
 import com.soundspace.entity.SongReaction;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
-
-/*TODO:
-    - sprawdzanie czy jest jakis like albo dislike
-    - sprawdzanie czy jest jakis favourite
-
- */
 
 public interface SongReactionRepository extends JpaRepository<SongReaction, Long> {
 
@@ -31,4 +26,21 @@ public interface SongReactionRepository extends JpaRepository<SongReaction, Long
             AND s.reactionType = 'FAVOURITE'
             """)
     Optional<SongReaction> findFavoriteBySongIdAndUserId(@Param("songId")Long songId, @Param("userId")Long userId);
+
+    @Modifying
+    @Query("DELETE FROM SongReaction s WHERE s.song.id = :songId AND s.user.id = :userId AND s.reactionType IN ('LIKE', 'DISLIKE')")
+    void deleteLikeOrDislikeBySongIdAndUserId(@Param("songId") Long songId, @Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM SongReaction s WHERE s.song.id = :songId AND s.user.id = :userId AND s.reactionType = 'FAVOURITE'")
+    void deleteFavouriteBySongIdAndUserId(@Param("songId")Long songId, @Param("userId")Long userId);
+
+    /// do bulk delete usera
+    @Modifying
+    @Query("""
+        DELETE FROM SongReaction r
+        WHERE r.user.id = :userId
+           OR r.song.author.id = :userId
+    """)
+    void deleteAllRelatedToUser(@Param("userId") Long userId);
 }

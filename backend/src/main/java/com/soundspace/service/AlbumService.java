@@ -50,10 +50,9 @@ public class AlbumService {
     private static final int COVER_WIDTH = 1200;
     private static final int COVER_HEIGHT = 1200;
     private static final double COVER_QUALITY = 0.85;
-
     private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
-    private final PlaylistRepository playlistRepository;
 
+    
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
         return albumRepository.findById(id);
