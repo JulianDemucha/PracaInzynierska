@@ -83,6 +83,11 @@ public class SongController {
         return ResponseEntity.ok(songCoreService.getSongsByUserId(userId, extractUserDetails(authentication)));
     }
 
+    @GetMapping("/top10")
+    public ResponseEntity<List<SongDto>> getTop10Songs() {
+        return ResponseEntity.ok(songCoreService.getTop10Liked());
+    }
+
     @DeleteMapping("/{songId}")
     public ResponseEntity<Void> deleteSongById(@PathVariable Long songId,
                                                @AuthenticationPrincipal UserDetails userDetails) {
