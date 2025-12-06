@@ -66,7 +66,7 @@ public class SongUploadService {
             audioStorageKeyEntity = validateAndSaveAudioFile(tmpAudioPath, appUser);
 
             if(coverFile == null || coverFile.isEmpty()){
-                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
+                coverStorageKeyEntity = storageKeyRepository.getReferenceById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID);
 
             } else {
                 // resize, convert i zapis cover image do temp file
@@ -180,7 +180,7 @@ public class SongUploadService {
     private Song validateAndBuildSong(Long albumId, AlbumSongUploadRequest request, AppUser appUser,
                                       StorageKey audioStorageKeyEntity)
             throws IllegalArgumentException {
-        Album album = albumService.findById(albumId).orElseThrow();
+        Album album = albumService.getReferenceById(albumId);
 
         String title = request.getTitle();
 

@@ -61,12 +61,18 @@ public class Song {
     @Formula("(SELECT count(*) FROM song_reactions r WHERE r.song_id = id AND r.reaction_type = 'DISLIKE')")
     private Integer dislikesCount  = 0;
 
+    private Long viewCount = 0L;
+
     public int getLikesCount() {
         return likesCount == null ? 0 : likesCount;
     }
 
     public int getDislikesCount() {
         return dislikesCount == null ? 0 : dislikesCount;
+    }
+
+    public long getViewCount() {
+        return viewCount == null ? 0 : viewCount;
     }
 
 }

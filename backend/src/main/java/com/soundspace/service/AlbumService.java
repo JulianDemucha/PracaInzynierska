@@ -15,7 +15,6 @@ import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.exception.StorageException;
 import com.soundspace.repository.AlbumRepository;
-import com.soundspace.repository.PlaylistRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +55,10 @@ public class AlbumService {
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
         return albumRepository.findById(id);
+    }
+
+    public Album getReferenceById(Long id) {
+        return albumRepository.getReferenceById(id);
     }
 
     public AlbumDto getAlbumById(Long id, UserDetails userDetails) {
@@ -148,7 +151,7 @@ public class AlbumService {
         try {
             MultipartFile coverFile = request.getCoverFile();
             if (coverFile == null || coverFile.isEmpty()) {
-                coverStorageKeyEntity = storageKeyRepository.findById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID).orElseThrow();
+                coverStorageKeyEntity = storageKeyRepository.getReferenceById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID);
 
             } else {
                 tmpCoverPath = processCoverAndSaveToTemp(coverFile);
@@ -162,7 +165,7 @@ public class AlbumService {
             Album album = Album.builder()
                     .title(request.getTitle())
                     .description(request.getDescription())
-                    .author(appUserService.getUserById(author.getId()))
+                    .author(author)
                     .publiclyVisible(request.isPubliclyVisible())
                     .createdAt(Instant.now())
                     .coverStorageKey(coverStorageKeyEntity)

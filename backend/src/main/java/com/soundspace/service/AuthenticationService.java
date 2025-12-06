@@ -67,7 +67,7 @@ public class AuthenticationService {
                 .bio("")
                 .comments(new ArrayList<>())
                 // poki co defaultowy avatar
-                .avatarStorageKey(storageKeyRepository.findById(DEFAULT_AVATAR_IMAGE_KEY_ID).orElseThrow())
+                .avatarStorageKey(storageKeyRepository.getReferenceById(DEFAULT_AVATAR_IMAGE_KEY_ID))
                 .build();
 
         repo.save(user);
