@@ -1,10 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { usePlayer } from '../../context/PlayerContext.js';
+import { addSongToFavorites, removeSongFromFavorites } from '../../services/songService.js'; // IMPORT SERWISÓW
+import ContextMenu from '../common/ContextMenu.jsx';
+
 import './PlayerBar.css';
 import '../../index.css';
 import '../common/ContextMenu.css';
-import ContextMenu from '../common/ContextMenu.jsx';
-import { usePlayer } from '../../context/PlayerContext.js';
+
 import playIcon from '../../assets/images/play.png';
 import pauseIcon from '../../assets/images/pause.png';
 import prevIcon from '../../assets/images/previous.png';
@@ -53,12 +56,12 @@ function PlayerBar() {
         toggleRepeat,
         isRepeatOn,
         isRepeatOneOn,
-        toggleMute,
-        isPlaying: playingState
+        toggleMute
     } = usePlayer();
 
     const [isQueueVisible, setIsQueueVisible] = React.useState(false);
     const queuePopupRef = useRef(null);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (queuePopupRef.current && !queuePopupRef.current.contains(event.target)) {
@@ -96,13 +99,35 @@ function PlayerBar() {
     const artistName = (currentSong?.authorUsername) || "SoundSpace";
     const artistId = currentSong?.authorId;
     const artistLink = artistId ? `/artist/${artistId}` : '#';
+    const songTitle = currentSong?.title || "Wybierz utwór";
+    const coverArt = currentSong?.coverArtUrl || albumArtPlaceholder;
+
+    const isCurrentSongFavorite = currentSong && favorites ? !!favorites[currentSong.id] : false;
+
+    const handleFavoriteClick = async () => {
+        if (!currentSong) return;
+
+        const songId = currentSong.id;
+        const wasFavorite = isCurrentSongFavorite;
+
+        toggleFavorite(songId);
+
+        try {
+            if (wasFavorite) {
+                await removeSongFromFavorites(songId);
+            } else {
+                await addSongToFavorites(songId);
+            }
+        } catch (error) {
+            console.error("Błąd aktualizacji ulubionych:", error);
+            toggleFavorite(songId);
+        }
+    };
 
     const playerMenuOptions = [
         {
-            label: "Dodaj do polubionych",
-            onClick: () => {
-                if (currentSong) toggleFavorite(currentSong.id);
-            }
+            label: isCurrentSongFavorite ? "Usuń z polubionych" : "Dodaj do polubionych",
+            onClick: () => handleFavoriteClick()
         },
         {
             label: "Dodaj do kolejki",
@@ -140,17 +165,6 @@ function PlayerBar() {
         setVolumePercent(e.target.value);
     };
 
-    const isCurrentSongFavorite = currentSong && favorites ? !!favorites[currentSong.id] : false;
-
-    const handleFavoriteClick = () => {
-        if (currentSong) {
-            toggleFavorite(currentSong.id);
-        }
-    };
-
-    const songTitle = currentSong?.title || "Wybierz utwór";
-    const coverArt = currentSong?.coverArtUrl || albumArtPlaceholder;
-
     const progressPercent = duration ? (currentTime / duration) * 100 : 0;
     const volumePercent = uiVolumePercent;
 
@@ -179,7 +193,7 @@ function PlayerBar() {
 
             <div className="player-section-middle">
                 <div className="player-controls">
-                    <button className="control-button prev">
+                    <button className="control-button prev" onClick={playPrev}>
                         <img src={prevIcon} alt="Poprzedni" />
                     </button>
 
@@ -195,7 +209,7 @@ function PlayerBar() {
                         )}
                     </button>
 
-                    <button className="control-button next">
+                    <button className="control-button next" onClick={playNext}>
                         <img src={nextIcon} alt="Następny" />
                     </button>
 
@@ -232,9 +246,9 @@ function PlayerBar() {
                         onClick={() => toggleRepeat()}
                     >
                         {isRepeatOneOn ? (
-                            <img src={repeatIconOn} alt="repeat wlaczony" />
+                            <img src={repeatIconOn} alt="Powtarzanie jednego" />
                         ) : (
-                            <img src={repeatIcon} alt="repeat wylaczony" />
+                            <img src={repeatIcon} alt="Powtarzanie" />
                         )}
                     </button>
                 </div>

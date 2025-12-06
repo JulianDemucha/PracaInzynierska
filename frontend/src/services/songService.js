@@ -40,3 +40,33 @@ export const updateSong = async (songId, songData) => {
     });
     return response.data;
 };
+
+export const likeSong = async (songId) => {
+    const response = await api.post(`/songs/${songId}/like`);
+    return response.data;
+};
+
+export const dislikeSong = async (songId) => {
+    const response = await api.post(`/songs/${songId}/dislike`);
+    return response.data;
+};
+
+export const removeLike = async (songId) => {
+    const response = await api.delete(`/songs/${songId}/like`);
+    return response.data;
+};
+
+export const removeDislike = async (songId) => {
+    const response = await api.delete(`/songs/${songId}/dislike`);
+    return response.data;
+};
+
+export const addSongToFavorites = async (songId) => {
+    const response = await api.post(`/songs/${songId}/favourite`);
+    return response.data;
+};
+
+export const removeSongFromFavorites = async (songId) => {
+    const response = await api.delete(`/songs/${songId}/favourite`);
+    return response.data;
+};

@@ -17,6 +17,14 @@ import {
     getUserPlaylists,
     changeSongPosition
 } from '../services/playlistService.js';
+import {
+    likeSong,
+    dislikeSong,
+    removeLike,
+    removeDislike,
+    addSongToFavorites,
+    removeSongFromFavorites
+} from '../services/songService.js';
 
 import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
@@ -59,7 +67,6 @@ function CollectionPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [isFavorite, setIsFavorite] = useState(false);
     const [songsPlaylistCount, setSongsPlaylistCount] = useState({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -294,6 +301,45 @@ function CollectionPage() {
         }
     };
 
+    const handleFavoriteSongClick = async (songId) => {
+        const isCurrentlyFavorite = !!favorites[songId];
+        toggleFavorite(songId);
+
+        try {
+            if (isCurrentlyFavorite) {
+                await removeSongFromFavorites(songId);
+            } else {
+                await addSongToFavorites(songId);
+            }
+        } catch (error) {
+            console.error("Błąd aktualizacji ulubionych:", error);
+            toggleFavorite(songId);
+        }
+    };
+
+    const handleRatingSongClick = async (songId, type) => {
+
+        rateSong(songId, type);
+
+        try {
+            if (type === 'like') {
+                if (ratings[songId] === 'like') {
+                    await removeLike(songId);
+                } else {
+                    await likeSong(songId);
+                }
+            } else if (type === 'dislike') {
+                if (ratings[songId] === 'dislike') {
+                    await removeDislike(songId);
+                } else {
+                    await dislikeSong(songId);
+                }
+            }
+        } catch (error) {
+            console.error("Błąd aktualizacji oceny:", error);
+        }
+    };
+
     const headerMenuOptions = [
         { label: "Dodaj wszystkie do kolejki", onClick: () => songs.forEach(s => addToQueue(s)) },
     ];
@@ -339,10 +385,6 @@ function CollectionPage() {
             <section className="song-controls">
                 <button className="song-play-button" onClick={handlePlayCollection}>
                     <img src={showPauseOnHeader ? pauseIcon : playIcon} alt="Play/Pause" />
-                </button>
-
-                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => setIsFavorite(!isFavorite)}>
-                    <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
 
                 {isOwner && !isPlaylist && (
@@ -393,7 +435,7 @@ function CollectionPage() {
                         const showGlobalRemove = playlistCount > 1;
 
                         const songMenuOptions = [
-                            { label: isLiked ? "Usuń z polubionych" : "Dodaj do polubionych", onClick: () => toggleFavorite(song.id) },
+                            { label: isLiked ? "Usuń z polubionych" : "Dodaj do polubionych", onClick: () => handleFavoriteSongClick(song.id) },
                             { label: "Dodaj do kolejki", onClick: () => addToQueue(song) },
                             { label: "Przejdź do artysty", onClick: () => navigate(`/artist/${song.artist.id}`) },
                             { label: "Przejdź do utworu", onClick: () => navigate(`/song/${song.id}`) },
@@ -437,9 +479,24 @@ function CollectionPage() {
                                     </Link>
                                 </div>
                                 <div className="song-item-actions">
-                                    <button className={`action-btn ${isLiked ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}><img src={isLiked ? heartIconOn : heartIconOff} alt="Like" /></button>
-                                    <button className={`action-btn ${songRating === 'like' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'like')}><img src={songRating === 'like' ? likeIconOn : likeIcon} alt="Up" /></button>
-                                    <button className={`action-btn ${songRating === 'dislike' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'dislike')}><img src={songRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Down" /></button>
+                                    <button
+                                        className={`action-btn ${isLiked ? 'active' : ''}`}
+                                        onClick={() => handleFavoriteSongClick(song.id)}
+                                    >
+                                        <img src={isLiked ? heartIconOn : heartIconOff} alt="Like" />
+                                    </button>
+                                    <button
+                                        className={`action-btn ${songRating === 'like' ? 'active' : ''}`}
+                                        onClick={() => handleRatingSongClick(song.id, 'like')}
+                                    >
+                                        <img src={songRating === 'like' ? likeIconOn : likeIcon} alt="Up" />
+                                    </button>
+                                    <button
+                                        className={`action-btn ${songRating === 'dislike' ? 'active' : ''}`}
+                                        onClick={() => handleRatingSongClick(song.id, 'dislike')}
+                                    >
+                                        <img src={songRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Down" />
+                                    </button>
                                 </div>
                                 <span className="song-item-duration">{formatTime(song.duration)}</span>
                                 <div className="song-context-menu-wrapper">

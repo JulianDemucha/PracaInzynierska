@@ -2,7 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
-import { getSongById, deleteSong } from '../services/songService.js';
+import {
+    getSongById,
+    deleteSong,
+    likeSong,
+    dislikeSong,
+    removeLike,
+    removeDislike,
+    addSongToFavorites,
+    removeSongFromFavorites
+} from '../services/songService.js';
 import { getImageUrl } from '../services/imageService.js';
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 import EditSongModal from '../components/song/EditSongModal.jsx';
@@ -128,6 +137,45 @@ function SongPage() {
     const isFavorite = !!favorites[song?.id];
     const currentRating = ratings[song?.id];
 
+    const handleFavoriteClick = async () => {
+        toggleFavorite(song.id);
+
+        try {
+            if (isFavorite) {
+                await removeSongFromFavorites(song.id);
+            } else {
+                await addSongToFavorites(song.id);
+            }
+        } catch (error) {
+            console.error("Błąd aktualizacji ulubionych:", error);
+            toggleFavorite(song.id);
+        }
+    };
+
+    const handleRatingClick = async (type) => {
+        const previousRating = currentRating;
+
+        rateSong(song.id, type);
+
+        try {
+            if (type === 'like') {
+                if (previousRating === 'like') {
+                    await removeLike(song.id);
+                } else {
+                    await likeSong(song.id);
+                }
+            } else if (type === 'dislike') {
+                if (previousRating === 'dislike') {
+                    await removeDislike(song.id);
+                } else {
+                    await dislikeSong(song.id);
+                }
+            }
+        } catch (error) {
+            console.error("Błąd aktualizacji oceny:", error);
+        }
+    };
+
     if (loading) {
         return (
             <div className="song-page song-loading-container">
@@ -187,7 +235,7 @@ function SongPage() {
                     <img src={isThisSongPlaying ? pauseIcon : playIcon} alt={isThisSongPlaying ? "Pauza" : "Odtwórz"} />
                 </button>
 
-                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}>
+                <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={handleFavoriteClick}>
                     <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
 
@@ -202,13 +250,13 @@ function SongPage() {
                 <div className="song-rating">
                     <button
                         className={`song-rating-button ${currentRating === 'like' ? 'active' : ''}`}
-                        onClick={() => rateSong(song.id, 'like')}
+                        onClick={() => handleRatingClick('like')}
                     >
                         <img src={currentRating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
                     </button>
                     <button
                         className={`song-rating-button ${currentRating === 'dislike' ? 'active' : ''}`}
-                        onClick={() => rateSong(song.id, 'dislike')}
+                        onClick={() => handleRatingClick('dislike')}
                     >
                         <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
                     </button>
