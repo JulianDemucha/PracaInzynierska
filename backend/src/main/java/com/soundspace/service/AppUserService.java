@@ -4,6 +4,7 @@ import com.soundspace.dto.AppUserDto;
 import com.soundspace.entity.*;
 import com.soundspace.enums.Sex;
 import com.soundspace.exception.StorageException;
+import com.soundspace.exception.UserNotFoundException;
 import com.soundspace.repository.*;
 import com.soundspace.dto.request.AppUserUpdateRequest;
 import jakarta.transaction.Transactional;
@@ -256,11 +257,13 @@ public class AppUserService {
     }
 
     public AppUser getUserByEmail(String email) {
-        return appUserRepository.findByEmail(email).orElseThrow();
+        return appUserRepository.findByEmail(email).orElseThrow(() ->
+                new UserNotFoundException("Nie znaleziono użytkownika o emailu: " + email));
     }
 
     public AppUser getUserById(Long id) {
-        return appUserRepository.findById(id).orElseThrow();
+        return appUserRepository.findById(id).orElseThrow(() ->
+                new UserNotFoundException("Nie znaleziono użytkownika o id: " + id));
     }
 
 
