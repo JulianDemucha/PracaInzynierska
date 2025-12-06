@@ -133,7 +133,6 @@
 
 /* --- Przycisk Usuń (Ikona Kosza) --- */
 .delete-song-button {
-    margin-left: auto; /* Pcha przycisk na sam koniec prawej strony */
     background: none;
     border: none;
     cursor: pointer;

@@ -34,3 +34,12 @@ export const getAllSongs = async () => {
         return [];
     }
 };
+
+export const updateSong = async (songId, songData) => {
+    const response = await api.put(`/songs/${songId}`, songData, {
+        headers: {
+            "content-type": "multipart/form-data",
+        },
+    });
+    return response.data;
+};

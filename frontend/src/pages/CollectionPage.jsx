@@ -5,7 +5,7 @@ import { usePlayer } from '../context/PlayerContext.js';
 import { useAuth } from '../context/useAuth.js';
 import { getImageUrl } from '../services/imageService.js';
 
-// --- SERWISY ALBUMU ---
+// --- SERWISY ---
 import {
     getAlbumById,
     getSongsByAlbumId,
@@ -13,14 +13,13 @@ import {
     removeSongFromAlbum
 } from '../services/albumService.js';
 
-// --- SERWISY PLAYLISTY ---
 import {
     getPlaylistById,
     getPlaylistSongs,
     deletePlaylist,
     removeSongFromPlaylist,
     getUserPlaylists,
-    changeSongPosition // <--- IMPORTUJEMY NOWĄ FUNKCJĘ
+    changeSongPosition
 } from '../services/playlistService.js';
 
 // --- KOMPONENTY ---
@@ -29,7 +28,7 @@ import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal.jsx';
 import RemoveFromPlaylistModal from '../components/playlist/RemoveFromPlaylistModal.jsx';
 import ContextMenu from '../components/common/ContextMenu.jsx';
 
-// --- IKONY (Bez zmian) ---
+// --- IKONY ---
 import binIcon from '../assets/images/bin.png';
 import defaultCover from '../assets/images/default-avatar.png';
 import playIcon from '../assets/images/play.png';
@@ -40,6 +39,7 @@ import likeIcon from '../assets/images/like.png';
 import likeIconOn from '../assets/images/likeOn.png';
 import dislikeIcon from '../assets/images/disLike.png';
 import dislikeIconOn from '../assets/images/disLikeOn.png';
+import plusIcon from '../assets/images/plus.png'; // Ikona plusa
 
 function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
@@ -65,7 +65,7 @@ function CollectionPage() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [songsPlaylistCount, setSongsPlaylistCount] = useState({});
 
-    // Modale podstawowe
+    // Modale
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
@@ -74,7 +74,7 @@ function CollectionPage() {
     const [isRemovePlaylistModalOpen, setIsRemovePlaylistModalOpen] = useState(false);
     const [songToRemoveFromPlaylist, setSongToRemoveFromPlaylist] = useState(null);
 
-    // --- NOWY STAN DLA ZMIANY KOLEJNOŚCI ---
+    // Zmiana kolejności
     const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
     const [songToReorder, setSongToReorder] = useState(null);
     const [newPositionValue, setNewPositionValue] = useState("");
@@ -207,7 +207,6 @@ function CollectionPage() {
     }, [songs]);
 
     // --- OBSŁUGA AKCJI ---
-
     const handleDeleteClick = () => setIsDeleteModalOpen(true);
 
     const confirmDelete = async () => {
@@ -241,7 +240,6 @@ function CollectionPage() {
             } else {
                 await removeSongFromAlbum(collection.id, songId);
             }
-            // Zamiast tylko filtrować, pobierzmy dane ponownie, żeby numery się zgadzały
             fetchData();
             fetchUserPlaylistData();
         } catch (err) {
@@ -259,24 +257,17 @@ function CollectionPage() {
     const handleConfirmReorder = async (e) => {
         e.preventDefault();
         if (!songToReorder) return;
-
         const pos = parseInt(newPositionValue, 10);
-
         if (isNaN(pos) || pos < 1 || pos > songs.length) {
             alert(`Podaj poprawny numer od 1 do ${songs.length}`);
             return;
         }
-
         try {
             const apiPosition = pos - 1;
-
             await changeSongPosition(collection.id, songToReorder.id, apiPosition);
-
             setIsReorderModalOpen(false);
             setSongToReorder(null);
-
             await fetchData();
-
         } catch (err) {
             console.error("Błąd zmiany pozycji:", err);
             alert("Wystąpił błąd podczas zmiany kolejności.");
@@ -316,7 +307,7 @@ function CollectionPage() {
 
     return (
         <div className="collection-page">
-            {/* --- NAGŁÓWEK --- */}
+            {/* NAGŁÓWEK */}
             <header className="song-header">
                 <img
                     src={getImageUrl(collection.coverStorageKeyId)}
@@ -356,21 +347,29 @@ function CollectionPage() {
                 </div>
             </header>
 
-            {/* KONTROLKI - Bez zmian */}
+            {/* KONTROLKI */}
             <section className="song-controls">
                 <button className="song-play-button" onClick={handlePlayCollection}>
                     <img src={showPauseOnHeader ? pauseIcon : playIcon} alt="Play/Pause" />
                 </button>
+
                 <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={() => setIsFavorite(!isFavorite)}>
                     <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
                 </button>
+
+                {isOwner && !isPlaylist && (
+                    <button
+                        className="add-song-circle-btn"
+                        onClick={() => setIsAddSongModalOpen(true)}
+                        title="Dodaj utwór"
+                    >
+                        <img src={plusIcon} alt="Dodaj do albumu" />
+                    </button>
+                )}
+
+                {/* Prawa strona (Kosz) */}
                 {isOwner && (
                     <div className="owner-controls">
-                        {!isPlaylist && (
-                            <button className="add-song-circle-btn" onClick={() => setIsAddSongModalOpen(true)} title="Dodaj utwór">
-                                +
-                            </button>
-                        )}
                         <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń">
                             <img src={binIcon} alt="Usuń" />
                         </button>
@@ -430,14 +429,11 @@ function CollectionPage() {
                         return (
                             <li key={`${song.id}-${index}`} className={`song-list-item ${isActive ? 'active' : ''}`} onDoubleClick={() => handlePlayTrack(song)}>
                                 <span className="song-track-number">
-                                    {isPlayingNow ? (
-                                        <img src={pauseIcon} alt="Pauza" onClick={() => pause()}/>
-                                    ) : (
+                                    {isPlayingNow ? <img src={pauseIcon} alt="Pauza" onClick={() => pause()}/> :
                                         <div className="number-container">
                                             <span className="track-number">{index + 1}</span>
                                             <img src={playIcon} alt="Odtwórz" className="play-icon-hover" onClick={() => handlePlayTrack(song)}/>
-                                        </div>
-                                    )}
+                                        </div>}
                                 </span>
                                 <div className="song-item-details">
                                     <span className={`song-item-title ${isActive ? 'highlight' : ''}`}>{song.title}</span>
@@ -446,15 +442,9 @@ function CollectionPage() {
                                     </Link>
                                 </div>
                                 <div className="song-item-actions">
-                                    <button className={`action-btn ${isLiked ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}>
-                                        <img src={isLiked ? heartIconOn : heartIconOff} alt="Like" />
-                                    </button>
-                                    <button className={`action-btn ${songRating === 'like' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'like')}>
-                                        <img src={songRating === 'like' ? likeIconOn : likeIcon} alt="Up" />
-                                    </button>
-                                    <button className={`action-btn ${songRating === 'dislike' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'dislike')}>
-                                        <img src={songRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Down" />
-                                    </button>
+                                    <button className={`action-btn ${isLiked ? 'active' : ''}`} onClick={() => toggleFavorite(song.id)}><img src={isLiked ? heartIconOn : heartIconOff} alt="Like" /></button>
+                                    <button className={`action-btn ${songRating === 'like' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'like')}><img src={songRating === 'like' ? likeIconOn : likeIcon} alt="Up" /></button>
+                                    <button className={`action-btn ${songRating === 'dislike' ? 'active' : ''}`} onClick={() => rateSong(song.id, 'dislike')}><img src={songRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Down" /></button>
                                 </div>
                                 <span className="song-item-duration">{formatTime(song.duration)}</span>
                                 <div className="song-context-menu-wrapper">
@@ -466,7 +456,7 @@ function CollectionPage() {
                 </ul>
             </section>
 
-            {/* MODALE ISTNIEJĄCE */}
+            {/* MODALE */}
             {isDeleteModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}>
                     <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -485,7 +475,6 @@ function CollectionPage() {
             <AddToPlaylistModal isOpen={isAddToPlaylistModalOpen} onClose={() => setIsAddToPlaylistModalOpen(false)} songToAdd={songToAddToPlaylist} />
             <RemoveFromPlaylistModal isOpen={isRemovePlaylistModalOpen} onClose={() => setIsRemovePlaylistModalOpen(false)} songToRemove={songToRemoveFromPlaylist} />
 
-            {/* --- NOWY MODAL: ZMIANA KOLEJNOŚCI --- */}
             {isReorderModalOpen && (
                 <div className="delete-modal-backdrop" onClick={() => setIsReorderModalOpen(false)}>
                     <div className="delete-modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '350px'}}>
@@ -495,15 +484,7 @@ function CollectionPage() {
                         <form onSubmit={handleConfirmReorder}>
                             <div style={{marginBottom: '20px'}}>
                                 <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem'}}>Nowa pozycja (1 - {songs.length}):</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max={songs.length}
-                                    value={newPositionValue}
-                                    onChange={(e) => setNewPositionValue(e.target.value)}
-                                    autoFocus
-                                    className="modal-input" // Dodamy ten styl niżej
-                                />
+                                <input type="number" min="1" max={songs.length} value={newPositionValue} onChange={(e) => setNewPositionValue(e.target.value)} autoFocus className="modal-input" />
                             </div>
 
                             <div className="delete-modal-actions">
@@ -514,7 +495,6 @@ function CollectionPage() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }

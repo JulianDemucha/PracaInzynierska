@@ -1,7 +1,6 @@
 import React, {useState, useRef, useEffect} from 'react';
 import ReactCrop, {centerCrop, makeAspectCrop} from "react-image-crop";
-import api from "../../context/axiosClient.js";
-import { createAlbum } from '../../services/albumService.js';
+import { createAlbum, addSongToAlbum } from '../../services/albumService.js';
 import { useAuth } from '../../context/useAuth.js';
 import 'react-image-crop/dist/ReactCrop.css';
 import './CreateAlbumModal.css';
@@ -33,7 +32,6 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
     const [imgSrc, setImgSrc] = useState(defaultAvatar);
     const [crop, setCrop] = useState();
     const imgRef = useRef(null);
-    const [albumCoverBlob, setAlbumCoverBlob] = useState(null);
 
     // Wynik kroku 1
     const [createdAlbumId, setCreatedAlbumId] = useState(null);
@@ -64,7 +62,6 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
                 setIsPublic(false);
                 setImgSrc(defaultAvatar);
                 setCrop(undefined);
-                setAlbumCoverBlob(null);
                 setCreatedAlbumId(null);
                 setSongTitle("");
                 setAudioFile(null);
@@ -170,7 +167,6 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
             formData.append('description', albumTitle);
             selectedGenres.forEach(g => formData.append('genre', g));
             formData.append('publiclyVisible', isPublic.toString());
-            setAlbumCoverBlob(blob);
 
             const albumDto = await createAlbum(formData);
             setCreatedAlbumId(albumDto.id);
@@ -203,32 +199,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
             formData.append('audioFile', audioFile);
             formData.append('title', songTitle);
 
-            // Jeśli to tryb edycji (existingAlbumId), nie wysyłamy okładki,
-            // chyba że backend tego bezwzględnie wymaga.
-            // Zazwyczaj przy dodawaniu do istniejącego albumu coverFile jest opcjonalny lub ignorowany.
-            // Jeśli backend wymaga, musielibyśmy pobrać cover z URL, co jest trudne.
-            // Zakładam, że w trybie edycji okładka nie jest potrzebna, bo album ją ma.
-            if (!existingAlbumId && albumCoverBlob) {
-                formData.append('coverFile', albumCoverBlob, "cover.jpg");
-            }
-
-            // W trybie edycji gatunki i publiczność są brane z albumu,
-            // ale jeśli endpoint wymaga, wysyłamy puste lub domyślne.
-            if (!existingAlbumId) {
-                selectedGenres.forEach(g => formData.append('genre', g));
-                formData.append('publiclyVisible', isPublic.toString());
-            }
-
-            // Ważne: endpoint POST /api/albums/{id}/add
-            // W albumService użyjemy tego ID
-
-            // Tutaj logika się zmienia zależnie od tego czy używamy endpointu `createAlbum` (tam piosenki nie szły)
-            // czy `addSongToAlbum`. W poprzednim kodzie używałeś:
-            // await api.post(`albums/${createdAlbumId}/add`, ...)
-
-            await api.post(`albums/${createdAlbumId}/add`, formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+            await addSongToAlbum(createdAlbumId, formData);
 
             setSongTitle("");
             setAudioFile(null);
@@ -310,7 +281,7 @@ function CreateAlbumModal({isOpen, onClose, existingAlbumId = null, onAlbumUpdat
                                         />
                                     </ReactCrop>
                                 </div>
-                                )}
+                            )}
 
                             <label>Gatunek</label>
                             <div className={`genre-picker-container ${showValidation && selectedGenres.length === 0 ? 'error-border' : ''}`}>
