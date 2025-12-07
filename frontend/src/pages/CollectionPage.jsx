@@ -23,7 +23,8 @@ import {
     removeLike,
     removeDislike,
     addSongToFavorites,
-    removeSongFromFavorites
+    removeSongFromFavorites,
+    getSongById
 } from '../services/songService.js';
 
 import CreateAlbumModal from '../components/album/CreateAlbumModal.jsx';
@@ -47,11 +48,13 @@ import editIcon from '../assets/images/edit.png';
 
 import './CollectionPage.css';
 
-function formatTime(seconds) {
-    if (!seconds || isNaN(seconds)) return "0:00";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
+function formatViews(count) {
+    if (!count) return "0";
+    const num = Number(count);
+    if (isNaN(num)) return "0";
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+    return num.toString();
 }
 
 function CollectionPage() {
@@ -113,10 +116,13 @@ function CollectionPage() {
                     const playlistSongsData = await getPlaylistSongs(id);
                     fetchedSongs = playlistSongsData.map(item => {
                         const s = item.song || item;
+                        const views = s.viewCount !== undefined ? s.viewCount : (item.viewCount || 0);
+
                         return {
                             id: s.id,
                             title: s.title,
                             duration: s.duration || 0,
+                            viewCount: views,
                             authorId: s.authorId,
                             authorUsername: s.authorUsername,
                             coverStorageKeyId: s.coverStorageKeyId,
@@ -134,7 +140,7 @@ function CollectionPage() {
                 }
 
             } else {
-                const [albumData, songsData] = await Promise.all([
+                const [albumData, basicSongsList] = await Promise.all([
                     getAlbumById(id),
                     getSongsByAlbumId(id)
                 ]);
@@ -145,16 +151,39 @@ function CollectionPage() {
                     type: 'ALBUM'
                 };
 
-                fetchedSongs = songsData.map(s => ({
-                    ...s,
+                const detailedSongsData = await Promise.all(
+                    basicSongsList.map(async (basicSong) => {
+                        try {
+                            const fullSongDetails = await getSongById(basicSong.id);
+                            return fullSongDetails;
+                        } catch (e) {
+                            console.warn(`Nie udało się pobrać szczegółów dla piosenki ${basicSong.id}`, e);
+                            return basicSong;
+                        }
+                    })
+                );
+
+                fetchedSongs = detailedSongsData.map(s => ({
+                    id: s.id,
+                    title: s.title,
+                    duration: s.duration || 0,
+                    viewCount: s.viewCount || 0,
+                    authorId: s.authorId,
+                    authorUsername: s.authorUsername,
+                    coverStorageKeyId: s.coverStorageKeyId || albumData.coverStorageKeyId,
                     artist: { id: s.authorId, name: s.authorUsername || "Nieznany" },
-                    coverArtUrl: getImageUrl(albumData.coverStorageKeyId),
-                    duration: s.duration || 0
+                    coverArtUrl: getImageUrl(s.coverStorageKeyId || albumData.coverStorageKeyId),
+                    genres: s.genres || [],
+                    position: s.trackNumber || 0,
+                    publiclyVisible: s.publiclyVisible,
+                    albumId: s.albumId
                 }));
             }
 
             setCollection(fetchedCollection);
-            setSongs(fetchedSongs);
+            // Sortowanie po pozycji
+            const sortedSongs = fetchedSongs.sort((a, b) => (a.position || 0) - (b.position || 0));
+            setSongs(sortedSongs);
 
         } catch (err) {
             console.error("Błąd pobierania kolekcji:", err);
@@ -422,7 +451,7 @@ function CollectionPage() {
                     <span className="song-header-track">#</span>
                     <span className="song-header-title">TYTUŁ</span>
                     <span className="song-header-actions"></span>
-                    <span className="song-header-duration">CZAS</span>
+                    <span className="song-header-views">WYŚWIETLENIA</span>
                     <span className="col-spacer"></span>
                 </div>
 
@@ -499,7 +528,7 @@ function CollectionPage() {
                                         <img src={songRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Down" />
                                     </button>
                                 </div>
-                                <span className="song-item-duration">{formatTime(song.duration)}</span>
+                                <span className="song-item-views">{formatViews(song.viewCount)}</span>
                                 <div className="song-context-menu-wrapper">
                                     <ContextMenu options={songMenuOptions} />
                                 </div>

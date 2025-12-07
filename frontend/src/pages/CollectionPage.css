@@ -205,7 +205,7 @@
     justify-self: start;
 }
 
-.song-header-duration {
+.song-header-views {
     justify-self: end;
     margin-right: 10px;
 }
@@ -358,7 +358,7 @@
     opacity: 1;
 }
 
-.song-item-duration {
+.song-item-views {
     text-align: right;
     margin-right: 10px;
     font-variant-numeric: tabular-nums;
@@ -562,7 +562,7 @@
         display: none;
     }
 
-    .song-item-duration {
+    .song-item-views {
         display: none;
     }
 
