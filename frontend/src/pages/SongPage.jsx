@@ -56,13 +56,15 @@ function SongPage() {
         favorites,
         toggleFavorite,
         ratings,
-        rateSong
+        rateSong,
+        viewUpdateTrigger
     } = usePlayer();
 
     useEffect(() => {
         const fetchSongDetails = async () => {
+            if (!song) setLoading(true);
+
             try {
-                setLoading(true);
                 const data = await getSongById(id);
 
                 const mappedSong = {
@@ -75,14 +77,14 @@ function SongPage() {
                 setSong(mappedSong);
             } catch (err) {
                 console.error("Błąd pobierania piosenki:", err);
-                setError("Nie udało się pobrać szczegółów utworu.");
+                if (!song) setError("Nie udało się pobrać szczegółów utworu.");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchSongDetails();
-    }, [id]);
+    }, [id, viewUpdateTrigger]);
 
     const handleSongUpdated = async () => {
         try {
@@ -174,7 +176,7 @@ function SongPage() {
         }
     };
 
-    if (loading) {
+    if (loading && !song) {
         return (
             <div className="song-page song-loading-container">
                 <h2>Ładowanie utworu...</h2>
@@ -208,6 +210,8 @@ function SongPage() {
                         <Link to={`/artist/${song.artist.id}`} className="song-artist">{song.artist.name}</Link>
                         <span>•</span>
                         <span className="song-date">{new Date(song.createdAt).getFullYear()}</span>
+                        <span>•</span>
+                        <span className="song-views">{song.viewCount || 0} wyświetleń</span>
                     </div>
                     <div className="genre-tags">
                         {song.genres && song.genres.map(genre => (
@@ -229,32 +233,34 @@ function SongPage() {
             </header>
 
             <section className="song-controls">
-                <div className="controls-row-1">
+                <div className="controls-group-main">
                     <button className="song-play-button" onClick={handlePlayPause}>
                         <img src={isThisSongPlaying ? pauseIcon : playIcon} alt={isThisSongPlaying ? "Pauza" : "Odtwórz"} />
                     </button>
 
-                    <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={handleFavoriteClick}>
-                        <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
-                    </button>
+                    <div className="main-actions-wrapper">
+                        <button className={`song-control-button ${isFavorite ? 'active' : ''}`} onClick={handleFavoriteClick}>
+                            <img src={isFavorite ? heartIconOn : heartIconOff} alt="Ulubione" />
+                        </button>
 
-                    <div className="song-rating">
-                        <button
-                            className={`song-rating-button ${currentRating === 'like' ? 'active' : ''}`}
-                            onClick={() => handleRatingClick('like')}
-                        >
-                            <img src={currentRating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
-                        </button>
-                        <button
-                            className={`song-rating-button ${currentRating === 'dislike' ? 'active' : ''}`}
-                            onClick={() => handleRatingClick('dislike')}
-                        >
-                            <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
-                        </button>
+                        <div className="song-rating">
+                            <button
+                                className={`song-rating-button ${currentRating === 'like' ? 'active' : ''}`}
+                                onClick={() => handleRatingClick('like')}
+                            >
+                                <img src={currentRating === 'like' ? likeIconOn : likeIcon} alt="Podoba mi się" />
+                            </button>
+                            <button
+                                className={`song-rating-button ${currentRating === 'dislike' ? 'active' : ''}`}
+                                onClick={() => handleRatingClick('dislike')}
+                            >
+                                <img src={currentRating === 'dislike' ? dislikeIconOn : dislikeIcon} alt="Nie podoba mi się" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="controls-row-2">
+                <div className="controls-group-secondary">
                     <button className={`song-control-button ${isQueuedAnim ? 'active' : ''}`} onClick={handleAddToQueue}>
                         <img src={isQueuedAnim ? queueIconOn : queueIcon} alt="Dodaj do kolejki" />
                     </button>
@@ -264,7 +270,7 @@ function SongPage() {
                     </button>
 
                     {isOwner && (
-                        <>
+                        <div className="owner-actions">
                             <button
                                 className="song-control-button icon-btn"
                                 onClick={() => setIsEditModalOpen(true)}
@@ -276,7 +282,7 @@ function SongPage() {
                             <button className="delete-song-button icon-btn" onClick={handleDeleteClick} title="Usuń utwór">
                                 <img src={binIcon} alt="Usuń" />
                             </button>
-                        </>
+                        </div>
                     )}
                 </div>
             </section>

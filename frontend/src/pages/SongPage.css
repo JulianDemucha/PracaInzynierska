@@ -58,6 +58,7 @@
     color: #b3b3b3;
     font-size: 0.9rem;
     font-weight: 600;
+    flex-wrap: wrap;
 }
 
 .song-artist {
@@ -111,15 +112,28 @@
     align-items: center;
     gap: 2rem;
     margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
-.controls-row-1 {
+.controls-group-main {
     display: flex;
     align-items: center;
     gap: 1.5rem;
 }
 
-.controls-row-2 {
+.main-actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.controls-group-secondary {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.owner-actions {
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -355,7 +369,7 @@
         align-items: center;
     }
 
-    .controls-row-1 {
+    .controls-group-main {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -363,7 +377,7 @@
         width: 100%;
     }
 
-    .controls-row-2 {
+    .controls-group-secondary {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -396,7 +410,7 @@
         height: 160px;
     }
 
-    .controls-row-1, .controls-row-2 {
+    .controls-group-main, .controls-group-secondary {
         gap: 1rem;
     }
 }

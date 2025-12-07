@@ -70,3 +70,8 @@ export const removeSongFromFavorites = async (songId) => {
     const response = await api.delete(`/songs/${songId}/favourite`);
     return response.data;
 };
+
+export const registerView = async (songId) => {
+    const response = await api.post(`/songs/${songId}/registerView`);
+    return response.data;
+};

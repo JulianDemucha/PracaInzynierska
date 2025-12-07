@@ -1,8 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PlayerContext } from './PlayerContext.js';
+import { registerView } from '../services/songService.js';
 
 export function PlayerProvider({ children }) {
     const audioRef = useRef(null);
+
+    const accumulatedTimeRef = useRef(0);
+    const lastTimeRef = useRef(0);
+    const viewRegisteredRef = useRef(false);
 
     const [currentSong, setCurrentSong] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -11,6 +16,8 @@ export function PlayerProvider({ children }) {
 
     const [favorites, setFavorites] = useState({});
     const [ratings, setRatings] = useState({});
+
+    const [viewUpdateTrigger, setViewUpdateTrigger] = useState(0);
 
     const [volume, setVolume] = useState(0.5);
     const [previousVolume, setPreviousVolume] = useState(0.8);
@@ -26,32 +33,81 @@ export function PlayerProvider({ children }) {
         const audio = audioRef.current;
         if (!audio) return;
 
-        const onTimeUpdate = () => setCurrentTime(audio.currentTime || 0);
+        const onTimeUpdate = () => {
+            const now = audio.currentTime || 0;
+            setCurrentTime(now);
+
+            if (now < 0.5 && lastTimeRef.current > 1.0) {
+                accumulatedTimeRef.current = 0;
+                viewRegisteredRef.current = false;
+            }
+
+            if (currentSong && isFinite(audio.duration) && audio.duration > 0) {
+                const timeDiff = now - lastTimeRef.current;
+
+                if (timeDiff > 0 && timeDiff < 1.5) {
+                    if (!viewRegisteredRef.current) {
+                        accumulatedTimeRef.current += timeDiff;
+                    }
+                }
+
+                lastTimeRef.current = now;
+
+                const totalDuration = audio.duration;
+                let threshold = 0;
+
+                if (totalDuration >= 60) {
+                    threshold = 30;
+                } else {
+                    threshold = totalDuration * 0.40;
+                }
+
+                if (!viewRegisteredRef.current && accumulatedTimeRef.current >= threshold) {
+                    registerView(currentSong.id)
+                        .then(() => {
+                            setViewUpdateTrigger(prev => prev + 1);
+                        })
+                        .catch(err => console.error("Błąd rejestracji wyświetlenia:", err));
+
+                    viewRegisteredRef.current = true;
+                }
+            }
+        };
 
         const onLoadedMetadata = () => {
-            setDuration(isFinite(audio.duration) ? audio.duration : 0);
+            const dur = isFinite(audio.duration) ? audio.duration : 0;
+            setDuration(dur);
             setCurrentTime(audio.currentTime || 0);
         };
 
         const onEnded = () => {
             if (isRepeatOneOn) {
                 audio.currentTime = 0;
+                accumulatedTimeRef.current = 0;
+                viewRegisteredRef.current = false;
+                lastTimeRef.current = 0;
                 audio.play();
                 return;
             }
             playNext();
         };
 
+        const onPlay = () => {
+            lastTimeRef.current = audio.currentTime;
+        };
+
         audio.addEventListener('timeupdate', onTimeUpdate);
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
         audio.addEventListener('ended', onEnded);
+        audio.addEventListener('play', onPlay);
 
         return () => {
             audio.removeEventListener('timeupdate', onTimeUpdate);
             audio.removeEventListener('loadedmetadata', onLoadedMetadata);
             audio.removeEventListener('ended', onEnded);
+            audio.removeEventListener('play', onPlay);
         };
-    }, [isRepeatOneOn]);
+    }, [currentSong, isRepeatOneOn]);
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -62,6 +118,10 @@ export function PlayerProvider({ children }) {
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
+
+        accumulatedTimeRef.current = 0;
+        viewRegisteredRef.current = false;
+        lastTimeRef.current = 0;
 
         if (!currentSong) {
             audio.pause();
@@ -183,6 +243,7 @@ export function PlayerProvider({ children }) {
         if (!audio) return;
         audio.currentTime = Math.max(0, Math.min(seconds, audio.duration || 0));
         setCurrentTime(audio.currentTime);
+        lastTimeRef.current = audio.currentTime;
     };
 
     const toggleFavorite = (songId) => {
@@ -259,6 +320,10 @@ export function PlayerProvider({ children }) {
         isRepeatOneOn,
         toggleShuffle,
         toggleRepeat,
+        viewUpdateTrigger,
+        removeFromQueue: (index) => {
+            setQueue(q => q.filter((_, i) => i !== index));
+        }
     };
 
     return (
