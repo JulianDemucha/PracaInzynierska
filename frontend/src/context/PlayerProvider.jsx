@@ -54,20 +54,12 @@ export function PlayerProvider({ children }) {
                 lastTimeRef.current = now;
 
                 const totalDuration = audio.duration;
-                let threshold = 0;
-
-                if (totalDuration >= 60) {
-                    threshold = 30;
-                } else {
-                    threshold = totalDuration * 0.40;
-                }
+                let threshold = totalDuration >= 60 ? 30 : totalDuration * 0.40;
 
                 if (!viewRegisteredRef.current && accumulatedTimeRef.current >= threshold) {
                     registerView(currentSong.id)
-                        .then(() => {
-                            setViewUpdateTrigger(prev => prev + 1);
-                        })
-                        .catch(err => console.error("Błąd rejestracji wyświetlenia:", err));
+                        .then(() => setViewUpdateTrigger(prev => prev + 1))
+                        .catch(err => console.error(err));
 
                     viewRegisteredRef.current = true;
                 }
@@ -75,8 +67,7 @@ export function PlayerProvider({ children }) {
         };
 
         const onLoadedMetadata = () => {
-            const dur = isFinite(audio.duration) ? audio.duration : 0;
-            setDuration(dur);
+            setDuration(isFinite(audio.duration) ? audio.duration : 0);
             setCurrentTime(audio.currentTime || 0);
         };
 
@@ -92,9 +83,7 @@ export function PlayerProvider({ children }) {
             playNext();
         };
 
-        const onPlay = () => {
-            lastTimeRef.current = audio.currentTime;
-        };
+        const onPlay = () => { lastTimeRef.current = audio.currentTime; };
 
         audio.addEventListener('timeupdate', onTimeUpdate);
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
@@ -110,9 +99,7 @@ export function PlayerProvider({ children }) {
     }, [currentSong, isRepeatOneOn]);
 
     useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        audio.volume = Number(volume);
+        if (audioRef.current) audioRef.current.volume = Number(volume);
     }, [volume]);
 
     useEffect(() => {
@@ -133,21 +120,12 @@ export function PlayerProvider({ children }) {
         }
 
         const src = `/api/songs/stream/${currentSong.id}`;
-
         if (!audio.src || !audio.src.endsWith(String(currentSong.id))) {
             audio.src = src;
             audio.load();
         }
 
-        const tryPlay = async () => {
-            try {
-                await audio.play();
-                setIsPlaying(true);
-            } catch {
-                setIsPlaying(false);
-            }
-        };
-        tryPlay();
+        audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }, [currentSong]);
 
     const playSong = (song, songList = null) => {
@@ -162,10 +140,9 @@ export function PlayerProvider({ children }) {
             }
         }
 
-        const audio = audioRef.current;
         if (currentSong && song.id === currentSong.id) {
-            if (audio) {
-                audio.play()
+            if (audioRef.current) {
+                audioRef.current.play()
                     .then(() => setIsPlaying(true))
                     .catch(() => setIsPlaying(false));
             } else {
@@ -174,18 +151,12 @@ export function PlayerProvider({ children }) {
             return;
         }
 
-        if (currentSong) {
-            setHistory(h => [...h, currentSong]);
-        }
-
+        if (currentSong) setHistory(h => [...h, currentSong]);
         setCurrentSong(song);
     };
 
     const pause = () => {
-        const audio = audioRef.current;
-        if (audio) {
-            audio.pause();
-        }
+        if (audioRef.current) audioRef.current.pause();
         setIsPlaying(false);
     };
 
@@ -225,39 +196,35 @@ export function PlayerProvider({ children }) {
     };
 
     const playPrev = () => {
-        if (history.length === 0) {
-            const audio = audioRef.current;
-            if (audio) {
-                audio.currentTime = 0;
-            }
+        if (audioRef.current && audioRef.current.currentTime > 3) {
+            audioRef.current.currentTime = 0;
             return;
         }
-        const prev = history[history.length - 1];
-        setHistory(h => h.slice(0, -1));
-        setQueue(q => [currentSong, ...q].filter(Boolean));
-        setCurrentSong(prev);
+
+        if (history.length > 0) {
+            const prev = history[history.length - 1];
+            setHistory(h => h.slice(0, -1));
+            if (currentSong) setQueue(q => [currentSong, ...q]);
+            setCurrentSong(prev);
+        } else {
+            if (audioRef.current) audioRef.current.currentTime = 0;
+        }
     };
 
     const seekTo = (seconds) => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        audio.currentTime = Math.max(0, Math.min(seconds, audio.duration || 0));
-        setCurrentTime(audio.currentTime);
-        lastTimeRef.current = audio.currentTime;
+        if (!audioRef.current) return;
+        audioRef.current.currentTime = Math.max(0, Math.min(seconds, audioRef.current.duration || 0));
+        setCurrentTime(audioRef.current.currentTime);
+        lastTimeRef.current = audioRef.current.currentTime;
     };
 
-    const toggleFavorite = (songId) => {
-        setFavorites(prev => ({ ...prev, [songId]: !prev[songId] }));
-    };
-
-    const addToQueue = (song) => {
-        setQueue(prevQueue => [...prevQueue, song]);
-    };
+    const toggleFavorite = (songId) => setFavorites(p => ({ ...p, [songId]: !p[songId] }));
+    const addToQueue = (song) => setQueue(p => [...p, song]);
 
     const rateSong = (songId, voteType) => {
         setRatings(prev => {
-            const currentRating = prev[songId];
-            if (currentRating === voteType) {
+            const current = prev[songId];
+            if (current === voteType) {
                 const newState = { ...prev };
                 delete newState[songId];
                 return newState;
@@ -269,70 +236,36 @@ export function PlayerProvider({ children }) {
     const toggleShuffle = () => setIsShuffleOn(s => !s);
 
     const toggleRepeat = () => {
-        if (!isRepeatOn && !isRepeatOneOn) {
-            setIsRepeatOn(true);
-            setIsRepeatOneOn(false);
-        } else if (isRepeatOn && !isRepeatOneOn) {
-            setIsRepeatOneOn(true);
-            setIsRepeatOn(false);
-        } else {
-            setIsRepeatOn(false);
-            setIsRepeatOneOn(false);
-        }
+        if (!isRepeatOn && !isRepeatOneOn) { setIsRepeatOn(true); setIsRepeatOneOn(false); }
+        else if (isRepeatOn && !isRepeatOneOn) { setIsRepeatOneOn(true); setIsRepeatOn(false); }
+        else { setIsRepeatOn(false); setIsRepeatOneOn(false); }
     };
 
     const toggleMute = () => {
-        if (volume > 0) {
-            setPreviousVolume(volume);
-            setVolume(0);
-        } else {
-            setVolume(previousVolume || 0.5);
-        }
+        if (volume > 0) { setPreviousVolume(volume); setVolume(0); }
+        else { setVolume(previousVolume || 0.5); }
     };
 
-    const setVolumePercent = (percent) => {
-        const v = Math.max(0, Math.min(100, Number(percent)));
+    const setVolumePercent = (pct) => {
+        const v = Math.max(0, Math.min(100, Number(pct)));
         setVolume(v / 100);
         setPreviousVolume(v / 100);
     };
 
     const value = {
-        currentSong,
-        isPlaying,
-        queue,
-        playSong,
-        pause,
-        addToQueue,
-        favorites,
-        toggleFavorite,
-        ratings,
-        rateSong,
-        playNext,
-        playPrev,
-        seekTo,
-        setVolumePercent,
-        toggleMute,
-        currentTime,
-        duration,
-        uiVolumePercent: Math.round(volume * 100),
-        isShuffleOn,
-        isRepeatOn,
-        isRepeatOneOn,
-        toggleShuffle,
-        toggleRepeat,
+        currentSong, isPlaying, queue, history,
+        playSong, pause, playNext, playPrev, addToQueue,
+        seekTo, setVolumePercent, toggleMute, toggleShuffle, toggleRepeat,
+        favorites, toggleFavorite, ratings, rateSong,
+        currentTime, duration, uiVolumePercent: Math.round(volume * 100),
+        isShuffleOn, isRepeatOn, isRepeatOneOn,
         viewUpdateTrigger,
-        removeFromQueue: (index) => {
-            setQueue(q => q.filter((_, i) => i !== index));
-        }
+        removeFromQueue: (index) => setQueue(q => q.filter((_, i) => i !== index))
     };
 
     return (
         <PlayerContext.Provider value={value}>
-            <audio
-                ref={audioRef}
-                crossOrigin="use-credentials"
-                style={{ display: 'none' }}
-            />
+            <audio ref={audioRef} crossOrigin="use-credentials" style={{ display: 'none' }} />
             {children}
         </PlayerContext.Provider>
     );
