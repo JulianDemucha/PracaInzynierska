@@ -19,8 +19,8 @@ public record SongDto(
         boolean publiclyVisible,
         String createdAt,
         Long coverStorageKeyId,
-        int likesCount,
-        int dislikesCount,
+        Integer likesCount,
+        Integer dislikesCount,
         Long viewCount
 ) {
 

@@ -20,8 +20,9 @@ public record PlaylistSongViewDto(
         String createdAt,
         Long coverStorageKeyId,
         int positionInPlaylist,
-        int likesCount,
-        int dislikesCount
+        Integer likesCount,
+        Integer dislikesCount,
+        Long viewCount
 ) {
 
     public static PlaylistSongViewDto toDto(PlaylistSongProjection psp) {
@@ -36,8 +37,9 @@ public record PlaylistSongViewDto(
                 psp.getCreatedAt().toString(),
                 psp.getCoverStorageKeyId(),
                 psp.getPosition(),
-                psp.getLikesCount(),
-                psp.getDislikesCount()
+                psp.getLikesCount() == null ? 0 : psp.getLikesCount(),
+                psp.getDislikesCount() == null ? 0 : psp.getLikesCount(),
+                psp.getViewCount()
         );
     }
 
@@ -58,7 +60,8 @@ public record PlaylistSongViewDto(
                 song.getCoverStorageKey().getId(),
                 playlistEntry.getPosition(),
                 song.getLikesCount(),
-                song.getDislikesCount()
+                song.getDislikesCount(),
+                song.getViewCount()
         );
     }
 

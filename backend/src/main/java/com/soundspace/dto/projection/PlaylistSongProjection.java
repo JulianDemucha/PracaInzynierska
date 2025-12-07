@@ -16,6 +16,7 @@ public interface PlaylistSongProjection {
     Integer getPosition();
     Integer getLikesCount();
     Integer getDislikesCount();
+    Long getViewCount();
 
     default List<String> getGenres() {
         String raw = getGenresStr();
