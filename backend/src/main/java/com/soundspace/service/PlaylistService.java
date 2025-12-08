@@ -1,6 +1,6 @@
 package com.soundspace.service;
 
-import com.soundspace.dto.AlbumDto;
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.PlaylistSongViewDto;
 import com.soundspace.dto.ProcessedImage;
@@ -36,15 +36,9 @@ public class PlaylistService {
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
     private final SongCoreService songCoreService;
-
-    private static final String COVER_TARGET_DIRECTORY = "playlists/covers";
-    private static final String COVER_TARGET_EXTENSION = "jpg";
-    private static final int COVER_WIDTH = 1200;
-    private static final int COVER_HEIGHT = 1200;
-    private static final double COVER_QUALITY = 0.85;
-    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
     private final SongRepository songRepository;
     private final PlaylistEntryRepository playlistEntryRepository;
+    private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
 
 
     public List<PlaylistDto> getAllPlaylists(UserDetails userDetails) {
@@ -108,7 +102,7 @@ public class PlaylistService {
         try {
             MultipartFile coverFile = request.coverFile();
             if(coverFile == null || coverFile.isEmpty()){
-                coverStorageKeyEntity = storageKeyRepository.getReferenceById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID);
+                coverStorageKeyEntity = storageKeyRepository.getReferenceById(coverConfig.defaultCoverId());
 
             } else {
                 // resize, convert i zapis cover image do temp file
@@ -226,7 +220,7 @@ public class PlaylistService {
         playlistRepository.flush();
 
         try {
-            if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
                 } catch (Exception ex) {
@@ -265,11 +259,11 @@ public class PlaylistService {
             updatedPlaylist.setCoverStorageKey(imageService.processAndSaveNewImage(
                     coverFile,
                     user,
-                    COVER_WIDTH,
-                    COVER_HEIGHT,
-                    COVER_QUALITY,
-                    COVER_TARGET_EXTENSION,
-                    COVER_TARGET_DIRECTORY,
+                    coverConfig.width(),
+                    coverConfig.height(),
+                    coverConfig.quality(),
+                    coverConfig.targetExtension(),
+                    coverConfig.playlistDirectory(),
                     "cover"
             ));
         }
@@ -335,13 +329,13 @@ public class PlaylistService {
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
         ProcessedImage processedCover = imageService.resizeImageAndConvert(
                 coverFile,
-                COVER_WIDTH,
-                COVER_HEIGHT,
-                COVER_TARGET_EXTENSION,
-                COVER_QUALITY
+                coverConfig.width(),
+                coverConfig.height(),
+                coverConfig.targetExtension(),
+                coverConfig.quality()
         );
 
-        Path tmpCoverPath = Files.createTempFile("playlist-cover-", "." + COVER_TARGET_EXTENSION);
+        Path tmpCoverPath = Files.createTempFile("playlist-cover-", "." + coverConfig.targetExtension());
         Files.write(tmpCoverPath, processedCover.bytes());
         return tmpCoverPath;
     }
@@ -349,13 +343,13 @@ public class PlaylistService {
     //  zapis pliku z temp file, utworzenie i zapisanie opdpowiadajacej plikowi encji StorageKey
     private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
         long coverFileSize = Files.size(tmpCoverPath);
-        String mimeType = "image/" + COVER_TARGET_EXTENSION;
+        String mimeType = "image/" + coverConfig.targetExtension();
 
         String coverStorageKeyString = storageService.saveFromPath(
                 tmpCoverPath,
                 appUser.getId(),
-                COVER_TARGET_EXTENSION,
-                COVER_TARGET_DIRECTORY
+                coverConfig.targetExtension(),
+                coverConfig.playlistDirectory()
         );
         log.info("Zapisano okładkę playlisty: key={}", coverStorageKeyString);
 

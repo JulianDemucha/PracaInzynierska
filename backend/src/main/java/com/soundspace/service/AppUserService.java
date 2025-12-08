@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.AppUserDto;
 import com.soundspace.entity.*;
 import com.soundspace.enums.Sex;
@@ -34,19 +35,13 @@ public class AppUserService {
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    private static final Long DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID = 6767L;
-    private static final String AVATARS_TARGET_DIRECTORY = "users/avatars";
-    private static final String AVATAR_TARGET_EXTENSION = "jpg";
-    private static final int AVATAR_WIDTH = 600;
-    private static final int AVATAR_HEIGHT = 600;
-    private static final double AVATAR_QUALITY = 0.80;
     private final AlbumRepository albumRepository;
     private final SongRepository songRepository;
     private final PlaylistEntryRepository playlistEntryRepository;
     private final PlaylistRepository playlistRepository;
     private final SongReactionRepository songReactionRepository;
     private final SongViewRepository songViewRepository;
+    private final ApplicationConfigProperties.MediaConfig.AvatarConfig avatarConfig;
 
     public AppUserDto getAppUser(Long userId) {
         return appUserRepository.findById(userId).map(AppUserDto::toDto).orElseThrow();
@@ -200,14 +195,14 @@ public class AppUserService {
 
         try {
             // resize/convert -> ProcessedImage
-            var processed = imageService.resizeImageAndConvert(avatar, AVATAR_WIDTH, AVATAR_HEIGHT, AVATAR_TARGET_EXTENSION, AVATAR_QUALITY);
+            var processed = imageService.resizeImageAndConvert(avatar, avatarConfig.width(), avatarConfig.height(), avatarConfig.targetExtension(), avatarConfig.quality());
 
             // zapis do temp file
-            tmpAvatar = Files.createTempFile("avatar-", "." + AVATAR_TARGET_EXTENSION);
+            tmpAvatar = Files.createTempFile("avatar-", "." + avatarConfig.targetExtension());
             Files.write(tmpAvatar, processed.bytes());
 
             // zapis do storage
-            String storageKey = storageService.saveFromPath(tmpAvatar, updatedUser.getId(), AVATAR_TARGET_EXTENSION, AVATARS_TARGET_DIRECTORY);
+            String storageKey = storageService.saveFromPath(tmpAvatar, updatedUser.getId(), avatarConfig.targetExtension(), avatarConfig.directory());
             log.info("Zapisano avatar do storage: {}", storageKey);
 
             // zapis encji StorageKey
@@ -244,7 +239,7 @@ public class AppUserService {
 
     private void cleanUpOldAvatar(StorageKey previous) {
         // usuwanie poprzedniego avatara jezeli to nie devault
-        if (previous != null && !previous.getId().equals(DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID)) {
+        if (previous != null && !previous.getId().equals(avatarConfig.defaultAvatarId())) {
             try {
                 storageService.delete(previous.getKey());
             } catch (Exception ex) {

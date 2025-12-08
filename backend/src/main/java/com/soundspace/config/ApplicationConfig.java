@@ -52,4 +52,35 @@ public class ApplicationConfig {
         return authProvider;
     }
 
+    @Bean
+    public ApplicationConfigProperties.JwtConfig jwtConfig(ApplicationConfigProperties config) {
+        return config.jwt();
+    }
+
+    @Bean
+    public ApplicationConfigProperties.StorageConfig storageConfig(ApplicationConfigProperties config) {
+        return config.storage();
+    }
+
+    @Bean
+    public ApplicationConfigProperties.ViewsConfig viewsConfig(ApplicationConfigProperties config) {
+        return config.views();
+    }
+
+    @Bean
+    public ApplicationConfigProperties.MediaConfig.AvatarConfig avatarConfig(ApplicationConfigProperties config) {
+        return config.media().avatar();
+    }
+
+    @Bean
+    public ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig(ApplicationConfigProperties config) {
+        return config.media().cover();
+    }
+
+    @Bean
+    public ApplicationConfigProperties.MediaConfig.AudioConfig audioConfig(ApplicationConfigProperties config) {
+        return config.media().audio();
+    }
+
+
 }

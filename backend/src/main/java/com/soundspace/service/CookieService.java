@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.RefreshTokenCookieDto;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -7,42 +8,39 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
+//todo zrobic CookieConfig, gdzie w application.yaml bedzie pobierac dane z .env (prod mialoby secure na true itp.)
 @Service
 @RequiredArgsConstructor
 public class CookieService {
+    private final ApplicationConfigProperties.JwtConfig jwtConfig;
 
-    private final RefreshTokenService refreshTokenService;
-
-    public ResponseCookie createJwtCookie(String jwt, int maxAgeSeconds) {
+    public ResponseCookie createJwtCookie(String jwt) {
         return ResponseCookie.from("jwt", jwt)
                 .httpOnly(true)
                 .secure(false) //http
                 .path("/")
-                .maxAge(maxAgeSeconds)
+                .maxAge(jwtConfig.expirationSeconds())
                 .sameSite("Lax")  //todo proxy on front (vite config)
                 .build();
     }
 
-    public ResponseCookie createRefreshCookie(String refreshToken, int maxAgeSeconds) {
+    public ResponseCookie createRefreshCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(false) //http
                 .path("/")
-                .maxAge(maxAgeSeconds)
+                .maxAge(jwtConfig.refreshExpirationSeconds())
                 .sameSite("Strict")  //todo proxy on front (vite config)
                 .build();
     }
 
-    public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response, int jwtMaxAgeSeconds, int refreshTokenMaxAgeSeconds) {
+    public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response) {
 
         response.addHeader(HttpHeaders.SET_COOKIE,
-                createJwtCookie(jwt, jwtMaxAgeSeconds)
-                        .toString());
+                createJwtCookie(jwt).toString());
 
         response.addHeader(HttpHeaders.SET_COOKIE,
-                createRefreshCookie(refreshToken, refreshTokenMaxAgeSeconds)
-                        .toString());
-
+                createRefreshCookie(refreshToken).toString());
 
 
     }
@@ -50,12 +48,11 @@ public class CookieService {
     // UZYWAC TYLKO W RAZIE REFRESHU REFRESHCOOKIE, NIE TWORZENIU NOWEGO, INACZEJ JWT == NULL
     public void setJwtAndRefreshCookie(RefreshTokenCookieDto refreshTokenCookieDto, HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE,
-               createJwtCookie(refreshTokenCookieDto.getJwt(),
-                                60 * 60 * 24 /* 1h */)
+                createJwtCookie(refreshTokenCookieDto.getJwt())
                         .toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, createRefreshCookie(refreshTokenCookieDto.getRefreshToken(),
-                        60 * 60 * 24 * 30 /* 24h */)
-                .toString());
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                createRefreshCookie(refreshTokenCookieDto.getRefreshToken())
+                        .toString());
     }
 
 

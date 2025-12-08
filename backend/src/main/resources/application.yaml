@@ -22,8 +22,47 @@ spring:
       max-request-size: 100MB
 
 app:
+  jwt:
+    secret: ${JWT_SECRET}
+    # czas zycia jwt
+    expiration-seconds: 3600 # 1h
+    # czas zycia refreshTokena
+    refresh-expiration-seconds: 2592000 # 30 dni
+
   storage:
     root: ./data
+
+  views:
+    # co ile dany uzytkownik (userId, ipv6) moze dodac wyswietlenie do piosenki
+    cooldown-seconds: 900 # 15 minut
+    # co ile bufor wyswietlen wysyla zapytanie ze zgromadzonymi wyswietleniami = 20000ms = 20 sekund
+    buffer-flush-rate-ms: 20000 # 20 sekund
+
+  media:
+
+    avatar:
+      target-extension: jpg
+      width: 600
+      height: 600
+      quality: 0.80
+      directory: users/avatars
+      default-avatar-id: 6767
+
+    cover:
+      target-extension: jpg
+      width: 1200
+      height: 1200
+      quality: 0.85
+      default-cover-id: 6767
+      album-directory: albums/covers
+      playlist-directory: playlists/covers
+      song-directory: songs/covers
+
+    audio:
+      target-extension: m4a
+      target-directory: songs/audio
+      default-audio-id: 5000
+      upload-max-bytes: 104857600 #100MB
 
 server:
   port: ${SERVER_PORT}

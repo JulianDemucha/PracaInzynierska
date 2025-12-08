@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
@@ -43,14 +44,7 @@ public class AlbumService {
     private final StorageService storageService;
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
-
-    private static final String COVER_TARGET_DIRECTORY = "albums/covers";
-    private static final String COVER_TARGET_EXTENSION = "jpg";
-    private static final int COVER_WIDTH = 1200;
-    private static final int COVER_HEIGHT = 1200;
-    private static final double COVER_QUALITY = 0.85;
-    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
-
+    private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
     
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
@@ -151,7 +145,7 @@ public class AlbumService {
         try {
             MultipartFile coverFile = request.getCoverFile();
             if (coverFile == null || coverFile.isEmpty()) {
-                coverStorageKeyEntity = storageKeyRepository.getReferenceById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID);
+                coverStorageKeyEntity = storageKeyRepository.getReferenceById(coverConfig.defaultCoverId());
 
             } else {
                 tmpCoverPath = processCoverAndSaveToTemp(coverFile);
@@ -225,7 +219,7 @@ public class AlbumService {
         albumRepository.flush();
 
         try {
-            if (coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
                 } catch (Exception ex) {
@@ -265,11 +259,11 @@ public class AlbumService {
             updatedAlbum.setCoverStorageKey(imageService.processAndSaveNewImage(
                     coverFile,
                     user,
-                    COVER_WIDTH,
-                    COVER_HEIGHT,
-                    COVER_QUALITY,
-                    COVER_TARGET_EXTENSION,
-                    COVER_TARGET_DIRECTORY,
+                    coverConfig.width(),
+                    coverConfig.height(),
+                    coverConfig.quality(),
+                    coverConfig.targetExtension(),
+                    coverConfig.albumDirectory(),
                     "cover"
             ));
         }
@@ -298,9 +292,9 @@ public class AlbumService {
 
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
         ProcessedImage processedCover =
-                imageService.resizeImageAndConvert(coverFile, COVER_WIDTH, COVER_HEIGHT, COVER_TARGET_EXTENSION, COVER_QUALITY);
+                imageService.resizeImageAndConvert(coverFile, coverConfig.width(), coverConfig.height(), coverConfig.targetExtension(), coverConfig.quality());
 
-        Path tmpCoverPath = Files.createTempFile("album-cover-", "." + COVER_TARGET_EXTENSION);
+        Path tmpCoverPath = Files.createTempFile("album-cover-", "." + coverConfig.targetExtension());
         Files.write(tmpCoverPath, processedCover.bytes());
         return tmpCoverPath;
     }
@@ -308,14 +302,14 @@ public class AlbumService {
     private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
         long coverFileSize = Files.size(tmpCoverPath);
         // Pobieramy typ MIME (zakładamy image/jpeg po konwersji, ale można użyć Tiki dla pewności)
-        String mimeType = "image/" + COVER_TARGET_EXTENSION;
+        String mimeType = "image/" + coverConfig.targetExtension();
 
         // Zapis fizyczny do storage
         String coverStorageKeyString = storageService.saveFromPath(
                 tmpCoverPath,
                 appUser.getId(),
-                COVER_TARGET_EXTENSION,
-                COVER_TARGET_DIRECTORY
+                coverConfig.targetExtension(),
+                coverConfig.albumDirectory()
         );
         log.info("Zapisano okładkę albumu: key={}", coverStorageKeyString);
 

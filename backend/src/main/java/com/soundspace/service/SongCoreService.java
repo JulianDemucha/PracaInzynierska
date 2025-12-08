@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.dto.request.SongUpdateRequest;
@@ -30,14 +31,9 @@ public class SongCoreService {
     private final StorageService storageService;
     private final StorageKeyRepository storageKeyRepository;
     private final ImageService imageService;
+    private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
+    private final ApplicationConfigProperties.MediaConfig.AudioConfig audioConfig;
 
-    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
-    private static final Long DEFAULT_AUDIO_STORAGE_KEY_ID = 5000L;
-    private static final String COVER_TARGET_DIRECTORY = "songs/covers";
-    private static final String COVER_TARGET_EXTENSION = "jpg";
-    private static final int COVER_WIDTH = 1200;
-    private static final int COVER_HEIGHT = 1200;
-    private static final double COVER_QUALITY = 0.80;
 
     public Song getSongById(Long id) {
         return songRepository.findById(id).orElseThrow(
@@ -130,7 +126,7 @@ public class SongCoreService {
         // storageService moze rzucic IOException lub StorageException
         try {
             StorageKey audioKey = song.getAudioStorageKey();
-            if (audioKey != null && !audioKey.getId().equals(DEFAULT_AUDIO_STORAGE_KEY_ID) && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
+            if (audioKey != null && !audioKey.getId().equals(audioConfig.defaultAudioId()) && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
                 try {
                     storageService.delete(audioKey.getKey());
                 } catch (Exception ex) {
@@ -146,7 +142,7 @@ public class SongCoreService {
             }
 
             StorageKey coverKey = song.getCoverStorageKey();
-            if (song.getAlbum() == null && coverKey != null && !coverKey.getId().equals(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (song.getAlbum() == null && coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
                 try {
                     storageService.delete(coverKey.getKey());
                 } catch (Exception ex) {
@@ -184,11 +180,11 @@ public class SongCoreService {
             updatedSong.setCoverStorageKey(imageService.processAndSaveNewImage(
                     coverFile,
                     user,
-                    COVER_WIDTH,
-                    COVER_HEIGHT,
-                    COVER_QUALITY,
-                    COVER_TARGET_EXTENSION,
-                    COVER_TARGET_DIRECTORY,
+                    coverConfig.width(),
+                    coverConfig.height(),
+                    coverConfig.quality(),
+                    coverConfig.targetExtension(),
+                    coverConfig.songDirectory(),
                     "cover"
             ));
         }

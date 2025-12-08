@@ -30,6 +30,8 @@ import java.util.Set;
 public class ImageService {
 
     private final Tika tika;
+    private final StorageService storageService;
+    private final StorageKeyRepository storageKeyRepository;
 
     private static final int MAX_BYTES = 100 * 1024 * 1024;
 
@@ -44,8 +46,7 @@ public class ImageService {
             "webp", "image/webp",
             "avif", "image/avif"
     );
-    private final StorageService storageService;
-    private final StorageKeyRepository storageKeyRepository;
+
 
 
     public ProcessedImage resizeImageAndConvert(MultipartFile imageFile, int width, int height, String outputFormat, double quality) {

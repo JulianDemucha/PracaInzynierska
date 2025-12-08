@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.request.AlbumSongUploadRequest;
@@ -39,13 +40,8 @@ public class SongUploadService {
     private final Tika tika;
     private final ImageService imageService;
     private final AlbumService albumService;
-
-    private static final int MAX_BYTES = 100 * 1024 * 1024; // 100MB
-    private static final String SONGS_TARGET_DIRECTORY = "songs/audio";
-    private static final String COVERS_TARGET_DIRECTORY = "songs/covers";
-    private static final String TARGET_AUDIO_EXTENSION = "m4a"; // service wpuszcza tylko .m4a
-    private static final String TARGET_COVER_EXTENSION = "jpg"; // jest konwersja
-    private static final Long DEFAULT_COVER_IMAGE_STORAGE_KEY_ID = 6767L;
+    private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
+    private final ApplicationConfigProperties.MediaConfig.AudioConfig audioConfig;
 
     /// typowy upload piosenki poza albumem (singiel)
     @Transactional
@@ -66,7 +62,7 @@ public class SongUploadService {
             audioStorageKeyEntity = validateAndSaveAudioFile(tmpAudioPath, appUser);
 
             if(coverFile == null || coverFile.isEmpty()){
-                coverStorageKeyEntity = storageKeyRepository.getReferenceById(DEFAULT_COVER_IMAGE_STORAGE_KEY_ID);
+                coverStorageKeyEntity = storageKeyRepository.getReferenceById(coverConfig.defaultCoverId());
 
             } else {
                 // resize, convert i zapis cover image do temp file
@@ -202,9 +198,9 @@ public class SongUploadService {
 
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
         ProcessedImage processedCover =
-                imageService.resizeImageAndConvert(coverFile, 1200, 1200, TARGET_COVER_EXTENSION, 0.80);
+                imageService.resizeImageAndConvert(coverFile, coverConfig.width(), coverConfig.height(), coverConfig.targetExtension(), coverConfig.quality());
 
-        Path tmpCoverPath = Files.createTempFile("cover-", "." + TARGET_COVER_EXTENSION);
+        Path tmpCoverPath = Files.createTempFile("cover-", "." + coverConfig.targetExtension());
         Files.write(tmpCoverPath, processedCover.bytes());
         return tmpCoverPath;
     }
@@ -214,11 +210,11 @@ public class SongUploadService {
             throw new IllegalArgumentException("Brak pliku w żądaniu");
         }
 
-        if (file.getSize() > MAX_BYTES) {
+        if (file.getSize() > audioConfig.uploadMaxBytes()) {
             throw new IllegalArgumentException("Plik jest za duży");
         }
 
-        Path tmp = Files.createTempFile("upload-", "." + TARGET_AUDIO_EXTENSION /* i tak service wpuszcza tylko .m4a */);
+        Path tmp = Files.createTempFile("audio-", "." + audioConfig.targetExtension() /* i tak service wpuszcza tylko .m4a */);
 
         try (InputStream in = file.getInputStream()) {
             Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
@@ -245,7 +241,7 @@ public class SongUploadService {
         long audioFileSize = Files.size(tmpAudioPath);
 
         // docelowy zapis audio
-        String audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), TARGET_AUDIO_EXTENSION, SONGS_TARGET_DIRECTORY);
+        String audioStorageKey = storage.saveFromPath(tmpAudioPath, appUser.getId(), audioConfig.targetExtension(), audioConfig.targetDirectory());
         log.info("Zapisano plik: audioStorageKey={}", audioStorageKey);
 
         // StorageKey dla audio
@@ -263,7 +259,7 @@ public class SongUploadService {
         long coverFileSize = Files.size(tmpCoverPath);
 
         // docelowy zapis cove
-        String coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), TARGET_COVER_EXTENSION, COVERS_TARGET_DIRECTORY);
+        String coverStorageKey = storage.saveFromPath(tmpCoverPath, appUser.getId(), coverConfig.targetExtension(), coverConfig.songDirectory());
         log.info("Zapisano plik: coverStorageKey={}", coverStorageKey);
 
         // StorageKey dla cover

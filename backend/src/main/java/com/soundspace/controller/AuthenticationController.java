@@ -4,7 +4,6 @@ import com.soundspace.dto.AppUserDto;
 import com.soundspace.dto.request.AuthenticationRequest;
 import com.soundspace.dto.RefreshTokenCookieDto;
 import com.soundspace.dto.request.RegisterRequest;
-import com.soundspace.entity.AppUser;
 import com.soundspace.service.AppUserService;
 import com.soundspace.service.AuthenticationService;
 import com.soundspace.service.CookieService;
@@ -16,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -40,8 +38,7 @@ public class AuthenticationController {
         String email = registerRequest.getEmail();
 
         cookieService.setJwtAndRefreshCookie(jwt,
-                refreshTokenService.createRefreshToken(email).getRefreshToken(), response,
-                60 * 60 * 24 /* 24h */, 60 * 60 * 24 * 30/* 30D */);
+                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
 
         AppUserDto appUserDto = AppUserDto.toDto(appUserService.getUserByEmail(email));
         URI location = URI.create("/api/users/" + appUserDto.id());
@@ -57,8 +54,7 @@ public class AuthenticationController {
         String jwt = authenticationService.authenticate(authenticationRequest);
         String email = authenticationRequest.getEmail();
         cookieService.setJwtAndRefreshCookie(jwt,
-                refreshTokenService.createRefreshToken(email).getRefreshToken(), response,
-                60 * 15 /* 15 min */, 60 * 60 * 24 * 30/* 30 D */);
+                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
 
         // revoke old if present
         if(refreshToken != null) {
@@ -99,7 +95,7 @@ public class AuthenticationController {
             refreshTokenService.revokeRefreshToken(token);
         });
 
-        cookieService.setJwtAndRefreshCookie("","",response,0, 0);
+        cookieService.setJwtAndRefreshCookie("","",response);
 
 
         SecurityContextHolder.clearContext();

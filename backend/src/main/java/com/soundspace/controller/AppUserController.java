@@ -46,7 +46,7 @@ public class AppUserController {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
         appUserService.deleteUser(email);
 
-        cookieService.setJwtAndRefreshCookie("", "", response, 0, 0);
+        cookieService.setJwtAndRefreshCookie("", "", response);
         return ResponseEntity.noContent().build();
     }
 }

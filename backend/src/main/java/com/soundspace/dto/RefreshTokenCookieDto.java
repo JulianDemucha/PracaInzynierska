@@ -7,6 +7,5 @@ import lombok.Data;
 @Builder
 public class RefreshTokenCookieDto {
     private String refreshToken;
-    private String expiresAt;
     private String jwt;
 }

@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Slf4j
 public class ViewBufferingService {
-
     private final SongRepository songRepository;
 
     // (key: songId, value: viewCount)
@@ -30,8 +29,8 @@ public class ViewBufferingService {
     }
 
 
-    // co 20 sekund
-    @Scheduled(fixedRate = 20000) // ms
+    // co 20 sekund - ustawienie z application.yaml
+    @Scheduled(fixedRateString = "${app.views.buffer-flush-rate-ms}") // ms
     @Transactional
     public void flushViewsToDatabase() {
         if (viewBuffer.isEmpty()) return;

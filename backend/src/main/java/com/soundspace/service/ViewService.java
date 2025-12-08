@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.SongView;
 import com.soundspace.repository.SongViewRepository;
@@ -18,8 +19,7 @@ public class ViewService {
     private final AppUserService appUserService;
     private final SongCoreService songCoreService;
     private final ViewBufferingService viewBufferingService;
-
-    private static final int viewRegisterCooldownInSeconds = 60 * 15; // 15 min
+    private final ApplicationConfigProperties.ViewsConfig viewsConfig;
 
     /*
         true gdy udalo sie dodac nowe wyswietlenie,
@@ -27,7 +27,7 @@ public class ViewService {
      */
     @Transactional
     public boolean registerView(Long songId, UserDetails userDetails, String clientIp) {
-        Instant cutoff = Instant.now().minusSeconds(viewRegisterCooldownInSeconds);
+        Instant cutoff = Instant.now().minusSeconds(viewsConfig.cooldownSeconds());
         AppUser appUser;
 
         if (userDetails != null) {

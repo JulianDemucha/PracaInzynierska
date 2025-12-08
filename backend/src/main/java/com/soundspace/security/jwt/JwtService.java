@@ -1,10 +1,13 @@
 package com.soundspace.security.jwt;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -15,14 +18,10 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class JwtService {
-/*
-    @Value("${jwt.secret}")
-    pozniej zrobimy .env i tam bedziemy trzymac klucz bo nie trzyma sie tak o w kodzie jak nizej.
-    narazie tak roboczo po prostu
-*/
-    private static final String SECRET_KEY =
-        "HSpwqdAj98Gx86l2Ht+QXmwUb5whoHDG+YhOsq7z189Fv8XZq6JT6e9iR09ItcSlnskjBiEkcGy46HnNKVnfdQ";
+    private final ApplicationConfigProperties.JwtConfig jwtConfig;
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -65,7 +64,8 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername()) // getUsername() zwraca email
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 60 minut
+                /// x1000, bo przy tworzeniu daty uzywajac currentTimeMills, data bedzie wyliczona w milisekundach
+                .setExpiration(new Date(System.currentTimeMillis() + jwtConfig.expirationSeconds()*1000 )) // 60 minut
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -77,7 +77,7 @@ public class JwtService {
 
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtConfig.secret());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

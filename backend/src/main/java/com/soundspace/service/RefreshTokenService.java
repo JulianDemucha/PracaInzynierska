@@ -1,5 +1,6 @@
 package com.soundspace.service;
 
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.RefreshToken;
 import com.soundspace.repository.AppUserRepository;
@@ -23,15 +24,15 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final AppUserRepository appUserRepository;
     private final JwtService jwtService;
+    private final ApplicationConfigProperties.JwtConfig jwtConfig;
 
     public RefreshTokenCookieDto createRefreshToken(String email) {
         String token = UUID.randomUUID().toString();
         String hashedToken = DigestUtils.sha256Hex(token);
-        Instant expiresAt = Instant.now().plusSeconds(60 * 60); //1h
+        Instant expiresAt = Instant.now().plusSeconds(jwtConfig.refreshExpirationSeconds()); //1h
         AppUser appUser = appUserRepository.findByEmail(email).orElseThrow(
                 () -> new UsernameNotFoundException("User not found: " + email)
         );
-
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .appUser(appUser)
@@ -45,7 +46,6 @@ public class RefreshTokenService {
 
         return RefreshTokenCookieDto.builder()
                 .refreshToken(token)
-                .expiresAt(expiresAt.toString())
                 .jwt(jwtService.generateJwtToken(appUser))
                 .build();
     }
@@ -69,7 +69,6 @@ public class RefreshTokenService {
 
         return RefreshTokenCookieDto.builder()
                 .refreshToken(newToken)
-                .expiresAt(expiresAt.toString())
                 .jwt(jwtService.generateJwtToken(appUser))
                 .build();
     }

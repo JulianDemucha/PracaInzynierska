@@ -1,4 +1,5 @@
 package com.soundspace.service;
+import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.entity.AppUser;
 import com.soundspace.enums.Role;
 import com.soundspace.enums.Sex;
@@ -30,8 +31,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final StorageKeyRepository storageKeyRepository;
-
-    private static final Long DEFAULT_AVATAR_IMAGE_KEY_ID = 6767L;
+    private final ApplicationConfigProperties.MediaConfig.AvatarConfig avatarConfig;
 
     public String register(RegisterRequest request) {
         // todo: zrobic customowe wyjatki i od razu je w klasach handlowac na 409 albo w global handlerze
@@ -67,7 +67,7 @@ public class AuthenticationService {
                 .bio("")
                 .comments(new ArrayList<>())
                 // poki co defaultowy avatar
-                .avatarStorageKey(storageKeyRepository.getReferenceById(DEFAULT_AVATAR_IMAGE_KEY_ID))
+                .avatarStorageKey(storageKeyRepository.getReferenceById(avatarConfig.defaultAvatarId()))
                 .build();
 
         repo.save(user);
