@@ -46,6 +46,7 @@ public class AppUserService {
     private final PlaylistEntryRepository playlistEntryRepository;
     private final PlaylistRepository playlistRepository;
     private final SongReactionRepository songReactionRepository;
+    private final SongViewRepository songViewRepository;
 
     public AppUserDto getAppUser(Long userId) {
         return appUserRepository.findById(userId).map(AppUserDto::toDto).orElseThrow();
@@ -162,6 +163,8 @@ public class AppUserService {
         /// usuniecie wszystkich reakcji usera i reakcji dotyczacych piosenek usera
         songReactionRepository.deleteAllRelatedToUser(appUserId);
 
+        /// odpiecie usera od encji jego wyswietlen
+        songViewRepository.detachUserFromViews(appUserId);
 
         /// usunięcie wszystkich piosenek i następnie albumów usera
 
