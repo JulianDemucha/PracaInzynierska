@@ -3,6 +3,7 @@ package com.soundspace.repository;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 public interface SongRepository extends JpaRepository<Song, Long> {
@@ -105,7 +107,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
           AND (s.author.id = :userId OR s.publiclyVisible = true)
     """)
     List<Song> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userId") Long userId);
-    
+
     @Query("""
             SELECT DISTINCT s
             FROM Song s
@@ -118,7 +120,68 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """)
     List<Song> findPublicByGenre(@Param("genre") Genre genre);
 
-    //todo zmienic s.createdAt na s.viewCount po dodaniu wyswietlen
+    @Modifying(clearAutomatically = true) // czyszczenie cachu hibernate
+    @Query("UPDATE Song s SET s.viewCount = s.viewCount + :count WHERE s.id = :id")
+    void incrementViewCountBy(@Param("id") Long id, @Param("count") Long count);
+
+    /// bulk delete wszystkich songow nalezacych do usera - do bulk delete calego usera.
+    /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow piosenek
+    @Modifying
+    @Query("DELETE FROM Song s WHERE s.author.id = :userId")
+    void deleteAllByAuthorId(@Param("userId") Long userId);
+
+    /// patrzac na ciezkosc zapytania uzywac tylko w sposob np jak w RecommendationService (1 przy starcie i ogolnie raz na dobe)
+    @Query("SELECT s.viewCount FROM Song s")
+    List<Long> getAllViewCounts();
+
+    //todo zrobic projekcje na tylko id autora i gatunki dla optymalizacji, bo glownie do uzycia w findCandidates
+    @Query("""
+        SELECT DISTINCT s
+        FROM SongReaction r
+        JOIN r.song s
+        LEFT JOIN FETCH s.genres
+        LEFT JOIN FETCH s.author
+        WHERE r.user.id = :userId
+          AND r.reactionType = 'LIKE'
+    """)
+    List<Song> findAllLikedByAppUserId(@Param("userId") Long userId);
+
+    @Query(value = "SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY view_count) FROM songs", nativeQuery = true)
+    Long findViewCountPercentile90();
+    //todo zrobic projekcje na tylko id autora i gatunki dla optymalizacji, bo glownie do uzycia w findCandidates
+    @Query("""
+        SELECT DISTINCT s
+        FROM SongReaction r
+        JOIN r.song s
+        LEFT JOIN FETCH s.genres
+        LEFT JOIN FETCH s.author
+        WHERE r.user.id = :userId
+          AND r.reactionType = 'DISLIKE'
+    """)
+    List<Song> findAllDislikedByAppUserId(@Param("userId") Long userId);
+
+    /// metoda zwraca piosenki:
+    /// - posiadajace w sobie przynajmniej jeden genre z podanych
+    /// - nalezace do podanych autorow
+    ///
+    /// zwracane piosenki to 'kandydaci' do wytworzenia listy rekomendowanych utworów.
+    @Query("""
+        SELECT DISTINCT s
+        FROM Song s
+        JOIN s.genres g
+        LEFT JOIN FETCH s.author
+        LEFT JOIN FETCH s.genres
+        WHERE (g IN :genres OR s.author.id IN :authorIds)
+          AND s.publiclyVisible = true
+          AND s.id NOT IN (
+              SELECT r.song.id FROM SongReaction r
+              WHERE r.user.id = :userId AND r.reactionType = 'LIKE'
+          )
+        ORDER BY s.viewCount DESC
+    """)
+    List<Song> findCandidates(@Param("genres") Collection<Genre> genres, @Param("authorIds") Collection<Long> authorIds,
+                              @Param("userId") Long userId, Pageable pageable);
+
     @Query("""
             SELECT s
             FROM Song s
@@ -130,17 +193,14 @@ public interface SongRepository extends JpaRepository<Song, Long> {
               AND r.reactedAt > :cutoffDate
               AND s.publiclyVisible = true
             GROUP BY s, s.author, s.coverStorageKey, s.album
-            ORDER BY COUNT(r) DESC, s.createdAt DESC
-            """) // LIMIT I OFFSET AUTOMATYCZNIE POBIERA SIE Z PAGEABLE
+            ORDER BY COUNT(r) DESC, s.viewCount DESC
+            """)
     List<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
 
-    @Modifying(clearAutomatically = true) // czyszczenie cachu hibernate
-    @Query("UPDATE Song s SET s.viewCount = s.viewCount + :count WHERE s.id = :id")
-    void incrementViewCountBy(@Param("id") Long id, @Param("count") Long count);
+    @Query("SELECT s FROM Song s WHERE s.publiclyVisible = true ORDER BY s.viewCount DESC")
+    List<Song> findTopPopularSongs(Pageable pageable);
 
-    /// bulk delete wszystkich songow nalezacych do usera - do bulk delete calego usera.
-    /// zeby uzyc gdzies indziej trzeba miec na uwadze, ze to nie usuwa storagekeys ani plikow piosenek
-    @Modifying
-    @Query("DELETE FROM Song s WHERE s.author.id = :userId")
-    void deleteAllByAuthorId(@Param("userId") Long userId);
+    @Query("SELECT s FROM Song s WHERE s.publiclyVisible = true ORDER BY s.viewCount DESC")
+    Page<Song> findTopPopularSongsPage(Pageable pageable);
 }
+

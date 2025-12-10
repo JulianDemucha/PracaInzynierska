@@ -32,11 +32,21 @@ public class SecurityConfig {
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers("/api/songs/recommendations/**")
+                        .authenticated()
+
                         .requestMatchers( "/api/auth/register"
-                                , "/api/auth/authenticate", "/api/auth/refreshToken").permitAll()
+                                , "/api/auth/authenticate", "/api/auth/refreshToken")
+                        .permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/users/**","/api/playlists/**",
-                                "/api/songs/**", "/api/albums/**", "/api/images/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/songs/*/registerView").permitAll()
+                                "/api/songs/**", "/api/albums/**", "/api/images/**")
+                        .permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/songs/*/registerView")
+                        .permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(e -> e

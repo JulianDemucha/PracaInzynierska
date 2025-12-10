@@ -9,6 +9,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,6 +47,7 @@ public class SongController {
             "WL-Proxy-Client-IP"
     };
     private final ViewService viewService;
+    private final RecommendationService recommendationService;
 
     @GetMapping("/{songId}")
     public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long songId, Authentication authentication) {
@@ -89,6 +93,13 @@ public class SongController {
     public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long userId,
                                                           Authentication authentication) {
         return ResponseEntity.ok(songCoreService.getSongsByUserId(userId, extractUserDetails(authentication)));
+    }
+
+    @GetMapping("/recommendations/{pageNumber}")
+    public ResponseEntity<Page<SongDto>> getRecommendations(@PathVariable int pageNumber,
+                                                            @AuthenticationPrincipal UserDetails userDetails){
+        Pageable pageable = PageRequest.of(pageNumber, 10);
+        return ResponseEntity.ok(recommendationService.getRecommendations(userDetails, pageable));
     }
 
     @GetMapping("/top10")
