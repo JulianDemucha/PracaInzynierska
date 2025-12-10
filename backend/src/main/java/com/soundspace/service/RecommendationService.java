@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RecommendationService {
-
-    private final ViewCapService statsService;
     private final SongRepository songRepo;
     private final AppUserRepository appUserRepository;
 
@@ -122,7 +120,7 @@ public class RecommendationService {
     /// - wyliczena jest średnia waga (z wszystkich gatunków songa)
     /// - wyliczena jest waga dla autora
     /// - wyliczana jest 'waga wyswietlen',
-    /// czyli jak duze znaczenie pod wzgledem wyswietlen ma song wzgledem reszty ( do pewnego momentu - cap z [ViewCapService] - 90 percentyl)
+    /// czyli jak duze znaczenie pod wzgledem wyswietlen ma song wzgledem reszty ( do pewnego momentu - [cachedViewCap] - 90 percentyl)
     private double calculateScore(Song song, Map<Genre, Double> genreProfile, Map<Long, Double> authorProfile, double logCap) {
         // pobiera gatunki songa i dla kazdego z nich: (jezeli istnieje w genreProfile zlicza jego wage)
         // nastepnie zapisuje do genreScore ŚREDNIĄ Z TYCH WAG (zapobiega exploitowaniu i braniu 3 gatunkow dla samych korzysci)

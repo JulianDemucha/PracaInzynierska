@@ -130,10 +130,6 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     @Query("DELETE FROM Song s WHERE s.author.id = :userId")
     void deleteAllByAuthorId(@Param("userId") Long userId);
 
-    /// patrzac na ciezkosc zapytania uzywac tylko w sposob np jak w RecommendationService (1 przy starcie i ogolnie raz na dobe)
-    @Query("SELECT s.viewCount FROM Song s")
-    List<Long> getAllViewCounts();
-
     //todo zrobic projekcje na tylko id autora i gatunki dla optymalizacji, bo glownie do uzycia w findCandidates
     @Query("""
         SELECT DISTINCT s
