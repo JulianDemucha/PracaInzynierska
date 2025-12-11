@@ -1,5 +1,6 @@
 package com.soundspace.repository;
 
+import com.soundspace.dto.projection.RecommendationsSongProjection;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
@@ -75,7 +76,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<SongProjection> findSongsByAlbumNative(@Param("albumId") Long albumId);
 
 
-    @Query(value = """
+    @Query("""
             SELECT DISTINCT s FROM Song s
             LEFT JOIN FETCH s.author
             LEFT JOIN FETCH s.coverStorageKey
@@ -85,7 +86,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """)
     List<Song> findAllPublic();
 
-    @Query(value = """
+    @Query("""
             SELECT DISTINCT s FROM Song s
             LEFT JOIN FETCH s.author
             LEFT JOIN FETCH s.coverStorageKey
@@ -97,15 +98,15 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<Song> findAllPublicOrOwnedByUser(@Param("userId") Long userId);
 
     @Query("""
-        SELECT DISTINCT s
-        FROM Song s
-        LEFT JOIN FETCH s.author
-        LEFT JOIN FETCH s.coverStorageKey
-        LEFT JOIN FETCH s.album
-        JOIN s.genres g
-        WHERE g = :genre
-          AND (s.author.id = :userId OR s.publiclyVisible = true)
-    """)
+            SELECT DISTINCT s
+            FROM Song s
+            LEFT JOIN FETCH s.author
+            LEFT JOIN FETCH s.coverStorageKey
+            LEFT JOIN FETCH s.album
+            JOIN s.genres g
+            WHERE g = :genre
+              AND (s.author.id = :userId OR s.publiclyVisible = true)
+            """)
     List<Song> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userId") Long userId);
 
     @Query("""
@@ -130,49 +131,57 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     @Query("DELETE FROM Song s WHERE s.author.id = :userId")
     void deleteAllByAuthorId(@Param("userId") Long userId);
 
-    //todo zrobic projekcje na tylko id autora i gatunki dla optymalizacji, bo glownie do uzycia w findCandidates
     @Query("""
-        SELECT DISTINCT s
-        FROM SongReaction r
-        JOIN r.song s
-        LEFT JOIN FETCH s.genres
-        LEFT JOIN FETCH s.author
-        WHERE r.user.id = :userId
-          AND r.reactionType = 'LIKE'
-    """)
-    List<Song> findAllLikedByAppUserId(@Param("userId") Long userId);
+            SELECT s.id AS id, s.genres AS genres, s.author.id AS authorId
+            FROM Song s
+            JOIN s.genres g
+            JOIN SongReaction r ON r.song = s
+            WHERE r.user.id = :userId
+              AND r.reactionType = 'LIKE'
+            """)
+    List<RecommendationsSongProjection> findAllLikedByAppUserIdForRecommendations(@Param("userId") Long userId);
+
+    @Query("""
+            SELECT s.id AS id, s.genres AS genres, s.author.id AS authorId
+            FROM Song s
+            JOIN s.genres g
+            JOIN SongReaction r ON r.song = s
+            WHERE r.user.id = :userId
+              AND r.reactionType = 'DISLIKE'
+            """)
+    List<RecommendationsSongProjection> findAllDislikedByAppUserIdForRecommendations(@Param("userId") Long userId);
+
+    @Query("""
+            SELECT s.id AS id, s.genres AS genres, s.author.id AS authorId
+            FROM Song s
+            JOIN s.genres g
+            JOIN SongReaction r ON r.song = s
+            WHERE r.user.id = :userId
+              AND r.reactionType = 'FAVOURITE'
+            """)
+    List<RecommendationsSongProjection> findAllFavouriteByAppUserIdForRecommendations(@Param("userId") Long userId);
+
+    // todo do przerobienia bo sie przyda do strony z ulubionymi
+//    @Query("""
+//        SELECT DISTINCT s
+//        FROM SongReaction r
+//        JOIN r.song s
+//        LEFT JOIN FETCH s.genres
+//        LEFT JOIN FETCH s.author
+//        WHERE r.user.id = :userId
+//          AND r.reactionType = 'FAVOURITE'
+//    """)
+//    List<Song> findAllFavouriteByAppUserId(@Param("userId") Long userId);
 
     @Query(value = "SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY view_count) FROM songs", nativeQuery = true)
     Long findViewCountPercentile90();
-    //todo zrobic projekcje na tylko id autora i gatunki dla optymalizacji, bo glownie do uzycia w findCandidates
-    @Query("""
-        SELECT DISTINCT s
-        FROM SongReaction r
-        JOIN r.song s
-        LEFT JOIN FETCH s.genres
-        LEFT JOIN FETCH s.author
-        WHERE r.user.id = :userId
-          AND r.reactionType = 'DISLIKE'
-    """)
-    List<Song> findAllDislikedByAppUserId(@Param("userId") Long userId);
-
-    @Query("""
-        SELECT DISTINCT s
-        FROM SongReaction r
-        JOIN r.song s
-        LEFT JOIN FETCH s.genres
-        LEFT JOIN FETCH s.author
-        WHERE r.user.id = :userId
-          AND r.reactionType = 'FAVOURITE'
-    """)
-    List<Song> findAllFavouriteByAppUserId(@Param("userId") Long userId);
 
 //    @Query("""
 //        SELECT DISTINCT s.id
 //        FROM SongReaction r
 //        JOIN r.song s
 //        WHERE r.user.id = :userId
-//    """)
+//          """)
 //    List<Long> findAllSongIdsReactedByUserByAppUserId(@Param("userId") Long userId);
 
     /// metoda zwraca piosenki:
@@ -181,19 +190,19 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     ///
     /// zwracane piosenki to 'kandydaci' do wytworzenia listy rekomendowanych utworów.
     @Query("""
-        SELECT DISTINCT s
-        FROM Song s
-        JOIN s.genres g
-        LEFT JOIN FETCH s.author
-        LEFT JOIN FETCH s.genres
-        WHERE (g IN :genres OR s.author.id IN :authorIds)
-          AND s.publiclyVisible = true
-          AND s.id NOT IN (
-              SELECT r.song.id FROM SongReaction r
-              WHERE r.user.id = :userId
-          )
-        ORDER BY s.viewCount DESC
-    """)
+            SELECT DISTINCT s
+            FROM Song s
+            JOIN s.genres g
+            LEFT JOIN FETCH s.author
+            LEFT JOIN FETCH s.genres
+            WHERE (g IN :genres OR s.author.id IN :authorIds)
+              AND s.publiclyVisible = true
+              AND s.id NOT IN (
+                  SELECT r.song.id FROM SongReaction r
+                  WHERE r.user.id = :userId
+              )
+            ORDER BY s.viewCount DESC
+            """)
     List<Song> findCandidates(@Param("genres") Collection<Genre> genres, @Param("authorIds") Collection<Long> authorIds,
                               @Param("userId") Long userId, Pageable pageable);
 
