@@ -32,15 +32,26 @@ public class RecommendationService {
     private static final int CANDIDATE_POOL_SIZE = 200;
     private static final int MINIMUM_CANDIDATES = 10;
 
-    // 1.0 ustawia wage dislike tak, że dislike kasuje like (1:1)
+    // wagi po ktorych przeliczane jest 'znaczenie' danych gatunkow i autorow
+    // default 1.0 dla like
+    // default 1.0 ustawia wage dislike tak, że dislike kasuje like (1:1)
+    // default 1.5 robi ze favourite jest troche silniejszy niz like
+    private static final double W_LIKE = 1.0;
     private static final double W_DISLIKE = 1.0;
+    private static final double W_FAVOURITE = 1.5;
 
+    // wagi bazowe, przez ktore mnozone sa wagi wyliczone po like, dislike, favourite
     private static final double W_GENRE = 0.5;
     private static final double W_AUTHOR = 0.3;
     private static final double W_VIEWS = 0.2;
 
+    /*
+        view cap liczony po 90 percentylu zeby same most-viewed piosenki nie zapychaly rekomendacji, tylko po
+        pewnym (wyliczonym) poziomie wyswietlen, wieksza ilosc nie robi juz roznicy
+     */
     private volatile double cachedViewCap;
     private volatile double cachedLogCap;
+
 
     @Transactional(readOnly = true)
     public Page<SongDto> getRecommendations(UserDetails userDetails, Pageable pageable) {
@@ -51,14 +62,15 @@ public class RecommendationService {
         Long userId = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow().getId();
         List<Song> likedSongs = songRepo.findAllLikedByAppUserId(userId);
         List<Song> dislikedSongs = songRepo.findAllDislikedByAppUserId(userId);
+        List<Song> favouriteSongs = songRepo.findAllFavouriteByAppUserId(userId);
 
         // COLD START - jak user nic nie polubil ani nie-polubil to po prostu te z najwieksza iloscia wyswietlen
-        if (likedSongs.isEmpty() && dislikedSongs.isEmpty()) {
+        if (likedSongs.isEmpty() && dislikedSongs.isEmpty() && favouriteSongs.isEmpty()) {
             return getGlobalTopSongs(pageable);
         }
 
-        Map<Genre, Double> genreWeights = calculateGenreProfile(likedSongs, dislikedSongs);
-        Map<Long, Double> authorWeights = calculateAuthorProfile(likedSongs, dislikedSongs);
+        Map<Genre, Double> genreWeights = calculateGenreProfile(likedSongs, dislikedSongs, favouriteSongs);
+        Map<Long, Double> authorWeights = calculateAuthorProfile(likedSongs, dislikedSongs, favouriteSongs);
 
         // przekazywane genre to wszystkie ktore sa przynajmniej w jednej piosence ktora polubil
         List<Song> candidates = songRepo.findCandidates(
@@ -71,15 +83,19 @@ public class RecommendationService {
         // BACKFILL - jezeli mniej niz 10 w candidates to uzupelniamy do tych min. 10 [MINIMUM_CANDIDATES] uzywajac popularnych
         if (candidates.size() < MINIMUM_CANDIDATES) {
             List<Song> fillers = songRepo.findTopPopularSongs(PageRequest.of(0, 50));
-            Set<Long> dislikedIds = dislikedSongs.stream()
-                    .map(Song::getId)
-                    .collect(Collectors.toSet());
+            Set<Long> dislikedIds = dislikedSongs.stream().map(Song::getId).collect(Collectors.toSet());
+            Set<Long> likedIds = likedSongs.stream().map(Song::getId).collect(Collectors.toSet());
+            Set<Long> favIds = favouriteSongs.stream().map(Song::getId).collect(Collectors.toSet());
 
             for (Song s : fillers) {
                 if (candidates.size() >= MINIMUM_CANDIDATES) break;
+
                 // todo edit komentarz jak sigma jak findallliked/disliked beda zwracac projection na to ze nie beda tylko juz zwracaja
-                // dislikedIds zamiast dislikedSongs.contains(s), bo pozniej likedSongs i dislikedSongs beda zwracac projekcje
-                if (!candidates.contains(s) && !dislikedIds.contains(s.getId())) {
+                // %Ids zamiast %Songs.contains(s), bo pozniej likedSongs, dislikedSongs, favouriteSongs beda zwracac projekcje
+                if (!candidates.contains(s)
+                        && !dislikedIds.contains(s.getId())
+                        && !likedIds.contains(s.getId())
+                        && !favIds.contains(s.getId())) {
                     candidates.add(s);
                 }
             }
@@ -102,6 +118,7 @@ public class RecommendationService {
         );
     }
 
+    /// helpery
 
     @PostConstruct
     @Scheduled(cron = "0 0 * * * *")
@@ -116,11 +133,11 @@ public class RecommendationService {
         log.info("Zaktualizowano ViewCap (Cache): {}", newCap);
     }
 
-    /// Pojedynczy song trafia do metody a nastepnie:
-    /// - wyliczena jest średnia waga (z wszystkich gatunków songa)
-    /// - wyliczena jest waga dla autora
-    /// - wyliczana jest 'waga wyswietlen',
-    /// czyli jak duze znaczenie pod wzgledem wyswietlen ma song wzgledem reszty ( do pewnego momentu - [cachedViewCap] - 90 percentyl)
+    /// Pojedyńczy song trafia do metody, a następnie:
+    /// * wyliczana jest średnia waga (ze wszystkich gatunków piosenki).
+    /// * wyliczana jest waga dla autora.
+    /// * wyliczana jest 'waga wyświetleń' -
+    /// czyli jak duże znaczenie pod względem wyświetleń ma piosenka względem reszty (do pewnego momentu - {@link #cachedViewCap}  - 90 percentyl)
     private double calculateScore(Song song, Map<Genre, Double> genreProfile, Map<Long, Double> authorProfile, double logCap) {
         // pobiera gatunki songa i dla kazdego z nich: (jezeli istnieje w genreProfile zlicza jego wage)
         // nastepnie zapisuje do genreScore ŚREDNIĄ Z TYCH WAG (zapobiega exploitowaniu i braniu 3 gatunkow dla samych korzysci)
@@ -145,9 +162,6 @@ public class RecommendationService {
                 .map(SongDto::toDto);
     }
 
-
-    /// Helpery
-
     // todo wrzucic to arcydzielo gdzies indziej bo przyda sie przy przerabianiu innych metod do wysylania page zamiast listy
     // zamienia liste songdto na Page, wycinając odpowiedni fragment
     private static <T> Page<T> toPage(List<T> list, Pageable pageable) {
@@ -170,67 +184,104 @@ public class RecommendationService {
     }
 
 
-    /// Tworzy mape (Gatunek -> Waga Gatunku),
-    /// gdzie waga kazdego gatunku wyliczana jest po tym jak duzy udzial dany gatunek ma w polubionych piosenkach użytkownika
-    private Map<Genre, Double> calculateGenreProfile(List<Song> likedSongs, List<Song> dislikedSongs) {
+    /// Tworzy mapę (Gatunek -> Waga Gatunku),
+    /// gdzie waga każdego gatunku wyliczana jest po tym jak duży udział dany gatunek ma w polubionych/nie-polubionych/ulubionych piosenkach użytkownika
+    private Map<Genre, Double> calculateGenreProfile(List<Song> likedSongs, List<Song> dislikedSongs, List<Song> favouriteSongs) {
         // na wszelki mimo ze w getRecoomendations wtedy i tak pojdzie topsongs
-        if (likedSongs.isEmpty() && dislikedSongs.isEmpty()) return Collections.emptyMap();
+        if (likedSongs.isEmpty() && dislikedSongs.isEmpty() && favouriteSongs.isEmpty()) return Collections.emptyMap();
 
         Map<Genre, Double> scores = new HashMap<>();
 
-        // liczy wagi dla konkretnych gatunkow po like
-        for (Song song : likedSongs) {
-            double contribution = 1.0 / song.getGenres().size();
+        // zeby pominac favourite przy iteracji po likedSongs
+        Set<Long> favIds = favouriteSongs.stream().map(Song::getId).collect(Collectors.toSet());
+
+        // do normalizacji
+        double currentTotalMass = 0.0;
+
+        // liczy wagi dla konkretnych gatunkow po favourite
+        for (Song song : favouriteSongs) {
+            double contribution = (1.0 / song.getGenres().size()) * W_FAVOURITE;
             for (Genre g : song.getGenres()) {
                 scores.merge(g, contribution, Double::sum);
             }
+            currentTotalMass += W_FAVOURITE;
         }
 
-        // liczy wagi ujemne dla konkretnych gatunkow po dislike
+        // liczy wagi dla konkretnych gatunkow po like, pomijajac songi ktore juz sa favourite
+        for (Song song : likedSongs) {
+            if (favIds.contains(song.getId())) continue; // jak song jest tez favourite to nara
+
+            double contribution = (1.0 / song.getGenres().size()) * W_LIKE;
+            for (Genre g : song.getGenres()) {
+                scores.merge(g, contribution, Double::sum);
+            }
+            currentTotalMass += W_LIKE;
+        }
+
+        // liczy UJEMNE wagi dla konkretnych gatunkow po dislike
         for (Song song : dislikedSongs) {
+            // Waga ujemna
             double contribution = (1.0 / song.getGenres().size()) * W_DISLIKE;
             for (Genre g : song.getGenres()) {
                 scores.merge(g, -contribution, Double::sum);
             }
+            currentTotalMass += W_DISLIKE;
         }
 
-        // normalizacja
-        // bez tego z kazdym kolejnym like genre ma coraz wiekszy wplyw i moze prowadzic do - w zasadzie zepsucia algorytmu
-        double totalActivityMass = likedSongs.size() + (dislikedSongs.size() * W_DISLIKE);
 
-        if (totalActivityMass == 0) return Collections.emptyMap();
 
+        if (currentTotalMass == 0) return Collections.emptyMap();
+        final double finalMass = currentTotalMass; // do mapowania przejdzie tylko final
+
+        // liczy wagi ujemne dla konkretnych gatunkow po dislike + normalizacja dzielac przez total mass
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue() / totalActivityMass
+                        entry -> entry.getValue() / finalMass
                 ));
     }
 
-    private Map<Long, Double> calculateAuthorProfile(List<Song> likedSongs, List<Song> dislikedSongs) {
+    /// Tworzy mapę (Autor -> Waga Autora),
+    /// gdzie waga każdego autora wyliczana jest po tym jak duży udział dany autor ma w polubionych/nie-polubionych/ulubionych piosenkach użytkownika.
+    private Map<Long, Double> calculateAuthorProfile(List<Song> likedSongs, List<Song> dislikedSongs, List<Song> favouriteSongs) {
         // na wszelki mimo ze w getRecoomendations wtedy i tak pojdzie topsongs
-        if (likedSongs.isEmpty() && dislikedSongs.isEmpty()) return Collections.emptyMap();
+        if (likedSongs.isEmpty() && dislikedSongs.isEmpty() && favouriteSongs.isEmpty()) return Collections.emptyMap();
 
         Map<Long, Double> scores = new HashMap<>();
 
-        // liczy wagi dla konkretnych autorow po like
+        // zeby pominac favourite przy iteracji po likedSongs
+        Set<Long> favIds = favouriteSongs.stream().map(Song::getId).collect(Collectors.toSet());
+
+        // do normalizacji
+        double currentTotalMass = 0.0;
+
+        // liczy wagi dla konkretnych autorow po favourite
+        for (Song song : favouriteSongs) {
+            scores.merge(song.getAuthor().getId(), W_FAVOURITE, Double::sum);
+            currentTotalMass += W_FAVOURITE;
+        }
+
+        // liczy wagi dla konkretnych autorow po like, pomijajac songi ktore juz sa favourite
         for (Song song : likedSongs) {
-            scores.merge(song.getAuthor().getId(), 1.0, Double::sum);
+            if (favIds.contains(song.getId())) continue;
+
+            scores.merge(song.getAuthor().getId(), W_LIKE, Double::sum);
+            currentTotalMass += W_LIKE;
         }
 
-        // liczy wagi ujemne dla konkretnych autorow po dislike
         for (Song song : dislikedSongs) {
-            scores.merge(song.getAuthor().getId(), -1.0 * W_DISLIKE, Double::sum);
+            scores.merge(song.getAuthor().getId(), -W_DISLIKE, Double::sum);
+            currentTotalMass += W_DISLIKE;
         }
 
-        // normalizacja
-        // bez tego z kazdym kolejnym like author ma coraz wiekszy wplyw i moze prowadzic do - w zasadzie zepsucia algorytmu
-        double totalActivityMass = likedSongs.size() + (dislikedSongs.size() * W_DISLIKE);
+        if (currentTotalMass == 0) return Collections.emptyMap();
+        final double finalMass = currentTotalMass; // do mapowania przejdzie tylko final
 
+        // liczy wagi ujemne dla konkretnych autorow po dislike + normalizacja dzielac przez total mass
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue() / totalActivityMass
+                        entry -> entry.getValue() / finalMass
                 ));
     }
 

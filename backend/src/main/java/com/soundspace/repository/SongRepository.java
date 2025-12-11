@@ -156,6 +156,25 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     """)
     List<Song> findAllDislikedByAppUserId(@Param("userId") Long userId);
 
+    @Query("""
+        SELECT DISTINCT s
+        FROM SongReaction r
+        JOIN r.song s
+        LEFT JOIN FETCH s.genres
+        LEFT JOIN FETCH s.author
+        WHERE r.user.id = :userId
+          AND r.reactionType = 'FAVOURITE'
+    """)
+    List<Song> findAllFavouriteByAppUserId(@Param("userId") Long userId);
+
+//    @Query("""
+//        SELECT DISTINCT s.id
+//        FROM SongReaction r
+//        JOIN r.song s
+//        WHERE r.user.id = :userId
+//    """)
+//    List<Long> findAllSongIdsReactedByUserByAppUserId(@Param("userId") Long userId);
+
     /// metoda zwraca piosenki:
     /// - posiadajace w sobie przynajmniej jeden genre z podanych
     /// - nalezace do podanych autorow
@@ -171,7 +190,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
           AND s.publiclyVisible = true
           AND s.id NOT IN (
               SELECT r.song.id FROM SongReaction r
-              WHERE r.user.id = :userId AND r.reactionType = 'LIKE'
+              WHERE r.user.id = :userId
           )
         ORDER BY s.viewCount DESC
     """)
