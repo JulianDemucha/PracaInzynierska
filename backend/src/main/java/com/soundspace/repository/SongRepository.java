@@ -161,17 +161,24 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """)
     List<RecommendationsSongProjection> findAllFavouriteByAppUserIdForRecommendations(@Param("userId") Long userId);
 
-    // todo do przerobienia bo sie przyda do strony z ulubionymi
-//    @Query("""
-//        SELECT DISTINCT s
-//        FROM SongReaction r
-//        JOIN r.song s
-//        LEFT JOIN FETCH s.genres
-//        LEFT JOIN FETCH s.author
-//        WHERE r.user.id = :userId
-//          AND r.reactionType = 'FAVOURITE'
-//    """)
-//    List<Song> findAllFavouriteByAppUserId(@Param("userId") Long userId);
+    @Query(
+            value = """
+        SELECT DISTINCT s
+        FROM SongReaction r
+        JOIN r.song s
+        LEFT JOIN FETCH s.author
+        WHERE r.user.id = :userId
+          AND r.reactionType = 'FAVOURITE'
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT s)
+        FROM SongReaction r
+        JOIN r.song s
+        WHERE r.user.id = :userId
+          AND r.reactionType = 'FAVOURITE'
+        """
+    )
+    Page<Song> findAllFavouriteByAppUserId(@Param("userId") Long userId, Pageable pageable);
 
     @Query(value = "SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY view_count) FROM songs", nativeQuery = true)
     Long findViewCountPercentile90();

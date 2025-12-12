@@ -13,7 +13,9 @@ import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.enums.Genre;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -202,6 +204,11 @@ public class SongCoreService {
             imageService.cleanUpOldImage(storageKeyToDelete, "cover");
         }
         return SongDto.toDto(updatedSong);
+    }
+
+    public Page<SongDto> getFavouriteSongs(UserDetails userDetails, Pageable pageable) {
+        Long userId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
+        return songRepository.findAllFavouriteByAppUserId(userId, pageable).map(SongDto::toDto);
     }
 
     public List<SongDto> getTop10Liked(){

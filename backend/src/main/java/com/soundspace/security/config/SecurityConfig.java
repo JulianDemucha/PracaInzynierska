@@ -33,7 +33,7 @@ public class SecurityConfig {
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/api/songs/recommendations/**")
+                        .requestMatchers("/api/songs/favourites/**")
                         .authenticated()
 
                         .requestMatchers( "/api/auth/register"

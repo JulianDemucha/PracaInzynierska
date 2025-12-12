@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -100,6 +101,12 @@ public class SongController {
                                                             @AuthenticationPrincipal UserDetails userDetails){
         Pageable pageable = PageRequest.of(pageNumber, 10);
         return ResponseEntity.ok(recommendationService.getRecommendations(userDetails, pageable));
+    }
+
+    @GetMapping("/favourites")
+    public ResponseEntity<Page<SongDto>> getFavouriteSongs(@PageableDefault Pageable pageable,
+                                                            @AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(songCoreService.getFavouriteSongs(userDetails, pageable));
     }
 
     @GetMapping("/top10")
