@@ -1,7 +1,8 @@
 package com.soundspace.controller.song;
 
 import com.soundspace.dto.SongDto;
-import com.soundspace.service.*;
+import com.soundspace.service.song.SongStatisticsService;
+import com.soundspace.service.song.ViewService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 public class SongStatisticsController {
-    private final SongCoreService songCoreService;
+    private final SongStatisticsService songStatisticsService;
     private final ViewService viewService;
 
     private static final String[] IP_HEADERS = {
@@ -39,7 +40,7 @@ public class SongStatisticsController {
 
     @GetMapping("/top10")
     public ResponseEntity<List<SongDto>> getTop10LikedSongs() {
-        return ResponseEntity.ok(songCoreService.getTop10Liked());
+        return ResponseEntity.ok(songStatisticsService.getTop10Liked());
     }
 
     //todo zrobic top10viewed i poprawic top10liked zeby zwracalo page i przyjmowalo wiadomo size i page

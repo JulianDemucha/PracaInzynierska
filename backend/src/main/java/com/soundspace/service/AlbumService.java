@@ -18,6 +18,7 @@ import com.soundspace.exception.StorageException;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
+import com.soundspace.service.song.SongCoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

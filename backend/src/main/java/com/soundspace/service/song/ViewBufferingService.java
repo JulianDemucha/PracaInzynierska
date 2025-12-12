@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.song;
 
 import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;

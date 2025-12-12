@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.song;
 
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.RecommendationsSongProjection;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RecommendationService {
+public class RecommendationsService {
     private final SongRepository songRepo;
     private final AppUserRepository appUserRepository;
 

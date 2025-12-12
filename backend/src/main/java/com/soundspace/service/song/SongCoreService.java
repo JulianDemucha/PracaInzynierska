@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.song;
 
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.SongDto;
@@ -11,17 +11,18 @@ import com.soundspace.exception.*;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.enums.Genre;
+import com.soundspace.service.AppUserService;
+import com.soundspace.service.ImageService;
+import com.soundspace.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -209,13 +210,6 @@ public class SongCoreService {
     public Page<SongDto> getFavouriteSongs(UserDetails userDetails, Pageable pageable) {
         Long userId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
         return songRepository.findAllFavouriteByAppUserId(userId, pageable).map(SongDto::toDto);
-    }
-
-    public List<SongDto> getTop10Liked(){
-        return songRepository.findTopLikedSongsSinceCutoff(
-                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
-                PageRequest.of(0, 10)
-        ).stream().map(SongDto::toDto).toList();
     }
 
 

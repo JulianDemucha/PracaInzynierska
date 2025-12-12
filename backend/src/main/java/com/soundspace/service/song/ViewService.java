@@ -1,9 +1,10 @@
-package com.soundspace.service;
+package com.soundspace.service.song;
 
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.SongView;
 import com.soundspace.repository.SongViewRepository;
+import com.soundspace.service.AppUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;

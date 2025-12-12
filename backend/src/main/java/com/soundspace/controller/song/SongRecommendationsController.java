@@ -1,7 +1,7 @@
 package com.soundspace.controller.song;
 
 import com.soundspace.dto.SongDto;
-import com.soundspace.service.*;
+import com.soundspace.service.song.RecommendationsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 public class SongRecommendationsController {
-    private final RecommendationService recommendationService;
+    private final RecommendationsService recommendationsService;
 
     @GetMapping("/{pageNumber}")
     public ResponseEntity<Page<SongDto>> getRecommendations(@PathVariable int pageNumber,
                                                             @AuthenticationPrincipal UserDetails userDetails){
         Pageable pageable = PageRequest.of(pageNumber, 10);
-        return ResponseEntity.ok(recommendationService.getRecommendations(userDetails, pageable));
+        return ResponseEntity.ok(recommendationsService.getRecommendations(userDetails, pageable));
     }
 }

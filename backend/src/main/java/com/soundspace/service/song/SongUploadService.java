@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.song;
 
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.ProcessedImage;
@@ -13,6 +13,9 @@ import com.soundspace.exception.SongUploadException;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.dto.request.SongUploadRequest;
+import com.soundspace.service.AlbumService;
+import com.soundspace.service.ImageService;
+import com.soundspace.service.StorageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;

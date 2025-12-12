@@ -13,6 +13,7 @@ import com.soundspace.repository.PlaylistEntryRepository;
 import com.soundspace.repository.PlaylistRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
+import com.soundspace.service.song.SongCoreService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
