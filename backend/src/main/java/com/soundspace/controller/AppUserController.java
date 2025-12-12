@@ -2,7 +2,7 @@ package com.soundspace.controller;
 
 import com.soundspace.dto.AppUserDto;
 import com.soundspace.dto.request.AppUserUpdateRequest;
-import com.soundspace.service.AppUserService;
+import com.soundspace.service.user.AppUserService;
 import com.soundspace.service.CookieService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

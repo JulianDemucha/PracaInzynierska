@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.storage;
 
 import com.soundspace.dto.ProcessedImage;
 import com.soundspace.entity.AppUser;

@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.storage;
 
 import com.soundspace.entity.StorageKey;
 import com.soundspace.exception.StorageException;

@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.user;
 
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.AppUserDto;
@@ -8,6 +8,8 @@ import com.soundspace.exception.StorageException;
 import com.soundspace.exception.UserNotFoundException;
 import com.soundspace.repository.*;
 import com.soundspace.dto.request.AppUserUpdateRequest;
+import com.soundspace.service.storage.ImageService;
+import com.soundspace.service.storage.StorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

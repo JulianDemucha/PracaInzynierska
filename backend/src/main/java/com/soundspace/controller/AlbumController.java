@@ -6,7 +6,7 @@ import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.dto.request.AlbumCreateRequest;
 import com.soundspace.dto.request.AlbumUpdateRequest;
 import com.soundspace.service.AlbumService;
-import com.soundspace.service.AppUserService;
+import com.soundspace.service.user.AppUserService;
 import com.soundspace.service.song.SongUploadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

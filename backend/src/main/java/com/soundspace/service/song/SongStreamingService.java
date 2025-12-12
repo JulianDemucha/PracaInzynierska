@@ -3,7 +3,7 @@ package com.soundspace.service.song;
 import com.soundspace.entity.Song;
 import com.soundspace.entity.StorageKey;
 import com.soundspace.repository.SongRepository;
-import com.soundspace.service.StorageService;
+import com.soundspace.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.ResourceRegion;

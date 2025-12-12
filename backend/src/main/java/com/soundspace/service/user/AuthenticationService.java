@@ -1,4 +1,4 @@
-package com.soundspace.service;
+package com.soundspace.service.user;
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.entity.AppUser;
 import com.soundspace.enums.Role;

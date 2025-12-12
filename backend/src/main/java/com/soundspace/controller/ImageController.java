@@ -1,8 +1,8 @@
 package com.soundspace.controller;
 
 import com.soundspace.entity.StorageKey;
-import com.soundspace.service.ImageService;
-import com.soundspace.service.StorageService;
+import com.soundspace.service.storage.ImageService;
+import com.soundspace.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
