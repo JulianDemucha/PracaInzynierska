@@ -44,6 +44,12 @@ app:
     # co ile bufor wyswietlen wysyla zapytanie ze zgromadzonymi wyswietleniami = 20000ms = 20 sekund
     buffer-flush-rate-ms: 20000 # 20 sekund
 
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+    http-only: true
+    same-site: ${COOKIE_SAME_SITE:Lax}
+    domain: ${COOKIE_DOMAIN:}
+
   media:
 
     avatar:

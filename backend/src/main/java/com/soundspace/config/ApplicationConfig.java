@@ -82,5 +82,10 @@ public class ApplicationConfig {
         return config.media().audio();
     }
 
+    @Bean
+    public ApplicationConfigProperties.CookieConfig cookieConfig(ApplicationConfigProperties config) {
+        return config.cookie();
+    }
+
 
 }

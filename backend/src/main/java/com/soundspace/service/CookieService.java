@@ -13,25 +13,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CookieService {
     private final ApplicationConfigProperties.JwtConfig jwtConfig;
+    private final ApplicationConfigProperties.CookieConfig cookieConfig;
 
     public ResponseCookie createJwtCookie(String jwt) {
-        return ResponseCookie.from("jwt", jwt)
-                .httpOnly(true)
-                .secure(false) //http
-                .path("/")
-                .maxAge(jwtConfig.expirationSeconds())
-                .sameSite("Lax")  //todo proxy on front (vite config)
-                .build();
+        return createCookie("jwt", jwt, jwtConfig.expirationSeconds());
     }
 
     public ResponseCookie createRefreshCookie(String refreshToken) {
-        return ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(false) //http
-                .path("/")
-                .maxAge(jwtConfig.refreshExpirationSeconds())
-                .sameSite("Strict")  //todo proxy on front (vite config)
-                .build();
+        return createCookie(refreshToken, refreshToken, jwtConfig.refreshExpirationSeconds());
     }
 
     public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response) {
@@ -41,7 +30,6 @@ public class CookieService {
 
         response.addHeader(HttpHeaders.SET_COOKIE,
                 createRefreshCookie(refreshToken).toString());
-
 
     }
 
@@ -53,6 +41,25 @@ public class CookieService {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 createRefreshCookie(refreshTokenCookieDto.getRefreshToken())
                         .toString());
+    }
+
+
+    // helpery
+
+    private ResponseCookie createCookie(String name, String value, long maxAgeSeconds) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
+                .httpOnly(cookieConfig.httpOnly())
+                .secure(cookieConfig.secure())
+                .path("/")
+                .maxAge(maxAgeSeconds)
+                .sameSite(cookieConfig.sameSite());
+
+        // zostawiam w razie mitycznego prod
+//        if (cookieConfig.domain() != null && !cookieConfig.domain().isBlank()) {
+//            builder.domain(cookieConfig.domain());
+//        }
+
+        return builder.build();
     }
 
 

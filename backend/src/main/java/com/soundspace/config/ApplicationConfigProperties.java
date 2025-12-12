@@ -7,7 +7,8 @@ public record ApplicationConfigProperties(
         JwtConfig jwt,
         StorageConfig storage,
         ViewsConfig views,
-        MediaConfig media
+        MediaConfig media,
+        CookieConfig cookie
 ) {
 
     public record JwtConfig(
@@ -57,4 +58,11 @@ public record ApplicationConfigProperties(
                 Long uploadMaxBytes
         ) {}
     }
+
+    public record CookieConfig(
+            boolean secure,
+            boolean httpOnly,
+            String sameSite,
+            String domain // Opcjonalnie, przydatne na prod
+    ) {}
 }
