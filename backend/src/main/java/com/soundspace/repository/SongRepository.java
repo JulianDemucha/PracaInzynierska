@@ -236,6 +236,25 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """)
     Page<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
 
+    @Query(value = """
+    SELECT s
+    FROM Song s
+    LEFT JOIN FETCH s.author
+    LEFT JOIN FETCH s.coverStorageKey
+    LEFT JOIN FETCH s.album
+    WHERE s.publiclyVisible = true
+    ORDER BY (
+        SELECT COUNT(v)
+        FROM SongView v
+        WHERE v.song = s
+    ) DESC
+    """,
+            countQuery = """
+    SELECT COUNT(s)
+    FROM Song s
+    WHERE s.publiclyVisible = true
+    """)
+    Page<Song> findTopViewedSongs(Pageable pageable);
     @Query("SELECT s FROM Song s WHERE s.publiclyVisible = true ORDER BY s.viewCount DESC")
     List<Song> findTopPopularSongs(Pageable pageable);
 
