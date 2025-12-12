@@ -40,6 +40,11 @@ public class SongStatisticsController {
         return ( isNewViewRegistered ? ResponseEntity.ok() : ResponseEntity.noContent() ).build();
     }
 
+    @GetMapping("/top/trending")
+    public ResponseEntity<Page<SongDto>> getTrendingSongs(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(songStatisticsService.getTrendingSongs(pageable));
+    }
+
     @GetMapping("/top/liked")
     public ResponseEntity<Page<SongDto>> getTop10LikedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopLiked(pageable));

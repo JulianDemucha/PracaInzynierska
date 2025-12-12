@@ -14,6 +14,16 @@ public class SongStatisticsService {
 
     private final SongRepository songRepository;
 
+    private static final int LIKE_WAGE_IN_TRENDING = 3;
+
+    public Page<SongDto> getTrendingSongs(Pageable pageable) {
+        return songRepository.findTrendingSongs(
+                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien,
+                pageable,
+                LIKE_WAGE_IN_TRENDING
+        ).map(SongDto::toDto);
+    }
+
     public Page<SongDto> getTopLiked(Pageable pageable) {
         return songRepository.findTopLikedSongsSinceCutoff(
                 Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien

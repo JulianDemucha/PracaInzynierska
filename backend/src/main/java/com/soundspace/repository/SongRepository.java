@@ -214,6 +214,68 @@ public interface SongRepository extends JpaRepository<Song, Long> {
                               @Param("userId") Long userId, Pageable pageable);
 
     @Query(value = """
+    SELECT s.id,
+           s.title,
+           u.id AS author_id,
+           u.login AS author_username,
+           s.album_id,
+           string_agg(DISTINCT g.genre, ',' ORDER BY g.genre) AS genres_str,
+           s.publicly_visible,
+           s.created_at,
+           sk.id AS cover_storage_key_id,
+           COALESCE(vv.views, 0) AS view_count,
+           COALESCE(rr.likes, 0) AS likes_count,
+           (COALESCE(vv.views,0) + COALESCE(rr.likes,0) * :likeWage) AS score
+    FROM songs s
+    LEFT JOIN app_users u ON u.id = s.user_id
+    LEFT JOIN storage_keys sk ON sk.id = s.cover_storage_key_id
+    LEFT JOIN song_genres g ON g.song_id = s.id
+
+    LEFT JOIN (
+      SELECT song_id, COUNT(*) AS views
+      FROM song_views
+      WHERE viewed_at > :cutoffDate
+      GROUP BY song_id
+    ) vv ON vv.song_id = s.id
+
+    LEFT JOIN (
+      SELECT song_id, COUNT(*) AS likes
+      FROM song_reactions
+      WHERE reaction_type = 'LIKE' AND reacted_at > :cutoffDate
+      GROUP BY song_id
+    ) rr ON rr.song_id = s.id
+
+    WHERE s.publicly_visible = true
+    -- AND (COALESCE(vv.views,0) + COALESCE(rr.likes,0)) > 0
+
+    GROUP BY s.id, s.title, u.id, u.login, s.album_id, s.publicly_visible, s.created_at, sk.id, vv.views, rr.likes
+    ORDER BY score DESC, s.created_at DESC
+    """,
+            countQuery = """
+    SELECT COUNT(*) FROM (
+      SELECT s.id
+      FROM songs s
+      LEFT JOIN (
+        SELECT song_id, COUNT(*) AS views
+        FROM song_views
+        WHERE viewed_at > :cutoffDate
+        GROUP BY song_id
+      ) vv ON vv.song_id = s.id
+      LEFT JOIN (
+        SELECT song_id, COUNT(*) AS likes
+        FROM song_reactions
+        WHERE reaction_type = 'LIKE' AND reacted_at > :cutoffDate
+        GROUP BY song_id
+      ) rr ON rr.song_id = s.id
+      WHERE s.publicly_visible = true
+      -- AND (COALESCE(vv.views,0) + COALESCE(rr.likes,0)) > 0
+    ) t
+    """,
+            nativeQuery = true)
+    Page<SongProjection> findTrendingSongs(@Param("cutoffDate") Instant cutoffDate, Pageable pageable, @Param("likeWage") int likeWage);
+
+
+    @Query(value = """
             SELECT s
             FROM Song s
             LEFT JOIN FETCH s.author
@@ -255,9 +317,11 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     WHERE s.publiclyVisible = true
     """)
     Page<Song> findTopViewedSongs(Pageable pageable);
+
     @Query("SELECT s FROM Song s WHERE s.publiclyVisible = true ORDER BY s.viewCount DESC")
     List<Song> findTopPopularSongs(Pageable pageable);
 
+    //todo do przerobienia zeby obsluzyc n+1 problem
     @Query("SELECT s FROM Song s WHERE s.publiclyVisible = true ORDER BY s.viewCount DESC")
     Page<Song> findTopPopularSongsPage(Pageable pageable);
 }
