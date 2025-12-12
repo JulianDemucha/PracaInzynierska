@@ -213,7 +213,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<Song> findCandidates(@Param("genres") Collection<Genre> genres, @Param("authorIds") Collection<Long> authorIds,
                               @Param("userId") Long userId, Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             SELECT s
             FROM Song s
             LEFT JOIN FETCH s.author
@@ -225,8 +225,16 @@ public interface SongRepository extends JpaRepository<Song, Long> {
               AND s.publiclyVisible = true
             GROUP BY s, s.author, s.coverStorageKey, s.album
             ORDER BY COUNT(r) DESC, s.viewCount DESC
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT s)
+            FROM Song s
+            JOIN SongReaction r ON r.song.id = s.id
+            WHERE r.reactionType = 'LIKE'
+              AND r.reactedAt > :cutoffDate
+              AND s.publiclyVisible = true
             """)
-    List<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
+    Page<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
 
     @Query("SELECT s FROM Song s WHERE s.publiclyVisible = true ORDER BY s.viewCount DESC")
     List<Song> findTopPopularSongs(Pageable pageable);

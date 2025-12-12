@@ -5,6 +5,9 @@ import com.soundspace.service.song.SongStatisticsService;
 import com.soundspace.service.song.ViewService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,9 +41,9 @@ public class SongStatisticsController {
         return ( isNewViewRegistered ? ResponseEntity.ok() : ResponseEntity.noContent() ).build();
     }
 
-    @GetMapping("/top10")
-    public ResponseEntity<List<SongDto>> getTop10LikedSongs() {
-        return ResponseEntity.ok(songStatisticsService.getTop10Liked());
+    @GetMapping("/top/liked")
+    public ResponseEntity<Page<SongDto>> getTop10LikedSongs(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(songStatisticsService.getTop10Liked(pageable));
     }
 
     //todo zrobic top10viewed i poprawic top10liked zeby zwracalo page i przyjmowalo wiadomo size i page
