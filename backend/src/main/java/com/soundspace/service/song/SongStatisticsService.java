@@ -25,15 +25,12 @@ public class SongStatisticsService {
     }
 
     public Page<SongDto> getTopLiked(Pageable pageable) {
-        return songRepository.findTopLikedSongsSinceCutoff(
-                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
-                pageable
-        ).map(SongDto::toDto);
+        return songRepository.findTopLikedSongs(pageable)
+                .map(SongDto::toDto);
     }
 
     public Page<SongDto> getTopViewed(Pageable pageable) {
-        return songRepository.findTopViewedSongs(
-                pageable
-        ).map(SongDto::toDto);
+        return songRepository.findTopViewedSongs(pageable)
+                .map(SongDto::toDto);
     }
 }

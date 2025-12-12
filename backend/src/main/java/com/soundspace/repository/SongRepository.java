@@ -276,27 +276,37 @@ public interface SongRepository extends JpaRepository<Song, Long> {
 
 
     @Query(value = """
-            SELECT s
-            FROM Song s
-            LEFT JOIN FETCH s.author
-            LEFT JOIN FETCH s.coverStorageKey
-            LEFT JOIN FETCH s.album
-            JOIN SongReaction r ON r.song.id = s.id
-            WHERE r.reactionType = 'LIKE'
-              AND r.reactedAt > :cutoffDate
-              AND s.publiclyVisible = true
-            GROUP BY s, s.author, s.coverStorageKey, s.album
-            ORDER BY COUNT(r) DESC, s.viewCount DESC
+            SELECT s.id,
+                   s.title,
+                   u.id AS author_id,
+                   u.login AS author_username,
+                   s.album_id,
+                   string_agg(DISTINCT g.genre, ',' ORDER BY g.genre) AS genresStr,
+                   s.publicly_visible,
+                   s.created_at,
+                   sk.id AS cover_storage_key_id,
+                   COUNT(r.id) AS likes_count,
+                   s.view_count
+            FROM songs s
+            LEFT JOIN app_users u ON u.id = s.user_id
+            LEFT JOIN storage_keys sk ON sk.id = s.cover_storage_key_id
+            LEFT JOIN song_genres g ON g.song_id = s.id
+            JOIN song_reactions r ON s.id = r.song_id AND r.reaction_type = 'LIKE'
+            
+            WHERE s.publicly_visible = true
+            
+            GROUP BY s.id, s.title, u.id, u.login, s.album_id, s.publicly_visible, s.created_at, sk.id, s.view_count
+            
+            ORDER BY likes_count DESC, s.view_count DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT s)
-            FROM Song s
-            JOIN SongReaction r ON r.song.id = s.id
-            WHERE r.reactionType = 'LIKE'
-              AND r.reactedAt > :cutoffDate
-              AND s.publiclyVisible = true
-            """)
-    Page<Song> findTopLikedSongsSinceCutoff(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
+            SELECT COUNT(DISTINCT s.id)
+            FROM songs s
+            JOIN song_reactions r ON s.id = r.song_id AND r.reaction_type = 'LIKE'
+            WHERE s.publicly_visible = true
+            """,
+            nativeQuery = true)
+    Page<SongProjection> findTopLikedSongs(Pageable pageable);
 
     @Query(value = """
     SELECT s
@@ -305,11 +315,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     LEFT JOIN FETCH s.coverStorageKey
     LEFT JOIN FETCH s.album
     WHERE s.publiclyVisible = true
-    ORDER BY (
-        SELECT COUNT(v)
-        FROM SongView v
-        WHERE v.song = s
-    ) DESC
+    ORDER BY s.viewCount DESC
     """,
             countQuery = """
     SELECT COUNT(s)
