@@ -338,7 +338,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
                    u.id AS author_id,
                    u.login AS author_username,
                    s.album_id,
-                   string_agg(DISTINCT g.genre, ',') AS genresStr,
+                   COALESCE(g.genresStr, '') AS genresStr,
                    s.publicly_visible,
                    s.created_at,
                    sk.id AS cover_storage_key_id,
@@ -348,22 +348,22 @@ public interface SongRepository extends JpaRepository<Song, Long> {
                        CASE WHEN LOWER(s.title) LIKE LOWER(:startsWithQuery) THEN 50 ELSE 0 END +
                        CASE WHEN LOWER(s.title) LIKE LOWER(:containsQuery) THEN 20 ELSE 0 END
                    ) AS relevance_score
-
             FROM songs s
             LEFT JOIN app_users u ON u.id = s.user_id
             LEFT JOIN storage_keys sk ON sk.id = s.cover_storage_key_id
-            LEFT JOIN song_genres g ON g.song_id = s.id
-            
+            LEFT JOIN (
+                SELECT song_id, string_agg(DISTINCT genre, ',') AS genresStr
+                FROM song_genres
+                GROUP BY song_id
+            ) g ON g.song_id = s.id
             WHERE (s.title ILIKE :containsQuery)
               AND (s.publicly_visible = true OR s.user_id = :userId)
-            
-            GROUP BY s.id, s.title, u.id, u.login, s.album_id, s.publicly_visible, s.created_at, sk.id, s.view_count
-            
-            ORDER BY relevance_score DESC, s.view_count DESC
+            ORDER BY relevance_score DESC, s.view_count DESC;
             """,
             countQuery = """
             SELECT COUNT(DISTINCT s.id)
             FROM songs s
+            LEFT JOIN song_genres g ON g.song_id = s.id
             WHERE (s.title ILIKE :containsQuery)
               AND (s.publicly_visible = true OR s.user_id = :userId)
             """,
@@ -382,7 +382,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
                    u.id AS author_id,
                    u.login AS author_username,
                    s.album_id,
-                   string_agg(DISTINCT g.genre, ',') AS genresStr,
+                   COALESCE(g.genresStr, '') AS genresStr,
                    s.publicly_visible,
                    s.created_at,
                    sk.id AS cover_storage_key_id,
@@ -396,18 +396,21 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             FROM songs s
             LEFT JOIN app_users u ON u.id = s.user_id
             LEFT JOIN storage_keys sk ON sk.id = s.cover_storage_key_id
-            LEFT JOIN song_genres g ON g.song_id = s.id
+                        LEFT JOIN (
+                SELECT song_id, string_agg(DISTINCT genre, ',') AS genresStr
+                FROM song_genres
+                GROUP BY song_id
+            ) g ON g.song_id = s.id
             
             WHERE (s.title ILIKE :containsQuery)
               AND s.publicly_visible = true
-            
-            GROUP BY s.id, s.title, u.id, u.login, s.album_id, s.publicly_visible, s.created_at, sk.id, s.view_count
             
             ORDER BY relevance_score DESC, s.view_count DESC
             """,
             countQuery = """
             SELECT COUNT(DISTINCT s.id)
             FROM songs s
+            LEFT JOIN song_genres g ON g.song_id = s.id
             WHERE (s.title ILIKE :containsQuery)
               AND s.publicly_visible = true
             """,
