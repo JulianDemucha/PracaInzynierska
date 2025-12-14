@@ -34,7 +34,6 @@ public record PlaylistDto(
 
     public static PlaylistDto toDto(PlaylistProjection p){
         Instant updatedAt = p.getUpdatedAt();
-        Integer songsCount = p.getSongsCount();
         return new PlaylistDto(
                 p.getId(),
                 p.getTitle(),

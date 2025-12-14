@@ -1,6 +1,7 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.AlbumDto;
+import com.soundspace.dto.AppUserDto;
 import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.SongDto;
 import com.soundspace.service.SearchService;
@@ -47,6 +48,14 @@ public class SearchController {
             Authentication authentication
     ) {
         return ResponseEntity.ok(searchService.searchPlaylists(query, pageable, extractUserDetails(authentication)));
+    }
+
+    @GetMapping("/users/search")
+    public ResponseEntity<Page<AppUserDto>> searchusers(
+            @RequestParam String query,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return ResponseEntity.ok(searchService.searchUsers(query, pageable));
     }
 
 
