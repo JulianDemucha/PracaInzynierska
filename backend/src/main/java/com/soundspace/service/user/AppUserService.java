@@ -188,6 +188,11 @@ public class AppUserService {
 
     }
 
+    public Long getUserIdByEmail(String email) {
+        return appUserRepository.findUserIdByEmail(email).orElseThrow(() ->
+                new UserNotFoundException("Nie znaleziono użytkownika o emailu: " + email));
+    }
+
 
     ///////////////////////////// HELPERS /////////////////////////////
 
