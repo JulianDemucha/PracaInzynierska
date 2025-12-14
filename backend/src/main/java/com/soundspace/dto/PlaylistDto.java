@@ -3,6 +3,8 @@ package com.soundspace.dto;
 import com.soundspace.dto.projection.PlaylistProjection;
 import com.soundspace.entity.Playlist;
 
+import java.time.Instant;
+
 public record PlaylistDto(
         Long id,
         String title,
@@ -12,7 +14,7 @@ public record PlaylistDto(
         String createdAt,
         String updatedAt,
         Long coverStorageKeyId,
-        int songsCount
+        Integer songsCount
 ) {
     public static PlaylistDto toDto(Playlist playlist) {
         int songsCount = playlist.getSongs() == null ? 0 : playlist.getSongs().size();
@@ -31,6 +33,8 @@ public record PlaylistDto(
     }
 
     public static PlaylistDto toDto(PlaylistProjection p){
+        Instant updatedAt = p.getUpdatedAt();
+        Integer songsCount = p.getSongsCount();
         return new PlaylistDto(
                 p.getId(),
                 p.getTitle(),
@@ -38,7 +42,7 @@ public record PlaylistDto(
                 p.getCreatorUsername(),
                 p.getPubliclyVisible(),
                 p.getCreatedAt().toString(),
-                p.getUpdatedAt().toString(),
+                updatedAt == null ? null : p.getUpdatedAt().toString(),
                 p.getCoverStorageKeyId(),
                 p.getSongsCount()
         );

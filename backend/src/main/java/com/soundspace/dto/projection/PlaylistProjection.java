@@ -11,5 +11,5 @@ public interface PlaylistProjection {
     Instant getCreatedAt();
     Instant getUpdatedAt();
     Long getCoverStorageKeyId();
-    int getSongsCount();
+    Integer getSongsCount();
 }

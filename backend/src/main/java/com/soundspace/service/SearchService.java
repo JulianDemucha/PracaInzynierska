@@ -1,10 +1,13 @@
 package com.soundspace.service;
 
 import com.soundspace.dto.AlbumDto;
+import com.soundspace.dto.PlaylistDto;
 import com.soundspace.dto.SongDto;
 import com.soundspace.dto.projection.AlbumProjection;
+import com.soundspace.dto.projection.PlaylistProjection;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.repository.AlbumRepository;
+import com.soundspace.repository.PlaylistRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.service.user.AppUserService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ public class SearchService {
     private final AlbumRepository albumRepository;
 
     private final AppUserService appUserService;
+    private final PlaylistRepository playlistRepository;
 
     @Transactional(readOnly = true)
     public Page<SongDto> searchSongs(String query, Pageable pageable, UserDetails userDetails) {
@@ -76,5 +80,33 @@ public class SearchService {
         );
 
         return results.map(AlbumDto::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PlaylistDto> searchPlaylists(String query, Pageable pageable, UserDetails userDetails) {
+        if (query == null || query.isBlank()) {
+            return Page.empty(pageable);
+        }
+
+        String cleanedQuery = query.trim();
+        String startsWith = cleanedQuery + "%";
+
+        String contains = "%" + cleanedQuery + "%";
+        Page<PlaylistProjection> results = userDetails == null ?
+                playlistRepository.searchPlaylistsPublic(
+                        cleanedQuery, //exact
+                        startsWith,
+                        contains,
+                        pageable
+                ):
+                playlistRepository.searchPlaylists(
+                        cleanedQuery,
+                        startsWith,
+                        contains,
+                        appUserService.getUserIdByEmail(userDetails.getUsername()),
+                        pageable
+                );
+
+        return results.map(PlaylistDto::toDto);
     }
 }

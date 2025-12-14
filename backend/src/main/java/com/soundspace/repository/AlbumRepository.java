@@ -125,7 +125,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             FROM albums a
             LEFT JOIN app_users u ON u.id = a.user_id
             LEFT JOIN storage_keys sk ON sk.id = a.cover_storage_key_id
-                        LEFT JOIN (
+            LEFT JOIN (
                 SELECT album_id, string_agg(DISTINCT genre, ',') AS genresStr
                 FROM album_genres g
                 GROUP BY album_id
