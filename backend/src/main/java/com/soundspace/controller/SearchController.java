@@ -1,5 +1,6 @@
 package com.soundspace.controller;
 
+import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.SongDto;
 import com.soundspace.service.SearchService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,16 @@ public class SearchController {
         return ResponseEntity.ok(searchService.searchSongs(query, pageable, extractUserDetails(authentication)));
     }
 
-    //todo zrobic search do playlist, appUserow i albumow
+    @GetMapping("/albums/search")
+    public ResponseEntity<Page<AlbumDto>> searchAlbums(
+            @RequestParam String query,
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(searchService.searchAlbums(query, pageable, extractUserDetails(authentication)));
+    }
+
+    //todo zrobic search do playlist i appUserow
 
     // HELPERY
 

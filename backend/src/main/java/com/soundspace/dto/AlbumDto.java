@@ -1,5 +1,6 @@
 package com.soundspace.dto;
 
+import com.soundspace.dto.projection.AlbumProjection;
 import com.soundspace.entity.Album;
 import lombok.Builder;
 
@@ -31,6 +32,21 @@ public record AlbumDto(
                 album.getCreatedAt().toString(),
                 album.getGenres().stream().map(Objects::toString).toList(),
                 album.getCoverStorageKey().getId()
+        );
+    }
+
+    public static AlbumDto toDto(AlbumProjection p) {
+
+        return new AlbumDto(
+                p.getId(),
+                p.getTitle(),
+                p.getDescription(),
+                p.getAuthorId(),
+                p.getAuthorLogin(),
+                p.getPubliclyVisible(),
+                p.getCreatedAt().toString(),
+                p.getGenres().stream().map(Objects::toString).toList(),
+                p.getCoverStorageKeyId()
         );
     }
 }
