@@ -147,12 +147,6 @@ public class SongUploadService {
                                       StorageKey audioStorageKeyEntity, StorageKey coverStorageKeyEntity)
             throws IllegalArgumentException {
 
-        String title = request.getTitle();
-
-        if (title == null || title.isBlank() || title.length() > 32) {
-            throw new IllegalArgumentException("Nieprawidłowy tytuł");
-        }
-
         List<Genre> validatedGenreList = new ArrayList<>();
         try {
             for (String genre : request.getGenre())
@@ -160,11 +154,11 @@ public class SongUploadService {
                     validatedGenreList.add(Genre.valueOf(genre.toUpperCase().trim()));
 
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Nieprawidłowy gatunek (genre)");
+            throw new IllegalArgumentException("Nieprawidłowy gatunek (genre): "+e.getMessage());
         }
 
         Song s = new Song();
-        s.setTitle(title);
+        s.setTitle(request.getTitle());
         s.setAuthor(appUser);
         s.setGenres(validatedGenreList);
         s.setAlbum(null);
@@ -181,14 +175,8 @@ public class SongUploadService {
             throws IllegalArgumentException {
         Album album = albumService.getReferenceById(albumId);
 
-        String title = request.getTitle();
-
-        if (title == null || title.isBlank() || title.length() > 32) {
-            throw new IllegalArgumentException("Nieprawidłowy tytuł");
-        }
-
         Song s = new Song();
-        s.setTitle(title);
+        s.setTitle(request.getTitle());
         s.setAuthor(appUser);
         s.setGenres(new ArrayList<>(album.getGenres()));
         s.setAlbum(album);
