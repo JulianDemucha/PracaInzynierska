@@ -23,7 +23,7 @@ public class StorageService {
     private final Path rootPath;
     private final StorageKeyRepository storageKeyRepository;
 
-    public StorageService(@Value("${app.storage.root:./data/audio}") String rootStr, StorageKeyRepository storageKeyRepository) {
+    public StorageService(@Value("${app.storage.root:./data}") String rootStr, StorageKeyRepository storageKeyRepository) {
         try {
             this.rootPath = Paths.get(rootStr).toAbsolutePath().normalize();
             Files.createDirectories(this.rootPath); // tworzymy root, jak nie istnieje

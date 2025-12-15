@@ -7,6 +7,7 @@ target/
 .env
 data/*
 !data/placeholders/
+!data/docker/placeholders/
 
 
 ### STS ###
