@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 // todo pozmieniac niepotrzebne left joiny w inner joiny kiedy relacja i tak jest obowiazkowa
 public interface SongRepository extends JpaRepository<Song, Long> {
@@ -182,7 +183,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     Page<Song> findAllFavouriteByAppUserId(@Param("userId") Long userId, Pageable pageable);
 
     @Query(value = "SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY view_count) FROM songs", nativeQuery = true)
-    Long findViewCountPercentile90();
+    Optional<Long> findViewCountPercentile90();
 
 //    @Query("""
 //        SELECT DISTINCT s.id

@@ -128,7 +128,7 @@ public class RecommendationsService {
     @PostConstruct
     @Scheduled(cron = "0 0 * * * *")
     public void updateViewCap() {
-        long newCap = songRepo.findViewCountPercentile90();
+        long newCap = songRepo.findViewCountPercentile90().orElse(0L);
 
         if (newCap < 1) newCap = 1;
 

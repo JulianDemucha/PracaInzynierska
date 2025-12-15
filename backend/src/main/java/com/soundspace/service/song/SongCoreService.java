@@ -129,11 +129,11 @@ public class SongCoreService {
         // storageService moze rzucic IOException lub StorageException
         try {
             StorageKey audioKey = song.getAudioStorageKey();
-            if (audioKey != null && !audioKey.getId().equals(audioConfig.defaultAudioId()) && audioKey.getKey() != null && !audioKey.getKey().isBlank()) {
+            if (audioKey != null && !audioKey.getId().equals(audioConfig.defaultAudioId()) && audioKey.getKeyStr() != null && !audioKey.getKeyStr().isBlank()) {
                 try {
-                    storageService.delete(audioKey.getKey());
+                    storageService.delete(audioKey.getKeyStr());
                 } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć pliku audio z storage: {}", audioKey.getKey(), ex);
+                    log.warn("Nie udało się usunąć pliku audio z storage: {}", audioKey.getKeyStr(), ex);
                     throw ex;
                 }
 
@@ -145,11 +145,11 @@ public class SongCoreService {
             }
 
             StorageKey coverKey = song.getCoverStorageKey();
-            if (song.getAlbum() == null && coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (song.getAlbum() == null && coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKeyStr() != null && !coverKey.getKeyStr().isBlank()) {
                 try {
-                    storageService.delete(coverKey.getKey());
+                    storageService.delete(coverKey.getKeyStr());
                 } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć pliku cover z storage: {}", coverKey.getKey(), ex);
+                    log.warn("Nie udało się usunąć pliku cover z storage: {}", coverKey.getKeyStr(), ex);
                     throw ex;
                 }
                 try {

@@ -237,7 +237,7 @@ public class SongUploadService {
 
         // StorageKey dla audio
         StorageKey audioStorageKeyEntity = new StorageKey();
-        audioStorageKeyEntity.setKey(audioStorageKey);
+        audioStorageKeyEntity.setKeyStr(audioStorageKey);
         audioStorageKeyEntity.setMimeType(audioFileMimeType);
         audioStorageKeyEntity.setSizeBytes(audioFileSize);
         audioStorageKeyEntity = storageKeyRepository.save(audioStorageKeyEntity);
@@ -255,7 +255,7 @@ public class SongUploadService {
 
         // StorageKey dla cover
         StorageKey coverStorageKeyEntity = new StorageKey();
-        coverStorageKeyEntity.setKey(coverStorageKey);
+        coverStorageKeyEntity.setKeyStr(coverStorageKey);
         coverStorageKeyEntity.setMimeType(coverFileMimeType);
         coverStorageKeyEntity.setSizeBytes(coverFileSize);
         coverStorageKeyEntity = storageKeyRepository.save(coverStorageKeyEntity);
@@ -266,9 +266,9 @@ public class SongUploadService {
         for (StorageKey keyEntity : keys) {
             if (keyEntity == null) continue;
             try {
-                storage.delete(keyEntity.getKey());
+                storage.delete(keyEntity.getKeyStr());
             } catch (Exception ex) {
-                log.warn("Nie udało się usunąć pliku ze storage podczas rollbacku: {}", keyEntity.getKey(), ex);
+                log.warn("Nie udało się usunąć pliku ze storage podczas rollbacku: {}", keyEntity.getKeyStr(), ex);
             }
             try {
                 storageKeyRepository.delete(keyEntity);

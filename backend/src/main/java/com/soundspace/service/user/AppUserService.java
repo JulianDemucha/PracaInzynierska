@@ -214,7 +214,7 @@ public class AppUserService {
 
             // zapis encji StorageKey
             StorageKey sk = new StorageKey();
-            sk.setKey(storageKey);
+            sk.setKeyStr(storageKey);
             sk.setMimeType(processed.contentType());
             sk.setSizeBytes(processed.bytes().length);
             sk = storageKeyRepository.save(sk);
@@ -248,9 +248,9 @@ public class AppUserService {
         // usuwanie poprzedniego avatara jezeli to nie devault
         if (previous != null && !previous.getId().equals(avatarConfig.defaultAvatarId())) {
             try {
-                storageService.delete(previous.getKey());
+                storageService.delete(previous.getKeyStr());
             } catch (Exception ex) {
-                log.warn("Nie udało się usunąć pliku starego avatara z storage: {}", previous.getKey(), ex);
+                log.warn("Nie udało się usunąć pliku starego avatara z storage: {}", previous.getKeyStr(), ex);
             }
             try {
                 storageKeyRepository.delete(previous);

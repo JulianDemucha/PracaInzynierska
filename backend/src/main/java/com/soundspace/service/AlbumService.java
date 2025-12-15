@@ -223,11 +223,11 @@ public class AlbumService {
         albumRepository.flush();
 
         try {
-            if (coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKeyStr() != null && !coverKey.getKeyStr().isBlank()) {
                 try {
-                    storageService.delete(coverKey.getKey());
+                    storageService.delete(coverKey.getKeyStr());
                 } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć pliku cover z storage: {}", coverKey.getKey(), ex);
+                    log.warn("Nie udało się usunąć pliku cover z storage: {}", coverKey.getKeyStr(), ex);
                     throw ex;
                 }
                 try {
@@ -319,7 +319,7 @@ public class AlbumService {
 
         // Zapis metadanych StorageKey
         StorageKey storageKeyEntity = new StorageKey();
-        storageKeyEntity.setKey(coverStorageKeyString);
+        storageKeyEntity.setKeyStr(coverStorageKeyString);
         storageKeyEntity.setMimeType(mimeType);
         storageKeyEntity.setSizeBytes(coverFileSize);
 
@@ -348,9 +348,9 @@ public class AlbumService {
 
     private void cleanUpStorageKey(StorageKey keyEntity) {
         try {
-            storageService.delete(keyEntity.getKey());
+            storageService.delete(keyEntity.getKeyStr());
         } catch (Exception ex) {
-            log.warn("Nie udało się usunąć pliku ze storage: {}", keyEntity.getKey(), ex);
+            log.warn("Nie udało się usunąć pliku ze storage: {}", keyEntity.getKeyStr(), ex);
         }
         try {
             storageKeyRepository.delete(keyEntity);

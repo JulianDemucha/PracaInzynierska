@@ -124,9 +124,9 @@ public class ImageService {
     }
 
     public Resource loadImageResource(StorageKey storageKey) {
-        Resource resource = storageService.loadAsResource(storageKey.getKey());
+        Resource resource = storageService.loadAsResource(storageKey.getKeyStr());
 
-        String storageKeyStr = storageKey.getKey();
+        String storageKeyStr = storageKey.getKeyStr();
         if (
                 !storageKeyStr.endsWith(".jpg") ||
 
@@ -164,7 +164,7 @@ public class ImageService {
 
             // zapis encji StorageKey
             StorageKey sk = new StorageKey();
-            sk.setKey(storageKey);
+            sk.setKeyStr(storageKey);
             sk.setMimeType(processed.contentType());
             sk.setSizeBytes(processed.bytes().length);
             sk = storageKeyRepository.save(sk);
@@ -191,9 +191,9 @@ public class ImageService {
         // usuwanie poprzedniego image jezeli to nie default
         if (imageStorageKey != null && !imageStorageKey.getId().equals(6767L)) { // 6767L = DEFAULT_AVATAR_IMAGE_STORAGE_KEY_ID
             try {
-                storageService.delete(imageStorageKey.getKey());
+                storageService.delete(imageStorageKey.getKeyStr());
             } catch (Exception ex) {
-                log.warn("Nie udało się usunąć pliku starego image "+" {"+prefix+")"+" z storage: {}", imageStorageKey.getKey(), ex);
+                log.warn("Nie udało się usunąć pliku starego image "+" {"+prefix+")"+" z storage: {}", imageStorageKey.getKeyStr(), ex);
             }
             try {
                 storageKeyRepository.delete(imageStorageKey);

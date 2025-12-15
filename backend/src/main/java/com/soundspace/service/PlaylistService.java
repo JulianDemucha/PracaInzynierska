@@ -224,11 +224,11 @@ public class PlaylistService {
         playlistRepository.flush();
 
         try {
-            if (coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKey() != null && !coverKey.getKey().isBlank()) {
+            if (coverKey != null && !coverKey.getId().equals(coverConfig.defaultCoverId()) && coverKey.getKeyStr() != null && !coverKey.getKeyStr().isBlank()) {
                 try {
-                    storageService.delete(coverKey.getKey());
+                    storageService.delete(coverKey.getKeyStr());
                 } catch (Exception ex) {
-                    log.warn("Nie udało się usunąć pliku cover z storage (playlist cover) storage key id={}", coverKey.getKey(), ex);
+                    log.warn("Nie udało się usunąć pliku cover z storage (playlist cover) storage key id={}", coverKey.getKeyStr(), ex);
                     throw ex;
                 }
                 try {
@@ -358,7 +358,7 @@ public class PlaylistService {
         log.info("Zapisano okładkę playlisty: key={}", coverStorageKeyString);
 
         StorageKey storageKeyEntity = new StorageKey();
-        storageKeyEntity.setKey(coverStorageKeyString);
+        storageKeyEntity.setKeyStr(coverStorageKeyString);
         storageKeyEntity.setMimeType(mimeType);
         storageKeyEntity.setSizeBytes(coverFileSize);
 
@@ -368,9 +368,9 @@ public class PlaylistService {
     private void rollbackStorage(StorageKey keyEntity) {
         if (keyEntity == null) return;
         try {
-            storageService.delete(keyEntity.getKey());
+            storageService.delete(keyEntity.getKeyStr());
         } catch (Exception ex) {
-            log.warn("Nie udało się usunąć pliku ze storage (rollback): {}", keyEntity.getKey(), ex);
+            log.warn("Nie udało się usunąć pliku ze storage (rollback): {}", keyEntity.getKeyStr(), ex);
         }
         try {
             storageKeyRepository.delete(keyEntity);

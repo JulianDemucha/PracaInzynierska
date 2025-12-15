@@ -36,11 +36,11 @@ public class SongStreamingService {
         validateAccess(song, userDetails);
 
         StorageKey audioKey = song.getAudioStorageKey();
-        if (audioKey == null || audioKey.getKey() == null || audioKey.getKey().isBlank()) {
+        if (audioKey == null || audioKey.getKeyStr() == null || audioKey.getKeyStr().isBlank()) {
             throw new NoSuchElementException("Brak przypisanego pliku audio dla piosenki");
         }
 
-        Path path = storageService.resolvePath(audioKey.getKey());
+        Path path = storageService.resolvePath(audioKey.getKeyStr());
         if (!Files.exists(path)) {
             throw new NoSuchElementException("Plik fizyczny nie istnieje");
         }

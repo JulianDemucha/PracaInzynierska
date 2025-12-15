@@ -11,11 +11,11 @@ public interface StorageKeyRepository extends JpaRepository<StorageKey, Long> {
     @Modifying
     @Query("""
         DELETE FROM StorageKey sk
-        WHERE sk.key LIKE CONCAT('users/avatars/', :userId, '/%')
-           OR sk.key LIKE CONCAT('albums/covers/', :userId, '/%')
-           OR sk.key LIKE CONCAT('playlists/covers/', :userId, '/%')
-           OR sk.key LIKE CONCAT('songs/covers/', :userId, '/%')
-           OR sk.key LIKE CONCAT('songs/audio/', :userId, '/%')
+        WHERE sk.keyStr LIKE CONCAT('users/avatars/', :userId, '/%')
+           OR sk.keyStr LIKE CONCAT('albums/covers/', :userId, '/%')
+           OR sk.keyStr LIKE CONCAT('playlists/covers/', :userId, '/%')
+           OR sk.keyStr LIKE CONCAT('songs/covers/', :userId, '/%')
+           OR sk.keyStr LIKE CONCAT('songs/audio/', :userId, '/%')
     """)
     void deleteAllByUserId(@Param("userId") Long userId);
 }

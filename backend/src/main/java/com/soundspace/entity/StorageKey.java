@@ -16,8 +16,8 @@ public class StorageKey {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "key", nullable = false, unique = true)
-    private String key;
+    @Column(name = "keyStr", nullable = false, unique = true)
+    private String keyStr;
 
     @Column(name = "mime_type", nullable = false)
     private String mimeType;
