@@ -13,6 +13,7 @@ import SongPage from './pages/SongPage.jsx'
 import CollectionPage from './pages/CollectionPage'
 import GenrePage from './pages/GenrePage.jsx'
 import FavoritesPage from "./pages/FavoritesPage.jsx";
+import SearchPage from "./pages/SearchPage.jsx";
 
 const router = createBrowserRouter([
     {
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
             {
                 path: "/favorites",
                 element: <FavoritesPage />,
+            },
+            {
+                path: "/search",
+                element: <SearchPage />
             },
         ]
     }

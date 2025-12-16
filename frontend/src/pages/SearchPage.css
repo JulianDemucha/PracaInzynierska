@@ -1,0 +1,107 @@
+.search-page {
+    padding: 2rem;
+    color: white;
+    padding-bottom: 6rem;
+}
+
+.search-header {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.search-page-msg {
+    padding: 3rem;
+    text-align: center;
+    color: #b3b3b3;
+    font-size: 1.2rem;
+}
+
+.search-section {
+    margin-bottom: 3rem;
+}
+
+.search-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.5rem;
+}
+
+.search-songs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.search-song-row {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.search-song-row:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-song-img-wrapper img {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.search-song-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-song-title {
+    font-weight: 600;
+    color: white;
+}
+
+.search-song-artist {
+    font-size: 0.85rem;
+    color: #b3b3b3;
+    text-decoration: none;
+}
+
+.search-song-artist:hover {
+    text-decoration: underline;
+}
+
+search-user-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #181818;
+    transition: background-color 0.3s;
+}
+
+.search-user-card:hover {
+    background-color: #282828;
+}
+
+.search-user-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.search-user-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+}
