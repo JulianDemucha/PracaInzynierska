@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import MediaCard from '../components/cards/MediaCard.jsx';
 import { getImageUrl } from '../services/imageService.js';
-import { getAllSongs } from '../services/songService.js';
+import {
+    getAllSongs,
+    getTrendingSongs,
+    getTopLikedSongs,
+    getTopViewedSongs
+} from '../services/songService.js';
 import { getAllAlbums } from '../services/albumService.js';
 import { getAllPlaylists } from '../services/playlistService.js';
 import './HomePage.css';
@@ -25,7 +30,7 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
                         className="expand-btn"
                         onClick={() => onUpdate(Math.min(currentLimit + ITEMS_IN_ROW, totalCount))}
                     >
-                        Pokaż 7 więcej
+                        Pokaż więcej
                     </button>
                     <button
                         className="expand-btn"
@@ -42,7 +47,7 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
                         className="expand-btn"
                         onClick={() => onUpdate(Math.max(currentLimit - ITEMS_IN_ROW, initialLimit))}
                     >
-                        Pokaż 7 mniej
+                        Pokaż mniej
                     </button>
                     <button
                         className="expand-btn"
@@ -57,15 +62,23 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
 };
 
 function HomePage() {
-    const [hitsLimit, setHitsLimit] = useState(ITEMS_IN_ROW);
+    const [trendingLimit, setTrendingLimit] = useState(ITEMS_IN_ROW);
+    const [likedLimit, setLikedLimit] = useState(ITEMS_IN_ROW);
+    const [viewedLimit, setViewedLimit] = useState(ITEMS_IN_ROW);
+
     const [genresLimit, setGenresLimit] = useState(ITEMS_IN_ROW);
     const [songsLimit, setSongsLimit] = useState(ITEMS_IN_ROW);
     const [albumsLimit, setAlbumsLimit] = useState(ITEMS_IN_ROW);
     const [playlistsLimit, setPlaylistsLimit] = useState(ITEMS_IN_ROW);
 
+    const [trendingSongs, setTrendingSongs] = useState([]);
+    const [topLikedSongs, setTopLikedSongs] = useState([]);
+    const [topViewedSongs, setTopViewedSongs] = useState([]);
+
     const [allSongs, setAllSongs] = useState([]);
     const [allAlbums, setAllAlbums] = useState([]);
     const [allPlaylists, setAllPlaylists] = useState([]);
+
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -74,17 +87,29 @@ function HomePage() {
                 setLoading(true);
 
                 const results = await Promise.allSettled([
+                    getTrendingSongs(0, 20),
+                    getTopLikedSongs(0, 10),
+                    getTopViewedSongs(0, 10),
                     getAllSongs(),
                     getAllAlbums(),
                     getAllPlaylists()
                 ]);
 
-                const getData = (result) => result.status === 'fulfilled' ? result.value : [];
+                const getData = (result, isPage = false) => {
+                    if (result.status === 'fulfilled') {
+                        return isPage ? result.value.content : result.value;
+                    }
+                    return [];
+                };
 
-                setAllSongs(getData(results[0]));
-                setAllAlbums(getData(results[1]));
+                setTrendingSongs(getData(results[0], true));
+                setTopLikedSongs(getData(results[1], true));
+                setTopViewedSongs(getData(results[2], true));
 
-                const playlistsData = getData(results[2]);
+                setAllSongs(getData(results[3]));
+                setAllAlbums(getData(results[4]));
+
+                const playlistsData = getData(results[5]);
                 if (playlistsData && Array.isArray(playlistsData)) {
                     const publicOnly = playlistsData.filter(p => p.publiclyVisible === true);
                     setAllPlaylists(publicOnly);
@@ -102,40 +127,53 @@ function HomePage() {
         fetchHomeData();
     }, []);
 
-    const hitsSongs = allSongs.slice(0, 21);
-
     if (loading) {
         return <div className="home-page loading-container">Ładowanie...</div>;
     }
 
+    const renderSection = (title, items, limit, setLimit, type = 'song') => (
+        <section className="home-section">
+            <div className="section-header">
+                <h2>
+                    {title}
+                    <span className="section-count">({items.length})</span>
+                </h2>
+            </div>
+            <div className="genre-grid">
+                {items.length > 0 ? (
+                    items.slice(0, limit).map((item) => (
+                        <MediaCard
+                            key={`${type}-${item.id}`}
+                            title={item.title || item.name}
+                            subtitle={type === 'playlist'
+                                ? `${item.songsCount || 0} utworów • ${item.creatorUsername || 'Nieznany'}`
+                                : item.artist || item.authorUsername || item.creatorUsername}
+                            imageUrl={getImageUrl(item.coverStorageKeyId)}
+                            linkTo={`/${type}/${item.id}`}
+                            data={type === 'song' ? item : null}
+                        />
+                    ))
+                ) : (
+                    <p className="empty-message">Brak elementów do wyświetlenia.</p>
+                )}
+            </div>
+            <ExpandControls
+                totalCount={items.length}
+                currentLimit={limit}
+                initialLimit={ITEMS_IN_ROW}
+                onUpdate={setLimit}
+            />
+        </section>
+    );
+
     return (
         <div className="home-page">
 
-            <section className="home-section">
-                <div className="section-header">
-                    <h2>
-                        🔥 Hity (Najbardziej Polubione)
-                        <span className="section-count">({hitsSongs.length})</span>
-                    </h2>
-                </div>
-                <div className="genre-grid">
-                    {hitsSongs.slice(0, hitsLimit).map((song) => (
-                        <MediaCard
-                            key={`hit-${song.id}`}
-                            title={song.title}
-                            subtitle={song.artist}
-                            imageUrl={getImageUrl(song.coverStorageKeyId)}
-                            linkTo={`/song/${song.id}`}
-                        />
-                    ))}
-                </div>
-                <ExpandControls
-                    totalCount={hitsSongs.length}
-                    currentLimit={hitsLimit}
-                    initialLimit={ITEMS_IN_ROW}
-                    onUpdate={setHitsLimit}
-                />
-            </section>
+            {renderSection("Hity Na Czasie", trendingSongs, trendingLimit, setTrendingLimit, 'song')}
+
+            {renderSection("Najczęściej Odtwarzane", topViewedSongs, viewedLimit, setViewedLimit, 'song')}
+
+            {renderSection("Ulubione Przez Społeczność", topLikedSongs, likedLimit, setLikedLimit, 'song')}
 
             <section className="home-section">
                 <div className="section-header">
@@ -163,95 +201,11 @@ function HomePage() {
                 />
             </section>
 
-            <section className="home-section">
-                <div className="section-header">
-                    <h2>
-                        Wszystkie Utwory
-                        <span className="section-count">({allSongs.length})</span>
-                    </h2>
-                </div>
-                <div className="genre-grid">
-                    {allSongs.length > 0 ? (
-                        allSongs.slice(0, songsLimit).map((song) => (
-                            <MediaCard
-                                key={song.id}
-                                title={song.title}
-                                subtitle={song.artist}
-                                imageUrl={getImageUrl(song.coverStorageKeyId)}
-                                linkTo={`/song/${song.id}`}
-                            />
-                        ))
-                    ) : (
-                        <p className="empty-message">Brak utworów w bazie.</p>
-                    )}
-                </div>
-                <ExpandControls
-                    totalCount={allSongs.length}
-                    currentLimit={songsLimit}
-                    initialLimit={ITEMS_IN_ROW}
-                    onUpdate={setSongsLimit}
-                />
-            </section>
+            {renderSection("Wszystkie Utwory", allSongs, songsLimit, setSongsLimit, 'song')}
 
-            <section className="home-section">
-                <div className="section-header">
-                    <h2>
-                        Wszystkie Albumy
-                        <span className="section-count">({allAlbums.length})</span>
-                    </h2>
-                </div>
-                <div className="genre-grid">
-                    {allAlbums.length > 0 ? (
-                        allAlbums.slice(0, albumsLimit).map((album) => (
-                            <MediaCard
-                                key={album.id}
-                                title={album.title}
-                                subtitle={album.artist}
-                                imageUrl={getImageUrl(album.coverStorageKeyId)}
-                                linkTo={`/album/${album.id}`}
-                            />
-                        ))
-                    ) : (
-                        <p className="empty-message">Brak albumów w bazie.</p>
-                    )}
-                </div>
-                <ExpandControls
-                    totalCount={allAlbums.length}
-                    currentLimit={albumsLimit}
-                    initialLimit={ITEMS_IN_ROW}
-                    onUpdate={setAlbumsLimit}
-                />
-            </section>
+            {renderSection("Wszystkie Albumy", allAlbums, albumsLimit, setAlbumsLimit, 'album')}
 
-            <section className="home-section">
-                <div className="section-header">
-                    <h2>
-                        Playlisty Społeczności
-                        <span className="section-count">({allPlaylists.length})</span>
-                    </h2>
-                </div>
-                <div className="genre-grid">
-                    {allPlaylists.length > 0 ? (
-                        allPlaylists.slice(0, playlistsLimit).map((playlist) => (
-                            <MediaCard
-                                key={playlist.id}
-                                title={playlist.title}
-                                subtitle={`${playlist.songsCount || 0} utworów • ${playlist.creatorUsername || 'Nieznany'}`}
-                                imageUrl={getImageUrl(playlist.coverStorageKeyId)}
-                                linkTo={`/playlist/${playlist.id}`}
-                            />
-                        ))
-                    ) : (
-                        <p className="empty-message full-width">Brak publicznych playlist.</p>
-                    )}
-                </div>
-                <ExpandControls
-                    totalCount={allPlaylists.length}
-                    currentLimit={playlistsLimit}
-                    initialLimit={ITEMS_IN_ROW}
-                    onUpdate={setPlaylistsLimit}
-                />
-            </section>
+            {renderSection("Playlisty Społeczności", allPlaylists, playlistsLimit, setPlaylistsLimit, 'playlist')}
 
         </div>
     );

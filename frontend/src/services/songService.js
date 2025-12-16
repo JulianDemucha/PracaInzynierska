@@ -80,3 +80,18 @@ export const getFavouriteSongs = async (page = 0, size = 20) => {
     const response = await api.get(`/favourites?page=${page}&size=${size}`);
     return response.data;
 };
+
+export const getTrendingSongs = async (page = 0, size = 10) => {
+    const response = await api.get(`/songs/top/trending?page=${page}&size=${size}`);
+    return response.data;
+};
+
+export const getTopLikedSongs = async (page = 0, size = 10) => {
+    const response = await api.get(`/songs/top/liked?page=${page}&size=${size}`);
+    return response.data;
+};
+
+export const getTopViewedSongs = async (page = 0, size = 10) => {
+    const response = await api.get(`/songs/top/viewed?page=${page}&size=${size}`);
+    return response.data;
+};
