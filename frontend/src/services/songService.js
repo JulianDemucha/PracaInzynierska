@@ -95,3 +95,8 @@ export const getTopViewedSongs = async (page = 0, size = 10) => {
     const response = await api.get(`/songs/top/viewed?page=${page}&size=${size}`);
     return response.data;
 };
+
+export const getRecommendations = async (page = 0) => {
+    const response = await api.get(`/songs/recommendations/${page}`);
+    return response.data;
+};

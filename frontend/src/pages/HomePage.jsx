@@ -5,10 +5,12 @@ import {
     getAllSongs,
     getTrendingSongs,
     getTopLikedSongs,
-    getTopViewedSongs
+    getTopViewedSongs,
+    getRecommendations
 } from '../services/songService.js';
 import { getAllAlbums } from '../services/albumService.js';
 import { getAllPlaylists } from '../services/playlistService.js';
+import { useAuth } from '../context/useAuth.js';
 import './HomePage.css';
 
 const genres = [
@@ -62,6 +64,9 @@ const ExpandControls = ({ totalCount, currentLimit, initialLimit, onUpdate }) =>
 };
 
 function HomePage() {
+    const { currentUser } = useAuth();
+
+    const [recLimit, setRecLimit] = useState(ITEMS_IN_ROW);
     const [trendingLimit, setTrendingLimit] = useState(ITEMS_IN_ROW);
     const [likedLimit, setLikedLimit] = useState(ITEMS_IN_ROW);
     const [viewedLimit, setViewedLimit] = useState(ITEMS_IN_ROW);
@@ -71,6 +76,7 @@ function HomePage() {
     const [albumsLimit, setAlbumsLimit] = useState(ITEMS_IN_ROW);
     const [playlistsLimit, setPlaylistsLimit] = useState(ITEMS_IN_ROW);
 
+    const [recommendations, setRecommendations] = useState([]);
     const [trendingSongs, setTrendingSongs] = useState([]);
     const [topLikedSongs, setTopLikedSongs] = useState([]);
     const [topViewedSongs, setTopViewedSongs] = useState([]);
@@ -86,13 +92,20 @@ function HomePage() {
             try {
                 setLoading(true);
 
-                const results = await Promise.allSettled([
-                    getTrendingSongs(0, 20),
-                    getTopLikedSongs(0, 10),
-                    getTopViewedSongs(0, 10),
-                    getAllSongs(),
-                    getAllAlbums(),
-                    getAllPlaylists()
+                const recPromise = currentUser
+                    ? getRecommendations(0)
+                    : Promise.resolve({ content: [] });
+
+                const [stdResults, recResult] = await Promise.all([
+                    Promise.allSettled([
+                        getTrendingSongs(0, 20),
+                        getTopLikedSongs(0, 20),
+                        getTopViewedSongs(0, 20),
+                        getAllSongs(),
+                        getAllAlbums(),
+                        getAllPlaylists()
+                    ]),
+                    recPromise.catch(() => ({ content: [] }))
                 ]);
 
                 const getData = (result, isPage = false) => {
@@ -102,14 +115,18 @@ function HomePage() {
                     return [];
                 };
 
-                setTrendingSongs(getData(results[0], true));
-                setTopLikedSongs(getData(results[1], true));
-                setTopViewedSongs(getData(results[2], true));
+                if (recResult && recResult.content) {
+                    setRecommendations(recResult.content);
+                }
 
-                setAllSongs(getData(results[3]));
-                setAllAlbums(getData(results[4]));
+                setTrendingSongs(getData(stdResults[0], true));
+                setTopLikedSongs(getData(stdResults[1], true));
+                setTopViewedSongs(getData(stdResults[2], true));
 
-                const playlistsData = getData(results[5]);
+                setAllSongs(getData(stdResults[3]));
+                setAllAlbums(getData(stdResults[4]));
+
+                const playlistsData = getData(stdResults[5]);
                 if (playlistsData && Array.isArray(playlistsData)) {
                     const publicOnly = playlistsData.filter(p => p.publiclyVisible === true);
                     setAllPlaylists(publicOnly);
@@ -125,7 +142,7 @@ function HomePage() {
         };
 
         fetchHomeData();
-    }, []);
+    }, [currentUser]);
 
     if (loading) {
         return <div className="home-page loading-container">Ładowanie...</div>;
@@ -168,6 +185,10 @@ function HomePage() {
 
     return (
         <div className="home-page">
+
+            {currentUser && recommendations.length > 0 &&
+                renderSection("Wybrane dla Ciebie", recommendations, recLimit, setRecLimit, 'song')
+            }
 
             {renderSection("Hity Na Czasie", trendingSongs, trendingLimit, setTrendingLimit, 'song')}
 
