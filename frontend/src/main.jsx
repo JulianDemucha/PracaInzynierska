@@ -12,6 +12,7 @@ import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage.jsx'
 import CollectionPage from './pages/CollectionPage'
 import GenrePage from './pages/GenrePage.jsx'
+import FavoritesPage from "./pages/FavoritesPage.jsx";
 
 const router = createBrowserRouter([
     {
@@ -44,7 +45,11 @@ const router = createBrowserRouter([
             {
                 path: "/genre/:genreName",
                 element: <GenrePage />
-            }
+            },
+            {
+                path: "/favorites",
+                element: <FavoritesPage />,
+            },
         ]
     }
 ]);

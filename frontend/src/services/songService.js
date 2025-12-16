@@ -75,3 +75,8 @@ export const registerView = async (songId) => {
     const response = await api.post(`/songs/${songId}/registerView`);
     return response.data;
 };
+
+export const getFavouriteSongs = async (page = 0, size = 20) => {
+    const response = await api.get(`/favourites?page=${page}&size=${size}`);
+    return response.data;
+};
