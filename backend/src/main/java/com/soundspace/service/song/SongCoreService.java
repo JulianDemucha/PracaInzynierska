@@ -115,21 +115,24 @@ public class SongCoreService {
 
         else return songRepository.findAllPublicOrOwnedByUser(
                         appUserService.getUserByEmail(userDetails.getUsername()).getId()).stream()
-                        .map(SongDto::toDto)
-                        .toList();
+                .map(SongDto::toDto)
+                .toList();
     }
 
     @Transactional
     public void deleteSongById(Long id, String requesterEmail) {
         Song song = getSongById(id);
-        AppUser requester = appUserService.getUserByEmail(requesterEmail);
+        AppUser requester = null;
 
-        if (requester == null || (!song.getAuthor().getId().equals(requester.getId()) &&
-                requester.getAuthorities().stream().noneMatch(
-                        a -> a.getAuthority().equals("ROLE_ADMIN"))
-        )) {
-            throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki ani administratorem");
+        boolean isAdmin = false;
+        if(requesterEmail != null) {
+            requester = appUserService.getUserByEmail(requesterEmail);
+            isAdmin = requester.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         }
+
+        if (requester != null && !(song.getAuthor().getId().equals(requester.getId()) || isAdmin))
+            throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki ani administratorem");
+
 
         reactionService.deleteAllBySongId(id);
         songRepository.delete(song);
@@ -200,16 +203,16 @@ public class SongCoreService {
             ));
         }
 
-        if(request.title() != null){
+        if (request.title() != null) {
             updatedSong.setTitle(request.title());
         }
 
-        if(request.publiclyVisible() != null && updatedSong.getAlbum() == null){
+        if (request.publiclyVisible() != null && updatedSong.getAlbum() == null) {
             updatedSong.setPubliclyVisible(request.publiclyVisible());
         }
 
         songRepository.save(updatedSong);
-        if(storageKeyToDelete != null){
+        if (storageKeyToDelete != null) {
             imageService.cleanUpOldImage(storageKeyToDelete, "cover");
         }
         return SongDto.toDto(updatedSong);
