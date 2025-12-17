@@ -24,7 +24,7 @@ public class PlaylistEntry {
     private Song song;
 
     @Column(nullable = false)
-    private Integer position; // To pozwoli Ci sortować piosenki
+    private Integer position;
 
     @Column(name = "added_at")
     private Instant addedAt = Instant.now();

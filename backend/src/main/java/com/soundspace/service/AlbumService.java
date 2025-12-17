@@ -209,7 +209,6 @@ public class AlbumService {
         Album album = findById(albumId).orElseThrow(
                 () -> new AlbumNotFoundException(albumId));
 
-        // jeżeli requestujący user nie jest autorem albumu - throw
         if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
                 .equals(album.getAuthor().getId()))
             throw new AccessDeniedException("Brak uprawnień");
@@ -305,10 +304,9 @@ public class AlbumService {
 
     private StorageKey processAndSaveCoverFile(Path tmpCoverPath, AppUser appUser) throws IOException {
         long coverFileSize = Files.size(tmpCoverPath);
-        // Pobieramy typ MIME (zakładamy image/jpeg po konwersji, ale można użyć Tiki dla pewności)
         String mimeType = "image/" + coverConfig.targetExtension();
 
-        // Zapis fizyczny do storage
+        // zapis fizyczny do storage
         String coverStorageKeyString = storageService.saveFromPath(
                 tmpCoverPath,
                 appUser.getId(),
@@ -317,7 +315,6 @@ public class AlbumService {
         );
         log.info("Zapisano okładkę albumu: key={}", coverStorageKeyString);
 
-        // Zapis metadanych StorageKey
         StorageKey storageKeyEntity = new StorageKey();
         storageKeyEntity.setKeyStr(coverStorageKeyString);
         storageKeyEntity.setMimeType(mimeType);

@@ -34,7 +34,6 @@ public record AlbumDto(
                 album.getCreatedAt().toString(),
                 album.getGenres().stream().map(Objects::toString).toList(),
                 coverStorageKey == null ? 6767L : coverStorageKey.getId()
-                // 6767 to id placeholdera insertowanego w migracji
         );
     }
 

@@ -8,7 +8,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
-//todo zrobic CookieConfig, gdzie w application.yaml bedzie pobierac dane z .env (prod mialoby secure na true itp.)
 @Service
 @RequiredArgsConstructor
 public class CookieService {

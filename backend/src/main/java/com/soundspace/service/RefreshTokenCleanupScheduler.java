@@ -14,7 +14,7 @@ public class RefreshTokenCleanupScheduler {
     private final RefreshTokenService refreshTokenService;
     final int secondsBeforeCutoff = 60 * 60;
 
-    @Scheduled(cron = "0 0 * * * *") // co godzine
+    @Scheduled(cron = "0 0 * * * *")
     public void scheduleCleanup() {
         int removed = refreshTokenService.deleteRevokedRefreshTokens(secondsBeforeCutoff);
         log.info("Removed {} refresh tokens revoked at least {} seconds ago", removed, secondsBeforeCutoff);

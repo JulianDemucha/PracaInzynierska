@@ -12,7 +12,7 @@ public interface AlbumProjection {
     Boolean getPubliclyVisible();
     Instant getCreatedAt();
     Long getCoverStorageKeyId();
-    String getGenresStr(); // Tutaj wpadnie "ROCK,POP"
+    String getGenresStr();
 
     default List<String> getGenres() {
         if (getGenresStr() == null || getGenresStr().isBlank()) return List.of();
