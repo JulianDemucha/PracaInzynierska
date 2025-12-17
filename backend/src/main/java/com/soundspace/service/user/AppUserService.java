@@ -4,6 +4,7 @@ import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.AppUserDto;
 import com.soundspace.entity.*;
 import com.soundspace.enums.Sex;
+import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.StorageException;
 import com.soundspace.exception.UserNotFoundException;
 import com.soundspace.repository.*;
@@ -137,7 +138,6 @@ public class AppUserService {
         AppUser appUser = getUserByEmail(requesterEmail);
         Long appUserId = appUser.getId();
 
-
         /// usuniecie wszystkich istniejacych w bazie refreshTokenow usera
         refreshTokenRepository.deleteAllByAppUserId(appUserId);
 
@@ -187,6 +187,27 @@ public class AppUserService {
         /// ]
 
     }
+
+    @Transactional
+    public void deleteUserByAdmin(Long userId, String requesterEmail){
+        AppUser sadUserSentencedForEternalDeletion = getUserById(userId);
+        AppUser requester = null;
+
+        boolean isAdmin = false;
+        if(requesterEmail != null) {
+            requester = getUserByEmail(requesterEmail);
+            isAdmin = requester.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        }
+
+        if (requester != null && requester.getEmail().equals(sadUserSentencedForEternalDeletion.getEmail()))
+            throw new IllegalArgumentException("Administrator nie moze usunac samego siebie w panelu usuwania usera");
+
+        if (!isAdmin)
+            throw new AccessDeniedException("Requestujacy uzytkownik nie jest administratorem");
+
+        deleteUser(sadUserSentencedForEternalDeletion.getEmail());
+    }
+
 
     public Long getUserIdByEmail(String email) {
         return appUserRepository.findUserIdByEmail(email).orElseThrow(() ->

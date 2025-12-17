@@ -33,8 +33,8 @@ public class SecurityConfig {
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                          // do endpointow dozwolonych tylko dla admina
-//                        .requestMatchers("").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/users/{userId}/delete")
+                        .hasAuthority("ROLE_ADMIN")
 
                         .requestMatchers("/api/songs/favourites/**")
                         .authenticated()
