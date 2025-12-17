@@ -5,6 +5,6 @@ import java.util.List;
 
 public interface RecommendationsSongProjection {
     Long getId();
-    List<Genre> getGenres(); // jpql, wiec nie trzeba pobierac str
+    List<Genre> getGenres();
     Long getAuthorId();
 }

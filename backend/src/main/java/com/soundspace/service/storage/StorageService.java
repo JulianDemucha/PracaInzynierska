@@ -26,7 +26,7 @@ public class StorageService {
     public StorageService(@Value("${app.storage.root:./data}") String rootStr, StorageKeyRepository storageKeyRepository) {
         try {
             this.rootPath = Paths.get(rootStr).toAbsolutePath().normalize();
-            Files.createDirectories(this.rootPath); // tworzymy root, jak nie istnieje
+            Files.createDirectories(this.rootPath);
         } catch (IOException e) {
             throw new StorageException("Nie można zainicjować folderu storage", e);
         }
@@ -90,7 +90,6 @@ public class StorageService {
     }
 
     public void deleteAllUserFiles(Long userId) {
-        // lokalizacje w ktorych znajduja sie foldery do usuniecia
         List<String> userDirectories = List.of(
                 "users/avatars",
                 "albums/covers",
@@ -105,7 +104,6 @@ public class StorageService {
                 Path userDir = rootPath.resolve(dir).resolve(String.valueOf(userId)).normalize();
 
                 // FileSystemUtils.deleteRecursively usuwa folder razem z zawartością (rm -rf)
-
                 boolean deleted = FileSystemUtils.deleteRecursively(userDir);
 
                 if (deleted) {

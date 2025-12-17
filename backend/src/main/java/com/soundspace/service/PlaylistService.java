@@ -124,7 +124,6 @@ public class PlaylistService {
             playlist.setUpdatedAt(Instant.now());
             playlist.setCoverStorageKey(coverStorageKeyEntity);
 
-            // zapis playlisty do db
             Playlist savedPlaylist = playlistRepository.save(playlist);
 
             log.info("Utworzono playlistę id={} dla usera={}", savedPlaylist.getId(), creator.getLogin());
@@ -195,7 +194,6 @@ public class PlaylistService {
 
         playlist.setUpdatedAt(Instant.now());
 
-        // zapis elegancji pzdr
         Playlist savedPlaylist = playlistRepository.save(playlist);
 
         log.info("Dodano piosenkę id={} do playlisty id={} (nowa pozycja: {})",
@@ -301,7 +299,7 @@ public class PlaylistService {
     }
 
 
-    /////////////////////////////////////** HELPERY *//////////////////////////////////////
+    // /////////////////////////////////// HELPERY ////////////////////////////////////  //
 
     private void ensureUserCanView(Playlist playlist, UserDetails userDetails) {
         if (!canView(playlist, userDetails)) {
@@ -329,7 +327,6 @@ public class PlaylistService {
             throw new AccessDeniedException("Brak dostępu do playlisty.");
     }
 
-    // resize i convert
     private Path processCoverAndSaveToTemp(MultipartFile coverFile) throws IOException {
         ProcessedImage processedCover = imageService.resizeImageAndConvert(
                 coverFile,

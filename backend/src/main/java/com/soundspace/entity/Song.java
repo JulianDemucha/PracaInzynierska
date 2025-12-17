@@ -3,8 +3,7 @@ package com.soundspace.entity;
 import com.soundspace.enums.Genre;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 
@@ -12,10 +11,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Builder
 @Entity
 @Table(name = "songs")
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Song {
 
     @Id

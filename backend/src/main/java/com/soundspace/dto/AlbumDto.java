@@ -2,6 +2,7 @@ package com.soundspace.dto;
 
 import com.soundspace.dto.projection.AlbumProjection;
 import com.soundspace.entity.Album;
+import com.soundspace.entity.StorageKey;
 import lombok.Builder;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public record AlbumDto(
 ) {
 
     public static AlbumDto toDto(Album album) {
+        StorageKey coverStorageKey = album.getCoverStorageKey();
 
         return new AlbumDto(
                 album.getId(),
@@ -31,7 +33,7 @@ public record AlbumDto(
                 album.getPubliclyVisible(),
                 album.getCreatedAt().toString(),
                 album.getGenres().stream().map(Objects::toString).toList(),
-                album.getCoverStorageKey().getId()
+                coverStorageKey == null ? 6767L : coverStorageKey.getId()
         );
     }
 

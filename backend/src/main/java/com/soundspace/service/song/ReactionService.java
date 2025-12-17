@@ -17,14 +17,6 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-/*
-    todo:
-     - dodawanie like/dislike
-     - dodawanie favourite
-     - usuwanie liek/dislike/favourite
-        *like i dislike nie mogą współistnieć, ale favourite jest niezależne
-
- */
 public class ReactionService {
     private final SongReactionRepository songReactionRepository;
     private final SongCoreService songCoreService;
