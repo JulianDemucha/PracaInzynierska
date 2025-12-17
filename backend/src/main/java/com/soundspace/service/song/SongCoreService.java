@@ -36,6 +36,7 @@ public class SongCoreService {
     private final ImageService imageService;
     private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
     private final ApplicationConfigProperties.MediaConfig.AudioConfig audioConfig;
+    private final ReactionService reactionService;
 
 
     public Song getSongById(Long id) {
@@ -123,10 +124,14 @@ public class SongCoreService {
         Song song = getSongById(id);
         AppUser requester = appUserService.getUserByEmail(requesterEmail);
 
-        if (requester == null || !song.getAuthor().getId().equals(requester.getId())) {
-            throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki");
+        if (requester == null || (!song.getAuthor().getId().equals(requester.getId()) &&
+                requester.getAuthorities().stream().noneMatch(
+                        a -> a.getAuthority().equals("ROLE_ADMIN"))
+        )) {
+            throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki ani administratorem");
         }
 
+        reactionService.deleteAllBySongId(id);
         songRepository.delete(song);
 
         // storageService moze rzucic IOException lub StorageException

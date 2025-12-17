@@ -77,6 +77,11 @@ public class ReactionService {
     }
 
 
+    @Transactional
+    public void deleteAllBySongId(Long songId) {
+        songReactionRepository.deleteAllBySongId(songId);
+    }
+
     /// helpers
 
     private ReactionType revertReactionType(ReactionType reactionType) {
