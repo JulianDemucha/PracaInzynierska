@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/useAuth.js";
-import googleIcon from '../../assets/images/googleIcon.png';
 import './AuthModal.css';
 
 function AuthModal() {
@@ -167,12 +166,7 @@ function AuthModal() {
                             {authLoading ? "Logowanie..." : "Zaloguj"}
                         </button>
 
-                        <div className="auth-divider"><span>LUB</span></div>
 
-                        <button type="button" className="google-login-button">
-                            <img className="google-logo" src={googleIcon} alt="G" />
-                            Zaloguj się przez Google
-                        </button>
 
                         <p className="auth-switch">
                             Nie masz konta?
@@ -247,12 +241,7 @@ function AuthModal() {
                             {authLoading ? "Rejestracja..." : "Zarejestruj"}
                         </button>
 
-                        <div className="auth-divider"><span>LUB</span></div>
 
-                        <button type="button" className="google-login-button" disabled>
-                            <img className="google-logo" src={googleIcon} alt="G" />
-                            Zarejestruj się przez Google
-                        </button>
 
                         <p className="auth-switch">
                             Masz już konto?
