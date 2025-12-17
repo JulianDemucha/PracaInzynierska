@@ -51,6 +51,9 @@ public class SongCoreService {
     public SongDto getSong(Long songId, UserDetails userDetails) {
         SongDto song = getSongDtoById(songId);
         if (song.publiclyVisible()) return song;
+        if (userDetails == null) {
+            throw new AccessDeniedException("Musisz być zalogowany, aby zobaczyć ten utwór.");
+        }
         if (!appUserService.getUserByEmail(userDetails.getUsername()).getId().equals(song.authorId()))
             throw new AccessDeniedException("Brak dostępu do piosenki");
 

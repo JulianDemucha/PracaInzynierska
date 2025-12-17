@@ -1,3 +1,6 @@
+server:
+  port: 0
+
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
@@ -10,6 +13,33 @@ spring:
       ddl-auto: create-drop
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    show-sql: true
+
   flyway:
     enabled: false
+
+app:
+  jwt:
+    secret: testSecretKeyMustBeLongEnoughToSatisfyHMACSHA256RequirementHere
+    expiration-seconds: 3600
+    refresh-expiration-seconds: 86400
+
+  media:
+    cover:
+      width: 300
+      height: 300
+      quality: 0.8
+      target-extension: "jpg"
+      song-directory: "songs/covers"
+      album-directory: "albums/covers"
+      playlist-directory: "playlists/covers"
+      default-cover-id: 6767
+    audio:
+      target-extension: "mp3"
+      target-directory: "songs/audio"
+      default-audio-id: 5000
+      upload-max-bytes: 10485760
+
+  storage:
+    root: "test-data"

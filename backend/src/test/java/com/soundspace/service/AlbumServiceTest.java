@@ -6,7 +6,6 @@ import com.soundspace.entity.AppUser;
 import com.soundspace.exception.AccessDeniedException;
 import com.soundspace.exception.AlbumNotFoundException;
 import com.soundspace.repository.AlbumRepository;
-import com.soundspace.service.user.AppUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -46,7 +45,7 @@ class AlbumServiceTest {
     @Test
     void getAlbumByIdShouldThrowWhenAlbumDoesNotExist() {
         Long albumId = 1L;
-        when(albumRepository.findById(1L)).thenReturn(Optional.empty());
+        when(albumRepository.findById(albumId)).thenReturn(Optional.empty());
 
         assertThrows(AlbumNotFoundException.class, () -> {
             albumService.getAlbumById(albumId, null);
