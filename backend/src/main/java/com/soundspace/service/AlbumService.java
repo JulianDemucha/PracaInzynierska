@@ -49,7 +49,7 @@ public class AlbumService {
     private final ImageService imageService;
     private final StorageKeyRepository storageKeyRepository;
     private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
-    
+
     public Optional<Album> findById(Long id) {
         if (id == null) return Optional.empty();
         return albumRepository.findById(id);
@@ -205,17 +205,24 @@ public class AlbumService {
     }
 
     @Transactional
-    public void deleteAlbum(Long albumId, String userEmail) {
+    public void deleteAlbum(Long albumId, String requesterEmail) {
         Album album = findById(albumId).orElseThrow(
                 () -> new AlbumNotFoundException(albumId));
 
-        if (userEmail == null || !appUserService.getUserByEmail(userEmail).getId()
-                .equals(album.getAuthor().getId()))
+        AppUser requester = null;
+
+        boolean isAdmin = false;
+        if(requesterEmail != null) {
+            requester = appUserService.getUserByEmail(requesterEmail);
+            isAdmin = requester.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        }
+
+        if (requester != null && !(requester.getId().equals(album.getAuthor().getId()) || isAdmin))
             throw new AccessDeniedException("Brak uprawnień");
 
         List<SongProjection> albumSongs = songRepository.findSongsByAlbumNative(albumId);
         for (SongProjection song : albumSongs) {
-            songCoreService.deleteSongById(song.getId(), userEmail);
+            songCoreService.deleteSongById(song.getId(), requesterEmail);
         }
         StorageKey coverKey = album.getCoverStorageKey();
         albumRepository.delete(album);
