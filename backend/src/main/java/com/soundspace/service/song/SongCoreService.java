@@ -8,6 +8,7 @@ import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.entity.StorageKey;
 import com.soundspace.exception.*;
+import com.soundspace.repository.SongReactionRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
 import com.soundspace.enums.Genre;
@@ -36,7 +37,7 @@ public class SongCoreService {
     private final ImageService imageService;
     private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
     private final ApplicationConfigProperties.MediaConfig.AudioConfig audioConfig;
-    private final ReactionService reactionService;
+    private final SongReactionRepository songReactionRepository;
 
 
     public Song getSongById(Long id) {
@@ -134,7 +135,7 @@ public class SongCoreService {
             throw new AccessDeniedException("Requestujacy uzytkownik nie jest wlascicielem piosenki ani administratorem");
 
 
-        reactionService.deleteAllBySongId(id);
+        songReactionRepository.deleteAllBySongId(id);
         songRepository.delete(song);
 
         // storageService moze rzucic IOException lub StorageException

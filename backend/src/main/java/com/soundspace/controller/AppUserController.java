@@ -49,4 +49,11 @@ public class AppUserController {
         cookieService.setJwtAndRefreshCookie("", "", response);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{userId}/delete")
+    public ResponseEntity<?> deleteUserByAdmin(@AuthenticationPrincipal UserDetails userDetails,
+                                        @PathVariable Long userId) {
+        appUserService.deleteUserByAdmin(userId, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
 }
