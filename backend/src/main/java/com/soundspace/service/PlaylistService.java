@@ -105,7 +105,7 @@ public class PlaylistService {
 
         try {
             MultipartFile coverFile = request.coverFile();
-            if(coverFile == null || coverFile.isEmpty()){
+            if (coverFile == null || coverFile.isEmpty()) {
                 coverStorageKeyEntity = storageKeyRepository.getReferenceById(coverConfig.defaultCoverId());
 
             } else {
@@ -179,7 +179,7 @@ public class PlaylistService {
                 throw new AccessDeniedException("Brak uprawnień do piosenki");
 
             } else if (playlist.getPubliclyVisible()) {
-                if(song.getAlbum() != null)
+                if (song.getAlbum() != null)
                     throw new IllegalArgumentException("Piosenka należy do prywatnego albumu. Nie może istnieć w publicznej playlist'cie");
 
                 song.setPubliclyVisible(true);
@@ -205,7 +205,7 @@ public class PlaylistService {
     @Transactional
     public void removeSong(Long playlistId, Long songId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        ensureUserIsOwner(playlist, userDetails);
+        ensureUserIsOwnerOrAdmin(playlist, userDetails);
         playlistEntryRepository.deleteBySongIdAndPlaylistId(songId, playlistId);
         playlistEntryRepository.renumberPlaylist(playlistId);
     }
@@ -290,7 +290,7 @@ public class PlaylistService {
                                                   Integer position,
                                                   UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
-        ensureUserIsOwner(playlist, userDetails);
+        ensureUserIsOwnerOrAdmin(playlist, userDetails);
 
         PlaylistEntry playlistEntry = playlistEntryRepository.findBySongIdAndPlaylistId(songId, playlistId);
 
@@ -321,9 +321,16 @@ public class PlaylistService {
         return requestingUserId.equals(playlist.getCreator().getId());
     }
 
-    private void ensureUserIsOwner(Playlist playlist, UserDetails userDetails) {
-        Long requestingUserId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
-        if(!requestingUserId.equals(playlist.getCreator().getId()))
+    private void ensureUserIsOwnerOrAdmin(Playlist playlist, UserDetails userDetails) {
+        AppUser requester = null;
+
+        boolean isAdmin = false;
+        if(userDetails != null) {
+            requester = appUserService.getUserByEmail(userDetails.getUsername());
+            isAdmin = requester.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        }
+
+        if (requester != null && !(requester.getId().equals(playlist.getCreator().getId()) || isAdmin))
             throw new AccessDeniedException("Brak dostępu do playlisty.");
     }
 
