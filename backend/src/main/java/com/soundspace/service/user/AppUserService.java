@@ -160,7 +160,8 @@ public class AppUserService {
         /// usuniecie wszystkich reakcji usera i reakcji dotyczacych piosenek usera
         songReactionRepository.deleteAllRelatedToUser(appUserId);
 
-        /// odpiecie usera od encji jego wyswietlen
+        /// usuniecie wszystkich wyswietlen na piosenkach usera i odpiecie usera od jego wyswietlen na innych piosenkach
+        songViewRepository.deleteAllBySongAuthorId(appUserId);
         songViewRepository.detachUserFromViews(appUserId);
 
         /// usunięcie wszystkich piosenek i następnie albumów usera
