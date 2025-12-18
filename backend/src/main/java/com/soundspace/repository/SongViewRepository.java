@@ -19,4 +19,13 @@ public interface SongViewRepository extends JpaRepository<SongView, Long> {
     @Modifying
     @Query("UPDATE SongView v SET v.user = NULL WHERE v.user.id = :userId")
     void detachUserFromViews(@Param("userId") Long userId);
+
+    // do bulk delete usera - usuwa wszystkie wyswietlenia wszystkich piosenek uzytkownika
+    @Modifying
+    @Query("DELETE FROM SongView sv WHERE sv.song.author.id = :userId")
+    void deleteAllBySongAuthorId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM SongView sv WHERE sv.song.id = :songId")
+    void deleteAllBySongId(@Param("songId") Long songId);
 }

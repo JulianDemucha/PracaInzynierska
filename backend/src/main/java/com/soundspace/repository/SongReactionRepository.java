@@ -49,7 +49,8 @@ public interface SongReactionRepository extends JpaRepository<SongReaction, Long
             @Param("userId") Long userId
     );
 
-    /// do bulk delete usera
+    // do bulk delete usera
+    // usuwa wszystkie reakcje usera i reakcje na jego pisoenkach
     @Modifying
     @Query("""
         DELETE FROM SongReaction r
