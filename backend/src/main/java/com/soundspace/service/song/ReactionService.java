@@ -45,7 +45,7 @@ public class ReactionService {
             songReaction.setUser(appUser);
             // reactedAt automatycznie sie ustawi
             songReactionRepository.save(songReaction);
-            songRepository.incrementReactionCount(songId, requestReactionType);
+            songRepository.incrementReactionCount(songId, requestReactionType.toString());
             return;
         }
 
@@ -64,8 +64,8 @@ public class ReactionService {
 
             songReactionRepository.save(songReaction);
 
-            songRepository.decrementReactionCount(songId, existingReactionType);
-            songRepository.incrementReactionCount(songId, requestReactionType);
+            songRepository.decrementReactionCount(songId, existingReactionType.toString());
+            songRepository.incrementReactionCount(songId, requestReactionType.toString());
         }
 
     }
@@ -81,7 +81,7 @@ public class ReactionService {
 
         if (reactionType != ReactionType.FAVOURITE){
         songReactionRepository.deleteLikeOrDislikeBySongIdAndUserId(songId, appUserId);
-        songRepository.decrementReactionCount(songId, reactionType);
+        songRepository.decrementReactionCount(songId, reactionType.toString());
         }
     }
 

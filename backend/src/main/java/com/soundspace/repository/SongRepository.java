@@ -431,7 +431,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             s.dislikesCount = s.dislikesCount + (CASE WHEN :reactionType = 'DISLIKE' THEN 1 ELSE 0 END)
         WHERE s.id = :songId
     """)
-    void incrementReactionCount(@Param("songId") Long songId, @Param("reactionType") ReactionType reactionType);
+    void incrementReactionCount(@Param("songId") Long songId, @Param("reactionType") String reactionType);
 
     @Modifying(clearAutomatically = true)
     @Query("""
@@ -440,7 +440,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             s.dislikesCount = s.dislikesCount - (CASE WHEN :reactionType = 'DISLIKE' THEN 1 ELSE 0 END)
         WHERE s.id = :songId
     """)
-    void decrementReactionCount(@Param("songId") Long songId, @Param("reactionType") ReactionType reactionType);
+    void decrementReactionCount(@Param("songId") Long songId, @Param("reactionType") String reactionType);
 
 }
 
