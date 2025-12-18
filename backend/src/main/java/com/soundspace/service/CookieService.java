@@ -19,7 +19,12 @@ public class CookieService {
     }
 
     public ResponseCookie createRefreshCookie(String refreshToken) {
-        return createCookie(refreshToken, refreshToken, jwtConfig.refreshExpirationSeconds());
+        return createCookie("refreshToken", refreshToken, jwtConfig.refreshExpirationSeconds());
+    }
+
+    public void clearCookies(HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE, createCookie("jwt", "", 0).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, createCookie("refreshToken", "", 0).toString());
     }
 
     public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response) {

@@ -95,7 +95,7 @@ public class AuthenticationController {
             refreshTokenService.revokeRefreshToken(token);
         });
 
-        cookieService.setJwtAndRefreshCookie("","",response);
+        cookieService.clearCookies(response);
 
 
         SecurityContextHolder.clearContext();
