@@ -14,6 +14,7 @@ import CollectionPage from './pages/CollectionPage'
 import GenrePage from './pages/GenrePage.jsx'
 import FavoritesPage from "./pages/FavoritesPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
+import AdminDashboard from './pages/AdminDashboard';
 
 const router = createBrowserRouter([
     {
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
                 path: "/search",
                 element: <SearchPage />
             },
+            {
+                path: "/admin",
+                element: <AdminDashboard />
+            }
         ]
     }
 ]);

@@ -109,6 +109,44 @@
     border: 2px solid #8A2BE2;
 }
 
+.topbar-admin-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    margin-right: 20px;
+    background-color: #ff4444;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+
+.topbar-admin-link:hover {
+    transform: scale(1.05);
+    background-color: #cc0000;
+}
+
+.topbar-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+.admin-text {
+    letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+    .topbar-admin-link {
+        padding: 5px;
+        margin-right: 10px;
+    }
+    .admin-text {
+        display: none;
+    }
+}
 
 @media (max-width: 1200px) {
     .topbar {
