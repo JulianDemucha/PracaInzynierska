@@ -50,7 +50,7 @@ public class AppUserController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{userId}/delete")
+    @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUserByAdmin(@AuthenticationPrincipal UserDetails userDetails,
                                         @PathVariable Long userId) {
         appUserService.deleteUserByAdmin(userId, userDetails.getUsername());
