@@ -424,7 +424,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             Pageable pageable
     );
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Song s
         SET s.likesCount = s.likesCount + (CASE WHEN :reactionType = 'LIKE' THEN 1 ELSE 0 END),
@@ -433,11 +433,11 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     """)
     void incrementReactionCount(@Param("songId") Long songId, @Param("reactionType") String reactionType);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Song s
-        SET s.likesCount = s.likesCount - (CASE WHEN :reactionType = 'LIKE' THEN 1 ELSE 0 END),
-            s.dislikesCount = s.dislikesCount - (CASE WHEN :reactionType = 'DISLIKE' THEN 1 ELSE 0 END)
+        SET s.likesCount = GREATEST(0, s.likesCount - (CASE WHEN :reactionType = 'LIKE' THEN 1 ELSE 0 END)),
+            s.dislikesCount = GREATEST(0, s.dislikesCount - (CASE WHEN :reactionType = 'DISLIKE' THEN 1 ELSE 0 END))
         WHERE s.id = :songId
     """)
     void decrementReactionCount(@Param("songId") Long songId, @Param("reactionType") String reactionType);
