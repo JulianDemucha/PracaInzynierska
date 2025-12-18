@@ -24,6 +24,8 @@ function TopBar() {
         }
     };
 
+    const isAdmin = currentUser?.role === "ROLE_ADMIN";
+
     return (
         <header className="topbar">
             <div className="topbar-homepage-icon">
@@ -49,6 +51,13 @@ function TopBar() {
             </div>
 
             <div className="topbar-profile">
+                {isAdmin && (
+                    <Link to="/admin" className="topbar-admin-link" title="Panel Administratora">
+                        <img src={homepage} alt="Admin" className="topbar-icon" onError={(e) => e.target.style.display='none'} />
+                        <span className="admin-text">ADMIN</span>
+                    </Link>
+                )}
+
                 {currentUser ? (
                     <Link to="/profile">
                         <img
