@@ -57,11 +57,11 @@ public class Song {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
-    @Formula("(SELECT count(*) FROM song_reactions r WHERE r.song_id = id AND r.reaction_type = 'LIKE')")
+    @Column(name = "likes_count", nullable = false)
     private Integer likesCount = 0;
 
-    @Formula("(SELECT count(*) FROM song_reactions r WHERE r.song_id = id AND r.reaction_type = 'DISLIKE')")
-    private Integer dislikesCount  = 0;
+    @Column(name = "dislikes_count", nullable = false)
+    private Integer dislikesCount = 0;
 
     private Long viewCount = 0L;
 

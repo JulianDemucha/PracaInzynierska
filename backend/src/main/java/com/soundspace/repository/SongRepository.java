@@ -4,6 +4,7 @@ import com.soundspace.dto.projection.RecommendationsSongProjection;
 import com.soundspace.dto.projection.SongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
+import com.soundspace.enums.ReactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -422,6 +423,24 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             @Param("containsQuery") String containsQuery,
             Pageable pageable
     );
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+        UPDATE Song s
+        SET s.likesCount = s.likesCount + (CASE WHEN :reactionType = 'LIKE' THEN 1 ELSE 0 END),
+            s.dislikesCount = s.dislikesCount + (CASE WHEN :reactionType = 'DISLIKE' THEN 1 ELSE 0 END)
+        WHERE s.id = :songId
+    """)
+    void incrementReactionCount(@Param("songId") Long songId, @Param("reactionType") ReactionType reactionType);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+        UPDATE Song s
+        SET s.likesCount = s.likesCount - (CASE WHEN :reactionType = 'LIKE' THEN 1 ELSE 0 END),
+            s.dislikesCount = s.dislikesCount - (CASE WHEN :reactionType = 'DISLIKE' THEN 1 ELSE 0 END)
+        WHERE s.id = :songId
+    """)
+    void decrementReactionCount(@Param("songId") Long songId, @Param("reactionType") ReactionType reactionType);
 
 }
 

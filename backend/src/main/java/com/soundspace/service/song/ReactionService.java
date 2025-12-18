@@ -4,6 +4,7 @@ import com.soundspace.entity.AppUser;
 import com.soundspace.entity.SongReaction;
 import com.soundspace.enums.ReactionType;
 import com.soundspace.repository.SongReactionRepository;
+import com.soundspace.repository.SongRepository;
 import com.soundspace.service.user.AppUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class ReactionService {
     private final SongReactionRepository songReactionRepository;
     private final SongCoreService songCoreService;
     private final AppUserService appUserService;
+    private final SongRepository songRepository;
 
     @Transactional
     public void addReaction(Long songId, ReactionType requestReactionType, UserDetails userDetails) {
@@ -43,6 +45,7 @@ public class ReactionService {
             songReaction.setUser(appUser);
             // reactedAt automatycznie sie ustawi
             songReactionRepository.save(songReaction);
+            songRepository.incrementReactionCount(songId, requestReactionType);
             return;
         }
 
@@ -54,10 +57,15 @@ public class ReactionService {
         // jezeli istnieje juz favourite (revert zwraca favourite jezeli dany favourite)
         if (existingReactionType == revertReactionType(existingReactionType)) return;
 
+        // swap like <--> dislike
         if (existingReactionType == revertReactionType(requestReactionType)) {
             songReaction.setReactionType(requestReactionType);
             songReaction.setReactedAt(Instant.now());
+
             songReactionRepository.save(songReaction);
+
+            songRepository.decrementReactionCount(songId, existingReactionType);
+            songRepository.incrementReactionCount(songId, requestReactionType);
         }
 
     }
@@ -66,7 +74,15 @@ public class ReactionService {
     public void deleteLikeOrDislike(Long songId, UserDetails userDetails) {
         AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
         Long appUserId = appUser.getId();
+        Optional<ReactionType> reactionTypeOpt = songReactionRepository.findTypeBySongIdAndUserId(songId, appUserId);
+
+        if(reactionTypeOpt.isEmpty()) { return;}
+        ReactionType reactionType = reactionTypeOpt.get();
+
+        if (reactionType != ReactionType.FAVOURITE){
         songReactionRepository.deleteLikeOrDislikeBySongIdAndUserId(songId, appUserId);
+        songRepository.decrementReactionCount(songId, reactionType);
+        }
     }
 
     @Transactional
@@ -82,7 +98,7 @@ public class ReactionService {
         songReactionRepository.deleteAllBySongId(songId);
     }
 
-    /// helpers
+    // helpers
 
     private ReactionType revertReactionType(ReactionType reactionType) {
         return switch (reactionType) {
