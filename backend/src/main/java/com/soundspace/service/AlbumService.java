@@ -191,7 +191,7 @@ public class AlbumService {
 
     @Transactional
     public void removeAlbumSong(Long albumId, Long songId, String userEmail) {
-        if (albumRepository.existsById(albumId))
+        if (!albumRepository.existsById(albumId))
             throw new AlbumNotFoundException(albumId);
 
 
