@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -138,11 +139,8 @@ public class AppUserService {
         AppUser appUser = getUserByEmail(requesterEmail);
         Long appUserId = appUser.getId();
 
-        /// usuniecie wszystkich istniejacych w bazie refreshTokenow usera
+        // usuniecie wszystkich istniejacych w bazie refreshTokenow usera
         refreshTokenRepository.deleteAllByAppUserId(appUserId);
-
-
-        /// usunięcie piosenek usera ze wszystkich playlist, usunięcie wszystkich piosenek z playlist usera i usunięcie playlist usera
 
         // zapisanie playlist do naprawienia po usunieciu piosenek usera (beda dziury w pozycjach)
         List<Long> playlistsToRepair = playlistEntryRepository.findPlaylistIdsToRepair(appUserId);
@@ -156,36 +154,33 @@ public class AppUserService {
         // usunięcie wszystkich playlist usera
         playlistRepository.deleteAllByCreatorId(appUserId);
 
-
-        /// usuniecie wszystkich reakcji usera i reakcji dotyczacych piosenek usera
+        // usuniecie wszystkich reakcji usera i reakcji dotyczacych piosenek usera
         songReactionRepository.deleteAllRelatedToUser(appUserId);
 
-        /// usuniecie wszystkich wyswietlen na piosenkach usera i odpiecie usera od jego wyswietlen na innych piosenkach
+        // usuniecie wszystkich wyswietlen na piosenkach usera i odpiecie usera od jego wyswietlen na innych piosenkach
         songViewRepository.deleteAllBySongAuthorId(appUserId);
         songViewRepository.detachUserFromViews(appUserId);
 
-        /// usunięcie wszystkich piosenek i następnie albumów usera
-
-        // usuniecie wszystkich songow usera
+        // usunięcie wszystkich piosenek i następnie albumów usera
         songRepository.deleteAllByAuthorId(appUserId);
-
-        // usuniecie wszystkich albumow usera
         albumRepository.deleteAllByAuthorId(appUserId);
 
 
-        /// usuniecie samego usera
+        // usuniecie samego usera
         appUserRepository.delete(appUser);
         appUserRepository.flush();
-        SecurityContextHolder.clearContext(); // wyczyszczenie kontekstu jic
 
-        /// usunięcie kluczy do plików i na samym końcu samych plików powiązanych z userem []
+        // czyszczenie kontekstu tylko jezeli user usuwa sam siebie (metoda jest tez uzywana w deleteUserByAdmin)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName().equals(appUser.getEmail())) {
+            SecurityContextHolder.clearContext();
+        }
 
         // usuniecie wszystkich storageKeys powiazanych z userem
         storageKeyRepository.deleteAllByUserId(appUserId);
 
         // usuniecie wszystkich plikow powiazanych bezposrednio z userem (pliki piosenek, okladki albumow, piosenek, playlist itp.)
         storageService.deleteAllUserFiles(appUserId);
-        /// ]
 
     }
 
@@ -216,7 +211,7 @@ public class AppUserService {
     }
 
 
-    ///////////////////////////// HELPERS /////////////////////////////
+    // ///////////////////////// HELPERS ////////////////////////// //
 
     private AppUser processAndSaveNewAvatar(MultipartFile avatar, AppUser updatedUser) {
         Path tmpAvatar = null;
