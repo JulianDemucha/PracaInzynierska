@@ -59,7 +59,7 @@ public interface SongReactionRepository extends JpaRepository<SongReaction, Long
     void deleteAllRelatedToUser(@Param("userId") Long userId);
 
     @Modifying
-    @Query("DELETE FROM SongView sv WHERE sv.song.id = :songId")
+    @Query("DELETE FROM SongReaction r WHERE r.song.id = :songId")
     void deleteAllBySongId(@Param("songId") Long songId);
 
     Long song(Song song);
