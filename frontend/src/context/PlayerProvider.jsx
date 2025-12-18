@@ -14,43 +14,34 @@ export function PlayerProvider({ children }) {
     const [queue, setQueue] = useState([]);
     const [history, setHistory] = useState([]);
 
-    const [favorites, setFavorites] = useState({});
-    const [ratings, setRatings] = useState({});
-
-    const [viewUpdateTrigger, setViewUpdateTrigger] = useState(0);
-
-    const [volume, setVolume] = useState(0.5);
-    const [previousVolume, setPreviousVolume] = useState(0.8);
-
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [volume, setVolume] = useState(0.5);
+    const [previousVolume, setPreviousVolume] = useState(0.5);
 
+    const [favorites, setFavorites] = useState({});
+    const [ratings, setRatings] = useState({});
     const [isShuffleOn, setIsShuffleOn] = useState(false);
     const [isRepeatOn, setIsRepeatOn] = useState(false);
     const [isRepeatOneOn, setIsRepeatOneOn] = useState(false);
+
+    const [viewUpdateTrigger, setViewUpdateTrigger] = useState(0);
 
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        const onTimeUpdate = () => {
+        const handleTimeUpdate = () => {
             const now = audio.currentTime || 0;
             setCurrentTime(now);
 
-            if (now < 0.5 && lastTimeRef.current > 1.0) {
-                accumulatedTimeRef.current = 0;
-                viewRegisteredRef.current = false;
-            }
-
             if (currentSong && isFinite(audio.duration) && audio.duration > 0) {
                 const timeDiff = now - lastTimeRef.current;
-
                 if (timeDiff > 0 && timeDiff < 1.5) {
                     if (!viewRegisteredRef.current) {
                         accumulatedTimeRef.current += timeDiff;
                     }
                 }
-
                 lastTimeRef.current = now;
 
                 const totalDuration = audio.duration;
@@ -60,46 +51,61 @@ export function PlayerProvider({ children }) {
                     registerView(currentSong.id)
                         .then(() => setViewUpdateTrigger(prev => prev + 1))
                         .catch(err => console.error(err));
-
                     viewRegisteredRef.current = true;
                 }
             }
         };
 
-        const onLoadedMetadata = () => {
+        const handleLoadedMetadata = () => {
             setDuration(isFinite(audio.duration) ? audio.duration : 0);
-            setCurrentTime(audio.currentTime || 0);
+            if (currentSong && audio.paused) {
+                audio.play().catch(e => console.warn("Autoplay blocked:", e));
+            }
         };
 
-        const onEnded = () => {
+        const handleEnded = () => {
             if (isRepeatOneOn) {
                 audio.currentTime = 0;
                 accumulatedTimeRef.current = 0;
                 viewRegisteredRef.current = false;
                 lastTimeRef.current = 0;
-                audio.play();
-                return;
+                audio.play().catch(console.error);
+            } else {
+                playNext();
             }
-            playNext();
         };
 
-        const onPlay = () => { lastTimeRef.current = audio.currentTime; };
+        const handlePlay = () => {
+            setIsPlaying(true);
+            lastTimeRef.current = audio.currentTime;
+        };
+        const handlePause = () => setIsPlaying(false);
+        const handleError = (e) => {
+            console.error("Audio error:", e);
+            setIsPlaying(false);
+        };
 
-        audio.addEventListener('timeupdate', onTimeUpdate);
-        audio.addEventListener('loadedmetadata', onLoadedMetadata);
-        audio.addEventListener('ended', onEnded);
-        audio.addEventListener('play', onPlay);
+        audio.addEventListener('timeupdate', handleTimeUpdate);
+        audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.addEventListener('ended', handleEnded);
+        audio.addEventListener('play', handlePlay);
+        audio.addEventListener('pause', handlePause);
+        audio.addEventListener('error', handleError);
 
         return () => {
-            audio.removeEventListener('timeupdate', onTimeUpdate);
-            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-            audio.removeEventListener('ended', onEnded);
-            audio.removeEventListener('play', onPlay);
+            audio.removeEventListener('timeupdate', handleTimeUpdate);
+            audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            audio.removeEventListener('ended', handleEnded);
+            audio.removeEventListener('play', handlePlay);
+            audio.removeEventListener('pause', handlePause);
+            audio.removeEventListener('error', handleError);
         };
     }, [currentSong, isRepeatOneOn]);
 
     useEffect(() => {
-        if (audioRef.current) audioRef.current.volume = Number(volume);
+        if (audioRef.current) {
+            audioRef.current.volume = volume;
+        }
     }, [volume]);
 
     useEffect(() => {
@@ -112,20 +118,25 @@ export function PlayerProvider({ children }) {
 
         if (!currentSong) {
             audio.pause();
-            audio.src = '';
-            setIsPlaying(false);
-            setCurrentTime(0);
-            setDuration(0);
+            audio.src = "";
             return;
         }
 
-        const src = `/api/songs/stream/${currentSong.id}`;
-        if (!audio.src || !audio.src.endsWith(String(currentSong.id))) {
-            audio.src = src;
+        const newSrc = `/api/songs/stream/${currentSong.id}`;
+
+        if (!audio.src || !audio.src.includes(`/api/songs/stream/${currentSong.id}`)) {
+            audio.src = newSrc;
             audio.load();
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Play interrupted or waiting for interaction:", error);
+                });
+            }
+        } else {
+            audio.play().catch(console.error);
         }
 
-        audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }, [currentSong]);
 
     const playSong = (song, songList = null) => {
@@ -141,12 +152,10 @@ export function PlayerProvider({ children }) {
         }
 
         if (currentSong && song.id === currentSong.id) {
-            if (audioRef.current) {
-                audioRef.current.play()
-                    .then(() => setIsPlaying(true))
-                    .catch(() => setIsPlaying(false));
-            } else {
-                setIsPlaying(true);
+            const audio = audioRef.current;
+            if (audio) {
+                if (audio.paused) audio.play().catch(console.error);
+                else audio.pause();
             }
             return;
         }
@@ -157,42 +166,37 @@ export function PlayerProvider({ children }) {
 
     const pause = () => {
         if (audioRef.current) audioRef.current.pause();
-        setIsPlaying(false);
     };
 
     const playNext = () => {
         if (isShuffleOn && queue.length > 0) {
             const idx = Math.floor(Math.random() * queue.length);
-            const next = queue[idx];
+            const nextSong = queue[idx];
 
-            setQueue(q => {
-                const copy = [...q];
-                copy.splice(idx, 1);
-                return copy;
+            setQueue(prevQueue => {
+                const newQueue = [...prevQueue];
+                newQueue.splice(idx, 1);
+                return newQueue;
             });
 
-            setHistory(h => [...h, currentSong].filter(Boolean));
-            setCurrentSong(next);
+            if (currentSong) setHistory(h => [...h, currentSong]);
+            setCurrentSong(nextSong);
             return;
         }
 
         if (queue.length > 0) {
             const [next, ...rest] = queue;
             setQueue(rest);
-            setHistory(h => [...h, currentSong].filter(Boolean));
+            if (currentSong) setHistory(h => [...h, currentSong]);
             setCurrentSong(next);
             return;
         }
 
         if (isRepeatOn && history.length > 0) {
-            const first = history[0];
-            setQueue([]);
-            setHistory([]);
-            setCurrentSong(first);
-            return;
+            setIsPlaying(false);
+        } else {
+            setIsPlaying(false);
         }
-
-        setIsPlaying(false);
     };
 
     const playPrev = () => {
@@ -213,9 +217,8 @@ export function PlayerProvider({ children }) {
 
     const seekTo = (seconds) => {
         if (!audioRef.current) return;
-        audioRef.current.currentTime = Math.max(0, Math.min(seconds, audioRef.current.duration || 0));
-        setCurrentTime(audioRef.current.currentTime);
-        lastTimeRef.current = audioRef.current.currentTime;
+        audioRef.current.currentTime = seconds;
+        setCurrentTime(seconds);
     };
 
     const toggleFavorite = (songId) => setFavorites(p => ({ ...p, [songId]: !p[songId] }));
@@ -243,13 +246,13 @@ export function PlayerProvider({ children }) {
 
     const toggleMute = () => {
         if (volume > 0) { setPreviousVolume(volume); setVolume(0); }
-        else { setVolume(previousVolume || 0.5); }
+        else { setVolume(previousVolume > 0 ? previousVolume : 0.5); }
     };
 
     const setVolumePercent = (pct) => {
         const v = Math.max(0, Math.min(100, Number(pct)));
         setVolume(v / 100);
-        setPreviousVolume(v / 100);
+        if (v > 0) setPreviousVolume(v / 100);
     };
 
     const value = {
@@ -265,7 +268,12 @@ export function PlayerProvider({ children }) {
 
     return (
         <PlayerContext.Provider value={value}>
-            <audio ref={audioRef} crossOrigin="use-credentials" style={{ display: 'none' }} />
+            <audio
+                ref={audioRef}
+                crossOrigin="use-credentials"
+                style={{ display: 'none' }}
+                preload="auto"
+            />
             {children}
         </PlayerContext.Provider>
     );
