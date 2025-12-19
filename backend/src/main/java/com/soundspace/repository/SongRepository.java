@@ -100,7 +100,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             """)
     List<Song> findAllPublicOrOwnedByUser(@Param("userId") Long userId);
 
-    @Query("""
+    @Query(value = """
             SELECT DISTINCT s
             FROM Song s
             LEFT JOIN FETCH s.author
@@ -109,10 +109,19 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             JOIN s.genres g
             WHERE g = :genre
               AND (s.author.id = :userId OR s.publiclyVisible = true)
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT s)
+            FROM Song s
+            JOIN s.genres g
+            WHERE g = :genre
+              AND (s.author.id = :userId OR s.publiclyVisible = true)
             """)
-    List<Song> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userId") Long userId);
+    Page<Song> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre,
+                                              @Param("userId") Long userId,
+                                              Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             SELECT DISTINCT s
             FROM Song s
             LEFT JOIN FETCH s.author
@@ -121,8 +130,18 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             JOIN s.genres g
             WHERE g = :genre
               AND s.publiclyVisible = true
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT s)
+            FROM Song s
+            JOIN s.genres g
+            WHERE g = :genre
+              AND s.publiclyVisible = true
             """)
-    List<Song> findPublicByGenre(@Param("genre") Genre genre);
+    Page<Song> findPublicByGenre(
+            @Param("genre") Genre genre,
+            Pageable pageable
+    );
 
     @Modifying(clearAutomatically = true) // czyszczenie cachu hibernate
     @Query("UPDATE Song s SET s.viewCount = s.viewCount + :count WHERE s.id = :id")

@@ -14,6 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -83,12 +84,17 @@ public class SongCoreController {
     }
 
 
-    // dodatkowe/specyficzne metody
+    // specyficzne nie-core endpointy
 
     @GetMapping("/genre/{genreName}")
-    public ResponseEntity<List<SongDto>> getSongsByGenre(@PathVariable String genreName,
-                                                         Authentication authentication) {
-        return ResponseEntity.ok(songCoreService.getSongsByGenre(genreName, extractUserDetails(authentication)));
+    public ResponseEntity<Page<SongDto>> getSongsByGenre(@PageableDefault Pageable pageable,
+                                                      @PathVariable String genreName,
+                                                      Authentication authentication) {
+        return ResponseEntity.ok(
+                songCoreService.getSongsByGenre(genreName,
+                extractUserDetails(authentication),
+                        pageable
+                ));
     }
 
     @GetMapping("/favourites")
@@ -98,7 +104,7 @@ public class SongCoreController {
     }
 
 
-    /// HELPERY
+    // HELPERY
 
     // anonymousUser jest Stringiem, wiec zwroci null do pozniejszej obslugi
     private UserDetails extractUserDetails(Authentication authentication) {

@@ -85,22 +85,20 @@ public class SongCoreService {
                 .toList();
     }
 
-    public List<SongDto> getSongsByGenre(String genreName, UserDetails userDetails) {
+    public Page<SongDto> getSongsByGenre(String genreName, UserDetails userDetails, Pageable pageable) {
         try {
             Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
 
 
             if (userDetails == null)
-                return songRepository.findPublicByGenre(genre).stream()
-                        .map(SongDto::toDto)
-                        .toList();
+                return songRepository.findPublicByGenre(genre, pageable)
+                        .map(SongDto::toDto);
 
             else return songRepository.findPublicOrOwnedByUserByGenre(
                             genre,
-                            appUserService.getUserByEmail(userDetails.getUsername()).getId()
-                    ).stream()
-                    .map(SongDto::toDto)
-                    .toList();
+                            appUserService.getUserByEmail(userDetails.getUsername()).getId(),
+                    pageable
+                    ).map(SongDto::toDto);
 
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
