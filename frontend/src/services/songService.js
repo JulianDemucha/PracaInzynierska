@@ -96,7 +96,7 @@ export const getTopViewedSongs = async (page = 0, size = 10) => {
     return response.data;
 };
 
-export const getRecommendations = async (page = 0) => {
-    const response = await api.get(`/songs/recommendations/${page}`);
+export const getRecommendations = async (page = 0, size = 20) => {
+    const response = await api.get(`/songs/recommendations/?page=${page}&size=${size}`);
     return response.data;
 };
