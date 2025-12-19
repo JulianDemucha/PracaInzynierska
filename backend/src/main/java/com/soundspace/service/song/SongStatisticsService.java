@@ -18,7 +18,7 @@ public class SongStatisticsService {
 
     public Page<SongDto> getTrendingSongs(Pageable pageable) {
         return songRepository.findTrendingSongs(
-                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien,
+                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
                 pageable,
                 LIKE_WAGE_IN_TRENDING
         ).map(SongDto::toDto);

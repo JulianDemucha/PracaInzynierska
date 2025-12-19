@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -163,8 +164,11 @@ public class RecommendationsService {
     }
 
     private Page<SongDto> getGlobalTopSongs(Pageable pageable) {
-        return songRepo.findTopPopularSongsPage(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()))
-                .map(SongDto::toDto);
+        return songRepo.findTrendingSongs(
+                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
+                pageable,
+                3
+        ).map(SongDto::toDto);
     }
 
     // todo wrzucic to arcydzielo gdzies indziej bo przyda sie przy przerabianiu innych metod do wysylania page zamiast listy
