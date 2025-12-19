@@ -9,6 +9,9 @@ import com.soundspace.repository.SongRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,6 +31,7 @@ import java.util.stream.Collectors;
 public class RecommendationsService {
     private final SongRepository songRepo;
     private final AppUserRepository appUserRepository;
+    private final CacheManager cacheManager;
 
     // zeby zmienic to 200 to juz lepiej - todo zrobic cachowanie
     // zeby przy kazdym odswiezeniu mainpage nie lecial request na milion songow (cachowanie i tak sie przyda nawet przy mniejszej ilosci)
@@ -53,8 +58,12 @@ public class RecommendationsService {
     private volatile double cachedViewCap;
     private volatile double cachedLogCap;
 
-
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = "recommendations",
+            key = "(#userDetails == null ? 'ANON' : #userDetails.username) + ':' + #pageable.pageNumber + ':' " +
+                    "+ #pageable.pageSize + ':' + (#pageable.sort == null ? '' : #pageable.sort.toString())"
+    )
     public Page<SongDto> getRecommendations(UserDetails userDetails, Pageable pageable) {
         if(userDetails == null) {
             return getGlobalTopSongs(pageable);
@@ -69,6 +78,7 @@ public class RecommendationsService {
         if (likedSongs.isEmpty() && dislikedSongs.isEmpty() && favouriteSongs.isEmpty()) {
             return getGlobalTopSongs(pageable);
         }
+
 
         Map<Genre, Double> genreWeights = calculateGenreProfile(likedSongs, dislikedSongs, favouriteSongs);
         Map<Long, Double> authorWeights = calculateAuthorProfile(likedSongs, dislikedSongs, favouriteSongs);
@@ -136,6 +146,11 @@ public class RecommendationsService {
         this.cachedLogCap = Math.log10(1 + this.cachedViewCap);
 
         log.info("Zaktualizowano ViewCap (Cache): {}", newCap);
+
+        Cache cache = cacheManager.getCache("recommendations");
+        if (cache != null) cache.clear();
+        log.info("Zresetowano cache rekomendacji");
+
     }
 
     /// Pojedyńczy song trafia do metody, a następnie:
@@ -163,8 +178,11 @@ public class RecommendationsService {
     }
 
     private Page<SongDto> getGlobalTopSongs(Pageable pageable) {
-        return songRepo.findTopPopularSongsPage(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()))
-                .map(SongDto::toDto);
+        return songRepo.findTrendingSongs(
+                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
+                pageable,
+                3
+        ).map(SongDto::toDto);
     }
 
     // todo wrzucic to arcydzielo gdzies indziej bo przyda sie przy przerabianiu innych metod do wysylania page zamiast listy
