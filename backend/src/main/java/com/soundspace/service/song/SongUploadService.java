@@ -2,7 +2,7 @@ package com.soundspace.service.song;
 
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.ProcessedImage;
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongStatslessDto;
 import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.entity.Album;
 import com.soundspace.entity.AppUser;
@@ -48,7 +48,7 @@ public class SongUploadService {
 
     /// typowy upload piosenki poza albumem (singiel)
     @Transactional
-    public SongDto upload(SongUploadRequest request, AppUser appUser) {
+    public SongStatslessDto upload(SongUploadRequest request, AppUser appUser) {
         MultipartFile audioFile = request.getAudioFile();
         MultipartFile coverFile = request.getCoverFile();
 
@@ -83,7 +83,7 @@ public class SongUploadService {
             );
 
             Song saved = songRepository.save(s);
-            return SongDto.toDto(saved);
+            return SongStatslessDto.toDto(saved);
 
         } catch (Exception e) {
             log.error("Błąd I/O podczas uploadu pliku", e);
@@ -104,7 +104,7 @@ public class SongUploadService {
 
     /// upload piosenki z perspektywy albumu
     @Transactional
-    public SongDto upload(Long albumId, AlbumSongUploadRequest request, AppUser appUser) {
+    public SongStatslessDto upload(Long albumId, AlbumSongUploadRequest request, AppUser appUser) {
         MultipartFile audioFile = request.getAudioFile();
 
         Path tmpAudioPath = null;
@@ -125,7 +125,7 @@ public class SongUploadService {
             );
 
             Song saved = songRepository.save(s);
-            return SongDto.toDto(saved);
+            return SongStatslessDto.toDto(saved);
 
         } catch (Exception e) {
             log.error("Błąd I/O podczas uploadu pliku", e);

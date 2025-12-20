@@ -1,6 +1,7 @@
 package com.soundspace.service.song;
 
 import com.soundspace.repository.SongRepository;
+import com.soundspace.repository.SongStatisticsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,7 @@ public class ViewBufferingService {
 
     // (key: songId, value: viewCount)
     private final ConcurrentHashMap<Long, Long> viewBuffer = new ConcurrentHashMap<>();
+    private final SongStatisticsRepository songStatisticsRepository;
 
     /**
      *  dzieki temu elegancko tymczasowo do viewBuffer zapisuja sie wszystkie wyswietlenia
@@ -44,7 +46,7 @@ public class ViewBufferingService {
             Long songId = entry.getKey();
             Long countToAdd = entry.getValue();
 
-            songRepository.incrementViewCountBy(songId, countToAdd);
+            songStatisticsRepository.incrementViewCountBy(songId, countToAdd);
         }
 
         log.info("Zapisano wyświetlenia dla {} piosenek.", snapshot.size());

@@ -1,6 +1,7 @@
 package com.soundspace.service.song;
 
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongDtoWithDetails;
 import com.soundspace.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,21 +17,21 @@ public class SongStatisticsService {
 
     private static final int LIKE_WAGE_IN_TRENDING = 3;
 
-    public Page<SongDto> getTrendingSongs(Pageable pageable) {
+    public Page<SongBaseDto> getTrendingSongs(Pageable pageable) {
         return songRepository.findTrendingSongs(
                 Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
                 pageable,
                 LIKE_WAGE_IN_TRENDING
-        ).map(SongDto::toDto);
+        ).map(SongBaseDto::toDto);
     }
 
-    public Page<SongDto> getTopLiked(Pageable pageable) {
+    public Page<SongBaseDto> getTopLiked(Pageable pageable) {
         return songRepository.findTopLikedSongs(pageable)
-                .map(SongDto::toDto);
+                .map(SongBaseDto::toDto);
     }
 
-    public Page<SongDto> getTopViewed(Pageable pageable) {
+    public Page<SongBaseDto> getTopViewed(Pageable pageable) {
         return songRepository.findTopViewedSongs(pageable)
-                .map(SongDto::toDto);
+                .map(SongBaseDto::toDto);
     }
 }

@@ -57,24 +57,15 @@ public class Song {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
-    @Column(name = "likes_count", nullable = false)
-    private Integer likesCount = 0;
+    @OneToOne(mappedBy = "song", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
+    private SongStatistics statistics;
 
-    @Column(name = "dislikes_count", nullable = false)
-    private Integer dislikesCount = 0;
-
-    private Long viewCount = 0L;
-
-    public int getLikesCount() {
-        return likesCount == null ? 0 : likesCount;
-    }
-
-    public int getDislikesCount() {
-        return dislikesCount == null ? 0 : dislikesCount;
-    }
-
-    public long getViewCount() {
-        return viewCount == null ? 0 : viewCount;
+    @PrePersist
+    public void prePersist() {
+        if (this.statistics == null) {
+            this.statistics = new SongStatistics();
+            this.statistics.setSong(this);
+        }
     }
 
 }

@@ -3,8 +3,10 @@ package com.soundspace.service;
 import com.soundspace.config.ApplicationConfigProperties;
 import com.soundspace.dto.AlbumDto;
 import com.soundspace.dto.ProcessedImage;
-import com.soundspace.dto.SongDto;
-import com.soundspace.dto.projection.SongProjection;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongDtoWithDetails;
+import com.soundspace.dto.projection.SongBaseProjection;
+import com.soundspace.dto.projection.SongProjectionWithDetails;
 import com.soundspace.dto.request.AlbumCreateRequest;
 import com.soundspace.dto.request.AlbumUpdateRequest;
 import com.soundspace.entity.Album;
@@ -24,6 +26,7 @@ import com.soundspace.service.storage.StorageService;
 import com.soundspace.service.user.AppUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -62,9 +65,9 @@ public class AlbumService {
         return albumRepository.getReferenceById(id);
     }
 
-    public AlbumDto getAlbumById(Long id, UserDetails userDetails) {
-        Album album = findById(id).orElseThrow(
-                () -> new AlbumNotFoundException(id));
+    public AlbumDto getAlbum(Long albumId, UserDetails userDetails) {
+        Album album = findById(albumId).orElseThrow(
+                () -> new AlbumNotFoundException(albumId));
 
         if (album.getPubliclyVisible()) return AlbumDto.toDto(album);
 
@@ -77,11 +80,11 @@ public class AlbumService {
         return AlbumDto.toDto(album);
     }
 
-    public List<SongDto> getSongs(Long albumId, UserDetails userDetails) {
+    public List<SongBaseDto> getSongs(Long albumId, UserDetails userDetails) {
         Album album = albumRepository.getAlbumById(albumId);
-        List<SongDto> songs = songRepository.findSongsByAlbumNative(albumId)
+        List<SongBaseDto> songs = songRepository.findSongsByAlbumNative(albumId)
                 .stream()
-                .map(SongDto::toDto)
+                .map(SongBaseDto::toDto)
                 .toList();
 
         // jesli publiczny to ok
@@ -219,8 +222,8 @@ public class AlbumService {
         if (requester != null && !(requester.getId().equals(album.getAuthor().getId()) || isAdmin))
             throw new AccessDeniedException("Brak uprawnień");
 
-        List<SongProjection> albumSongs = songRepository.findSongsByAlbumNative(albumId);
-        for (SongProjection song : albumSongs) {
+        List<SongBaseProjection> albumSongs = songRepository.findSongsByAlbumNative(albumId);
+        for (SongBaseProjection song : albumSongs) {
             songCoreService.deleteSongById(song.getId(), requesterEmail);
         }
         StorageKey coverKey = album.getCoverStorageKey();
@@ -379,9 +382,9 @@ public class AlbumService {
                 .map(AlbumDto::toDto);
     }
 
-    private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
+    private List<SongDtoWithDetails> getSongsFromSongProjection(List<SongProjectionWithDetails> songsProjection) {
         return songsProjection.stream()
-                .map(SongDto::toDto).toList();
+                .map(SongDtoWithDetails::toDto).toList();
     }
 
 }

@@ -1,25 +1,20 @@
 package com.soundspace.service.song;
 
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
 import com.soundspace.dto.projection.RecommendationsSongProjection;
 import com.soundspace.entity.Song;
 import com.soundspace.enums.Genre;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.repository.SongRepository;
+import com.soundspace.repository.SongStatisticsRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,7 +24,6 @@ import java.util.stream.Collectors;
 public class RecommendationsService {
     private final SongRepository songRepo;
     private final AppUserRepository appUserRepository;
-    private final CacheManager cacheManager;
 
     // zeby zmienic to 200 to juz lepiej - todo zrobic cachowanie
     // zeby przy kazdym odswiezeniu mainpage nie lecial request na milion songow (cachowanie i tak sie przyda nawet przy mniejszej ilosci)
@@ -48,6 +42,7 @@ public class RecommendationsService {
     private static final double W_GENRE = 0.5;
     private static final double W_AUTHOR = 0.3;
     private static final double W_VIEWS = 0.2;
+    private final SongStatisticsRepository songStatisticsRepository;
 
     /*
         view cap liczony po 90 percentylu zeby same most-viewed piosenki nie zapychaly rekomendacji, tylko po
@@ -57,7 +52,7 @@ public class RecommendationsService {
     private volatile double cachedLogCap;
 
     @Transactional(readOnly = true)
-    public List<SongDto> getRecommendations(UserDetails userDetails) {
+    public List<SongBaseDto> getRecommendations(UserDetails userDetails) {
 
         Long userId = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow().getId();
         List<RecommendationsSongProjection> likedSongs = songRepo.findAllLikedByAppUserIdForRecommendations(userId);
@@ -119,7 +114,7 @@ public class RecommendationsService {
                     return new ScoredSong(song, score);
                 })
                 .sorted(Comparator.comparingDouble(ScoredSong::score).reversed())
-                .map(scoredSong -> SongDto.toDto(scoredSong.song()))
+                .map(scoredSong -> SongBaseDto.toDto(scoredSong.song()))
                 .toList();
     }
 
@@ -128,7 +123,7 @@ public class RecommendationsService {
     @PostConstruct
     @Scheduled(cron = "0 0 * * * *")
     public void updateViewCap() {
-        long newCap = songRepo.findViewCountPercentile90().orElse(0L);
+        long newCap = songStatisticsRepository.findViewCountPercentile90().orElse(0L);
 
         if (newCap < 1) newCap = 1;
 
@@ -153,21 +148,13 @@ public class RecommendationsService {
 
         double authorScore = authorProfile.getOrDefault(song.getAuthor().getId(), 0.0);
 
-        double rawViewScore = Math.log10(1 + song.getViewCount()) / logCap;
+        double rawViewScore = Math.log10(1 + song.getStatistics().getViewCount()) / logCap;
         double viewScore = Math.min(rawViewScore, 1.0); // 1.0 to uciecie 10% wyzszych (90 percentyl)
 
         // docelowe wyliczenie średniej ważonej / score
         return (genreScore * W_GENRE) +
                 (authorScore * W_AUTHOR) +
                 (viewScore * W_VIEWS);
-    }
-
-    private Page<SongDto> getGlobalTopSongs(Pageable pageable) {
-        return songRepo.findTrendingSongs(
-                Instant.now().minusSeconds(60 * 60 * 24 * 7), //tydzien
-                pageable,
-                3
-        ).map(SongDto::toDto);
     }
 
 

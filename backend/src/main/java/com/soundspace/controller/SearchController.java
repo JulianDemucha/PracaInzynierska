@@ -1,9 +1,6 @@
 package com.soundspace.controller;
 
-import com.soundspace.dto.AlbumDto;
-import com.soundspace.dto.AppUserDto;
-import com.soundspace.dto.PlaylistDto;
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.*;
 import com.soundspace.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +21,7 @@ public class SearchController {
     private final SearchService searchService;
 
     @GetMapping("/songs/search")
-    public ResponseEntity<Page<SongDto>> searchSongs(
+    public ResponseEntity<Page<SongBaseDto>> searchSongs(
             @RequestParam String query,
             @PageableDefault(size = 20) Pageable pageable,
             Authentication authentication

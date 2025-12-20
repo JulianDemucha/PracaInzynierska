@@ -1,6 +1,6 @@
 package com.soundspace.controller.song;
 
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
 import com.soundspace.service.song.SongStatisticsService;
 import com.soundspace.service.song.ViewService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,17 +41,17 @@ public class SongStatisticsController {
     }
 
     @GetMapping("/top/trending")
-    public ResponseEntity<Page<SongDto>> getTrendingSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getTrendingSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTrendingSongs(pageable));
     }
 
     @GetMapping("/top/liked")
-    public ResponseEntity<Page<SongDto>> getTopLikedSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getTopLikedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopLiked(pageable));
     }
 
     @GetMapping("/top/viewed")
-    public ResponseEntity<Page<SongDto>> getTopViewedSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getTopViewedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopViewed(pageable));
     }
 

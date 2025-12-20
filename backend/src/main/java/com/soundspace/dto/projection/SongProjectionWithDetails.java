@@ -2,7 +2,7 @@ package com.soundspace.dto.projection;
 import java.time.Instant;
 import java.util.List;
 
-public interface SongProjection {
+public interface SongProjectionWithDetails {
     Long getId();
     String getTitle();
     Long getAuthorId();

@@ -19,6 +19,7 @@ import com.soundspace.service.storage.StorageService;
 import com.soundspace.service.user.AppUserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -78,8 +79,7 @@ public class PlaylistService {
         return playlists.stream().map(PlaylistDto::toDto).toList();
     }
 
-
-    public PlaylistDto getById(Long playlistId, UserDetails userDetails) {
+    public PlaylistDto getPlaylist(Long playlistId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
         ensureUserCanView(playlist, userDetails);
         return PlaylistDto.toDto(playlist);

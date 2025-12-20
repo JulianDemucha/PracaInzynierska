@@ -1,5 +1,8 @@
 package com.soundspace.controller.song;
-import com.soundspace.dto.SongDto;
+import com.soundspace.cache.facade.SongFacade;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongDtoWithDetails;
+import com.soundspace.dto.SongStatslessDto;
 import com.soundspace.dto.request.SongUpdateRequest;
 import com.soundspace.dto.request.SongUploadRequest;
 import com.soundspace.service.song.SongCoreService;
@@ -14,7 +17,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -35,32 +37,33 @@ public class SongCoreController {
     private final SongCoreService songCoreService;
     private final SongUploadService songUploadService;
     private final AppUserService appUserService;
+    private final SongFacade songFacade;
 
 
     // totalnie core metody
 
     @GetMapping("/{songId}")
-    public ResponseEntity<SongDto> getSongById(@NotNull @PathVariable Long songId, Authentication authentication) {
-        return ResponseEntity.ok(songCoreService.getSong(songId, extractUserDetails(authentication)));
+    public ResponseEntity<SongDtoWithDetails> getSongById(@NotNull @PathVariable Long songId, Authentication authentication) {
+        return ResponseEntity.ok(songFacade.getSong(songId, extractUserDetails(authentication)));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<SongDto>> getSongsByUserId(@PathVariable Long userId,
-                                                          Authentication authentication) {
+    public ResponseEntity<List<SongBaseDto>> getSongsByUserId(@PathVariable Long userId,
+                                                              Authentication authentication) {
         return ResponseEntity.ok(songCoreService.getSongsByUserId(userId, extractUserDetails(authentication)));
     }
 
     @GetMapping
-    public ResponseEntity<Page<SongDto>> getAllSongs(Authentication authentication, @PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getAllSongs(Authentication authentication, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songCoreService.getAllSongs(extractUserDetails(authentication), pageable));
     }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
-    public ResponseEntity<SongDto> upload(
+    public ResponseEntity<SongStatslessDto> upload(
             @AuthenticationPrincipal UserDetails userDetails,
             @ModelAttribute @Valid SongUploadRequest request) {
 
-        SongDto result = songUploadService.upload(
+        SongStatslessDto result = songUploadService.upload(
                 request,
                 appUserService.getUserByEmail(userDetails.getUsername())
         );
@@ -69,9 +72,9 @@ public class SongCoreController {
     }
 
     @PutMapping("/{songId}")
-    public ResponseEntity<SongDto> updateSongById(@ModelAttribute @Valid SongUpdateRequest request,
-                                                  @PathVariable Long songId,
-                                                  Authentication authentication) {
+    public ResponseEntity<SongDtoWithDetails> updateSongById(@ModelAttribute @Valid SongUpdateRequest request,
+                                                             @PathVariable Long songId,
+                                                             Authentication authentication) {
         return ResponseEntity.ok(songCoreService.update(songId, request, extractUserDetails(authentication)));
     }
 
@@ -87,9 +90,9 @@ public class SongCoreController {
     // specyficzne nie-core endpointy
 
     @GetMapping("/genre/{genreName}")
-    public ResponseEntity<Page<SongDto>> getSongsByGenre(@PageableDefault Pageable pageable,
-                                                      @PathVariable String genreName,
-                                                      Authentication authentication) {
+    public ResponseEntity<Page<SongBaseDto>> getSongsByGenre(@PageableDefault Pageable pageable,
+                                                                    @PathVariable String genreName,
+                                                                    Authentication authentication) {
         return ResponseEntity.ok(
                 songCoreService.getSongsByGenre(genreName,
                 extractUserDetails(authentication),
@@ -98,8 +101,8 @@ public class SongCoreController {
     }
 
     @GetMapping("/favourites")
-    public ResponseEntity<Page<SongDto>> getFavouriteSongs(@PageableDefault Pageable pageable,
-                                                           @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<Page<SongBaseDto>> getFavouriteSongs(@PageableDefault Pageable pageable,
+                                                                      @AuthenticationPrincipal UserDetails userDetails){
         return ResponseEntity.ok(songCoreService.getFavouriteSongs(userDetails, pageable));
     }
 

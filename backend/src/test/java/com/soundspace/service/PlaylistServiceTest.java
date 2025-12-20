@@ -50,7 +50,7 @@ class PlaylistServiceTest {
 
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist));
 
-        PlaylistDto result = playlistService.getById(playlistId, null);
+        PlaylistDto result = playlistService.getPlaylist(playlistId, null);
 
         assertNotNull(result);
         assertEquals(playlistId, result.id());
@@ -63,7 +63,7 @@ class PlaylistServiceTest {
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class, () -> {
-            playlistService.getById(playlistId, null);
+            playlistService.getPlaylist(playlistId, null);
         });
     }
 
@@ -84,7 +84,7 @@ class PlaylistServiceTest {
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist));
 
         assertThrows(AccessDeniedException.class, () -> {
-            playlistService.getById(playlistId, null);
+            playlistService.getPlaylist(playlistId, null);
         });
     }
 }

@@ -59,9 +59,9 @@ public record PlaylistSongViewDto(
                 song.getCreatedAt().toString(),
                 song.getCoverStorageKey().getId(),
                 playlistEntry.getPosition(),
-                song.getLikesCount(),
-                song.getDislikesCount(),
-                song.getViewCount()
+                song.getStatistics().getLikesCount(),
+                song.getStatistics().getDislikesCount(),
+                song.getStatistics().getViewCount()
         );
     }
 

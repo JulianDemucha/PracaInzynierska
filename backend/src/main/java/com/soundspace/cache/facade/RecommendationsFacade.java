@@ -1,5 +1,6 @@
 package com.soundspace.cache.facade;
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongDtoWithDetails;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.service.song.CachedRecommendationsProvider;
 import com.soundspace.util.SongPaginationUtil;
@@ -19,12 +20,12 @@ public class RecommendationsFacade {
     private final CachedRecommendationsProvider cachedProvider;
     private final SongRepository songRepo; // Do fallbacku na global top
 
-    public Page<SongDto> getRecommendations(UserDetails userDetails, Pageable pageable) {
+    public Page<SongBaseDto> getRecommendations(UserDetails userDetails, Pageable pageable) {
         if (userDetails == null) {
             return getGlobalTopSongs(pageable);
         }
 
-        List<SongDto> recommendedSongs = cachedProvider.getRecommendations(userDetails);
+        List<SongBaseDto> recommendedSongs = cachedProvider.getRecommendations(userDetails);
 
         if (recommendedSongs.isEmpty()) {
             return getGlobalTopSongs(pageable);
@@ -33,11 +34,11 @@ public class RecommendationsFacade {
         return SongPaginationUtil.toPage(recommendedSongs, pageable);
     }
 
-    private Page<SongDto> getGlobalTopSongs(Pageable pageable) {
+    private Page<SongBaseDto> getGlobalTopSongs(Pageable pageable) {
         return songRepo.findTrendingSongs(
                 Instant.now().minusSeconds(60 * 60 * 24 * 7),
                 pageable,
                 3
-        ).map(SongDto::toDto);
+        ).map(SongBaseDto::toDto);
     }
 }

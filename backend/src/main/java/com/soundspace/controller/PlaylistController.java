@@ -28,7 +28,7 @@ public class PlaylistController {
     @GetMapping("/{playlistId}")
     public ResponseEntity<PlaylistDto> getPlaylist(@PathVariable Long playlistId,
                                                    Authentication authentication) {
-        return ResponseEntity.ok(playlistService.getById(playlistId, extractUserDetails(authentication)));
+        return ResponseEntity.ok(playlistService.getPlaylist(playlistId, extractUserDetails(authentication)));
     }
 
     @PostMapping("/create")

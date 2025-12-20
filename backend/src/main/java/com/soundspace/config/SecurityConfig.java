@@ -1,4 +1,4 @@
-package com.soundspace.security.config;
+package com.soundspace.config;
 
 import com.soundspace.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;

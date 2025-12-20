@@ -1,7 +1,8 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.AlbumDto;
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongStatslessDto;
 import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.dto.request.AlbumCreateRequest;
 import com.soundspace.dto.request.AlbumUpdateRequest;
@@ -49,14 +50,14 @@ public class AlbumController {
     @GetMapping("/{albumId}")
     public ResponseEntity<AlbumDto> getAlbum(@PathVariable Long albumId,
                                              Authentication authentication) {
-        return ResponseEntity.ok(albumService.getAlbumById(albumId, extractUserDetails(authentication)));
+        return ResponseEntity.ok(albumService.getAlbum(albumId, extractUserDetails(authentication)));
     }
 
     @PostMapping("/{albumId}/add")
-    public ResponseEntity<SongDto> addSongToAlbum(@PathVariable Long albumId,
-                                                  @ModelAttribute @Valid AlbumSongUploadRequest request,
-                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        SongDto createdSong = songUploadService.upload(albumId, request,
+    public ResponseEntity<SongStatslessDto> addSongToAlbum(@PathVariable Long albumId,
+                                                           @ModelAttribute @Valid AlbumSongUploadRequest request,
+                                                           @AuthenticationPrincipal UserDetails userDetails) {
+        SongStatslessDto createdSong = songUploadService.upload(albumId, request,
                 appUserService.getUserByEmail(userDetails.getUsername()));
         return ResponseEntity.created(URI.create("/api/albums/"+createdSong.id())).body(createdSong);
     }
@@ -70,8 +71,8 @@ public class AlbumController {
     }
 
     @GetMapping("/{albumId}/songs")
-    public ResponseEntity<List<SongDto>> getSongsByAlbumId(@PathVariable Long albumId,
-                                                           Authentication authentication) {
+    public ResponseEntity<List<SongBaseDto>> getSongsByAlbumId(@PathVariable Long albumId,
+                                                               Authentication authentication) {
         return ResponseEntity.ok(albumService.getSongs(albumId, extractUserDetails(authentication)));
     }
 

@@ -1,7 +1,7 @@
 package com.soundspace.controller.song;
 
 import com.soundspace.cache.facade.RecommendationsFacade;
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,8 +22,8 @@ public class SongRecommendationsController {
     private final RecommendationsFacade recommendationsFacade;
 
     @GetMapping
-    public ResponseEntity<Page<SongDto>> getRecommendations(@PageableDefault Pageable pageable,
-                                                            @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<Page<SongBaseDto>> getRecommendations(@PageableDefault Pageable pageable,
+                                                                @AuthenticationPrincipal UserDetails userDetails){
         return ResponseEntity.ok(recommendationsFacade.getRecommendations(userDetails, pageable));
     }
 }
