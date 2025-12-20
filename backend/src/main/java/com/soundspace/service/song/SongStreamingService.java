@@ -75,7 +75,9 @@ public class SongStreamingService {
 
         String authorEmail = song.getAuthor().getEmail();
 
-        if (!authorEmail.equals(userDetails.getUsername())) {
+        if (!authorEmail.equals(userDetails.getUsername()) ||
+                userDetails.getAuthorities().stream().anyMatch(
+                        authority -> authority.getAuthority().equals("ROLE_ADMIN"))) {
             throw new AccessDeniedException("Brak dostępu");
         }
     }

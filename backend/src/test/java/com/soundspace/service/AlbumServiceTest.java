@@ -35,7 +35,7 @@ class AlbumServiceTest {
         album.setPubliclyVisible(true);
         album.setAuthor(new AppUser());
         when(albumRepository.findById(albumId)).thenReturn(Optional.of(album));
-        AlbumDto result = albumService.getAlbumById(albumId, null);
+        AlbumDto result = albumService.getAlbum(albumId, null);
 
         assertNotNull(result);
         assertEquals(albumId, result.id());
@@ -48,7 +48,7 @@ class AlbumServiceTest {
         when(albumRepository.findById(albumId)).thenReturn(Optional.empty());
 
         assertThrows(AlbumNotFoundException.class, () -> {
-            albumService.getAlbumById(albumId, null);
+            albumService.getAlbum(albumId, null);
         });
     }
 
@@ -62,7 +62,7 @@ class AlbumServiceTest {
         when(albumRepository.findById(albumId)).thenReturn(Optional.of(album));
 
         assertThrows(AccessDeniedException.class, () -> {
-            albumService.getAlbumById(albumId, null);
+            albumService.getAlbum(albumId, null);
         });
     }
 }

@@ -1,7 +1,8 @@
 package com.soundspace.controller;
 
 import com.soundspace.dto.AlbumDto;
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongStatslessDto;
 import com.soundspace.dto.request.AlbumSongUploadRequest;
 import com.soundspace.dto.request.AlbumCreateRequest;
 import com.soundspace.dto.request.AlbumUpdateRequest;
@@ -10,6 +11,9 @@ import com.soundspace.service.user.AppUserService;
 import com.soundspace.service.song.SongUploadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,14 +50,14 @@ public class AlbumController {
     @GetMapping("/{albumId}")
     public ResponseEntity<AlbumDto> getAlbum(@PathVariable Long albumId,
                                              Authentication authentication) {
-        return ResponseEntity.ok(albumService.getAlbumById(albumId, extractUserDetails(authentication)));
+        return ResponseEntity.ok(albumService.getAlbum(albumId, extractUserDetails(authentication)));
     }
 
     @PostMapping("/{albumId}/add")
-    public ResponseEntity<SongDto> addSongToAlbum(@PathVariable Long albumId,
-                                                  @ModelAttribute @Valid AlbumSongUploadRequest request,
-                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        SongDto createdSong = songUploadService.upload(albumId, request,
+    public ResponseEntity<SongStatslessDto> addSongToAlbum(@PathVariable Long albumId,
+                                                           @ModelAttribute @Valid AlbumSongUploadRequest request,
+                                                           @AuthenticationPrincipal UserDetails userDetails) {
+        SongStatslessDto createdSong = songUploadService.upload(albumId, request,
                 appUserService.getUserByEmail(userDetails.getUsername()));
         return ResponseEntity.created(URI.create("/api/albums/"+createdSong.id())).body(createdSong);
     }
@@ -67,8 +71,8 @@ public class AlbumController {
     }
 
     @GetMapping("/{albumId}/songs")
-    public ResponseEntity<List<SongDto>> getSongsByAlbumId(@PathVariable Long albumId,
-                                                           Authentication authentication) {
+    public ResponseEntity<List<SongBaseDto>> getSongsByAlbumId(@PathVariable Long albumId,
+                                                               Authentication authentication) {
         return ResponseEntity.ok(albumService.getSongs(albumId, extractUserDetails(authentication)));
     }
 
@@ -79,14 +83,16 @@ public class AlbumController {
     }
 
     @GetMapping("/genre/{genreName}")
-    public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName,
-                                                                 Authentication authentication) {
-        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName, extractUserDetails(authentication)));
+    public ResponseEntity<Page<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName,
+                                                                 Authentication authentication,
+                                                                 @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName, extractUserDetails(authentication), pageable));
     }
 
     @GetMapping
-    public ResponseEntity<List<AlbumDto>> getAllAlbums(Authentication authentication) {
-        return ResponseEntity.ok(albumService.getAllAlbums(extractUserDetails(authentication)));
+    public ResponseEntity<Page<AlbumDto>> getAllAlbums(Authentication authentication,
+                                                       @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(albumService.getAllAlbums(extractUserDetails(authentication), pageable));
     }
 
     @PutMapping("/{albumId}")

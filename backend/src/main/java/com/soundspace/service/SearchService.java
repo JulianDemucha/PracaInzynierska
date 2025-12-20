@@ -1,13 +1,7 @@
 package com.soundspace.service;
 
-import com.soundspace.dto.AlbumDto;
-import com.soundspace.dto.AppUserDto;
-import com.soundspace.dto.PlaylistDto;
-import com.soundspace.dto.SongDto;
-import com.soundspace.dto.projection.AlbumProjection;
-import com.soundspace.dto.projection.AppUserProjection;
-import com.soundspace.dto.projection.PlaylistProjection;
-import com.soundspace.dto.projection.SongProjection;
+import com.soundspace.dto.*;
+import com.soundspace.dto.projection.*;
 import com.soundspace.repository.AlbumRepository;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.repository.PlaylistRepository;
@@ -31,7 +25,7 @@ public class SearchService {
     private final AppUserRepository appUserRepository;
 
     @Transactional(readOnly = true)
-    public Page<SongDto> searchSongs(String query, Pageable pageable, UserDetails userDetails) {
+    public Page<SongBaseDto> searchSongs(String query, Pageable pageable, UserDetails userDetails) {
         if (query == null || query.isBlank()) {
             return Page.empty(pageable);
         }
@@ -40,7 +34,7 @@ public class SearchService {
         String startsWith = cleanedQuery + "%";
 
         String contains = "%" + cleanedQuery + "%";
-        Page<SongProjection> results = userDetails == null ?
+        Page<SongBaseProjection> results = userDetails == null ?
                 songRepository.searchSongsPublic(
                 cleanedQuery, //exact
                 startsWith,
@@ -55,7 +49,7 @@ public class SearchService {
                 pageable
         );
 
-        return results.map(SongDto::toDto);
+        return results.map(SongBaseDto::toDto);
     }
 
     @Transactional(readOnly = true)

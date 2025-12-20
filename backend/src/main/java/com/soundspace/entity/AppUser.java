@@ -61,9 +61,6 @@ public class AppUser implements UserDetails {
     @Column(length = 1000)
     private String bio;
 
-    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
-
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "avatar_storage_key_id", nullable = false)

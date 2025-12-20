@@ -34,25 +34,9 @@ public class AuthenticationService {
     private final ApplicationConfigProperties.MediaConfig.AvatarConfig avatarConfig;
 
     public String register(RegisterRequest request) {
-        // todo: zrobic customowe wyjatki i od razu je w klasach handlowac na 409 albo w global handlerze
         if (repo.existsByEmail(request.getEmail()) || repo.existsByLogin(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Email lub login jest zajęty");
-        }
-
-        if (request.getPassword().length() < 8 || request.getPassword().length() > 24) {
-            throw new ResponseStatusException((HttpStatus.CONFLICT),
-                    "Hasło musi mieć pomiędzy 8 a 24 znaki");
-        }
-
-        if (request.getUsername().length() < 3 || request.getUsername().length() > 16) {
-            throw new ResponseStatusException((HttpStatus.CONFLICT),
-                    "Login musi mieć pomiędzy 3 a 16 znaków");
-        }
-
-        if (!request.getEmail().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new ResponseStatusException((HttpStatus.CONFLICT),
-                    "Niewłaściwy email");
         }
 
         var user = AppUser.builder()
@@ -65,8 +49,7 @@ public class AuthenticationService {
                 .authProvider(UserAuthProvider.LOCAL)
                 .emailVerified(false)
                 .bio("")
-                .comments(new ArrayList<>())
-                // poki co defaultowy avatar
+                // defaultowy avatar
                 .avatarStorageKey(storageKeyRepository.getReferenceById(avatarConfig.defaultAvatarId()))
                 .build();
 

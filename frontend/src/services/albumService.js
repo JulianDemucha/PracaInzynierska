@@ -29,24 +29,16 @@ export const deleteAlbum = async (albumId) => {
     return response.data;
 };
 
-export const getAllAlbums = async () => {
-    try {
-        const response = await api.get('/albums');
-        return response.data;
-    } catch (error) {
-        console.error("Błąd pobierania wszystkich albumów:", error);
-        return [];
-    }
+export const getAllAlbums = async (page = 0, size = 7) => {
+    const response = await api.get(`/albums?page=${page}&size=${size}`);
+    return response.data;
 };
-export const getAlbumsByGenre = async (genreName) => {
-    try {
-        const response = await api.get(`/albums/genre/${genreName}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Błąd pobierania albumów z gatunku ${genreName}:`, error);
-        return [];
-    }
+
+export const getAlbumsByGenre = async (genreName, page = 0, size = 7) => {
+    const response = await api.get(`/albums/genre/${genreName}?page=${page}&size=${size}`);
+    return response.data;
 };
+
 
 export const addSongToAlbum = async (albumId, songData) => {
     const response = await api.post(`/albums/${albumId}/add`, songData, {

@@ -17,14 +17,14 @@ export const deleteSong = async (songId) => {
     return response.data;
 };
 
-export const getSongsByGenre = async (genreName) => {
-    const response = await api.get(`/songs/genre/${genreName}`);
+export const getSongsByGenre = async (genreName, page = 0, size = 7) => {
+    const response = await api.get(`/songs/genre/${genreName}?page=${page}&size=${size}`);
     return response.data;
 };
 
-export const getAllSongs = async () => {
+export const getAllSongs = async (page = 0, size = 7) => {
     try {
-        const response = await api.get('/songs');
+        const response = await api.get(`/songs?page=${page}&size=${size}`);
         return response.data;
     } catch (error) {
         console.error("Błąd pobierania wszystkich utworów:", error);
@@ -76,27 +76,27 @@ export const registerView = async (songId) => {
     return response.data;
 };
 
-export const getFavouriteSongs = async (page = 0, size = 20) => {
+export const getFavouriteSongs = async (page = 0, size = 7) => {
     const response = await api.get(`/favourites?page=${page}&size=${size}`);
     return response.data;
 };
 
-export const getTrendingSongs = async (page = 0, size = 10) => {
+export const getTrendingSongs = async (page = 0, size = 7) => {
     const response = await api.get(`/songs/top/trending?page=${page}&size=${size}`);
     return response.data;
 };
 
-export const getTopLikedSongs = async (page = 0, size = 10) => {
+export const getTopLikedSongs = async (page = 0, size = 7) => {
     const response = await api.get(`/songs/top/liked?page=${page}&size=${size}`);
     return response.data;
 };
 
-export const getTopViewedSongs = async (page = 0, size = 10) => {
+export const getTopViewedSongs = async (page = 0, size = 7) => {
     const response = await api.get(`/songs/top/viewed?page=${page}&size=${size}`);
     return response.data;
 };
 
-export const getRecommendations = async (page = 0) => {
-    const response = await api.get(`/songs/recommendations/${page}`);
+export const getRecommendations = async (page = 0, size = 7) => {
+    const response = await api.get(`/songs/recommendations?page=${page}&size=${size}`);
     return response.data;
 };

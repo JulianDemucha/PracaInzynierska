@@ -1,8 +1,10 @@
 package com.soundspace.service.song;
 
 import com.soundspace.config.ApplicationConfigProperties;
-import com.soundspace.dto.SongDto;
-import com.soundspace.dto.projection.SongProjection;
+import com.soundspace.dto.SongBaseDto;
+import com.soundspace.dto.SongDtoWithDetails;
+import com.soundspace.dto.SongStatslessDto;
+import com.soundspace.dto.projection.SongProjectionWithDetails;
 import com.soundspace.dto.request.SongUpdateRequest;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
@@ -18,6 +20,7 @@ import com.soundspace.service.storage.ImageService;
 import com.soundspace.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,8 +55,8 @@ public class SongCoreService {
         return songRepository.getReferenceById(id);
     }
 
-    public SongDto getSong(Long songId, UserDetails userDetails) {
-        SongDto song = getSongDtoById(songId);
+    public SongStatslessDto getSong(Long songId, UserDetails userDetails) {
+        SongStatslessDto song = getSongDtoById(songId);
         if (song.publiclyVisible()) return song;
         if (userDetails == null) {
             throw new AccessDeniedException("Musisz być zalogowany, aby zobaczyć ten utwór.");
@@ -64,43 +67,41 @@ public class SongCoreService {
         return song;
     }
 
-    public List<SongDto> getSongsByUserId(Long songsAuthorId, UserDetails userDetails) {
+    public List<SongBaseDto> getSongsByUserId(Long songsAuthorId, UserDetails userDetails) {
         if (userDetails == null)
             return songRepository.findPublicSongsByUserNative(songsAuthorId)
                     .stream()
-                    .map(SongDto::toDto)
+                    .map(SongBaseDto::toDto)
                     .toList();
 
         AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
         if (appUser.getId().equals(songsAuthorId))
             return songRepository.findSongsByUserNative(songsAuthorId)
                     .stream()
-                    .map(SongDto::toDto)
+                    .map(SongBaseDto::toDto)
                     .toList();
 
         //else
         return songRepository.findPublicSongsByUserNative(songsAuthorId)
                 .stream()
-                .map(SongDto::toDto)
+                .map(SongBaseDto::toDto)
                 .toList();
     }
 
-    public List<SongDto> getSongsByGenre(String genreName, UserDetails userDetails) {
+    public Page<SongBaseDto> getSongsByGenre(String genreName, UserDetails userDetails, Pageable pageable) {
         try {
             Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
 
 
             if (userDetails == null)
-                return songRepository.findPublicByGenre(genre).stream()
-                        .map(SongDto::toDto)
-                        .toList();
+                return songRepository.findPublicByGenre(genre, pageable)
+                        .map(SongBaseDto::toDto);
 
             else return songRepository.findPublicOrOwnedByUserByGenre(
                             genre,
-                            appUserService.getUserByEmail(userDetails.getUsername()).getId()
-                    ).stream()
-                    .map(SongDto::toDto)
-                    .toList();
+                            appUserService.getUserByEmail(userDetails.getUsername()).getId(),
+                    pageable
+                    ).map(SongBaseDto::toDto);
 
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
@@ -109,17 +110,16 @@ public class SongCoreService {
     }
 
     @Transactional
-    public List<SongDto> getAllSongs(UserDetails userDetails) {
+    public Page<SongBaseDto> getAllSongs(UserDetails userDetails, Pageable pageable) {
         if (userDetails == null)
-            return songRepository.findAllPublic()
-                    .stream()
-                    .map(SongDto::toDto)
-                    .toList();
+            return songRepository.findAllPublic(pageable)
+                    .map(SongBaseDto::toDto);
 
         else return songRepository.findAllPublicOrOwnedByUser(
-                        appUserService.getUserByEmail(userDetails.getUsername()).getId()).stream()
-                .map(SongDto::toDto)
-                .toList();
+                appUserService.getUserByEmail(
+                        userDetails.getUsername()).getId(),
+                        pageable
+                ).map(SongBaseDto::toDto);
     }
 
     @Transactional
@@ -184,7 +184,8 @@ public class SongCoreService {
     }
 
     @Transactional
-    public SongDto update(Long songId, SongUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
+    @CacheEvict(value = "song", key = "#songId")
+    public SongDtoWithDetails update(Long songId, SongUpdateRequest request, UserDetails userDetails) { // @AuthenticationPrincipal userDetails jest NotNull
         Song updatedSong = getSongById(songId); //narazie wszytkie pola takie same, a pozniej beda zmieniane zeby zapisac po update
 
         AppUser user = appUserService.getUserByEmail(userDetails.getUsername());
@@ -219,24 +220,24 @@ public class SongCoreService {
         if (storageKeyToDelete != null) {
             imageService.cleanUpOldImage(storageKeyToDelete, "cover");
         }
-        return SongDto.toDto(updatedSong);
+        return SongDtoWithDetails.toDto(updatedSong);
     }
 
-    public Page<SongDto> getFavouriteSongs(UserDetails userDetails, Pageable pageable) {
+    public Page<SongBaseDto> getFavouriteSongs(UserDetails userDetails, Pageable pageable) {
         Long userId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
-        return songRepository.findAllFavouriteByAppUserId(userId, pageable).map(SongDto::toDto);
+        return songRepository.findAllFavouriteByAppUserId(userId, pageable).map(SongBaseDto::toDto);
     }
 
 
     /// HELPERY
 
-    private SongDto getSongDtoById(Long id) {
-        return SongDto.toDto(getSongById(id));
+    private SongStatslessDto getSongDtoById(Long id) {
+        return SongStatslessDto.toDto(getSongById(id));
     }
 
-    private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {
+    private List<SongDtoWithDetails> getSongsFromSongProjection(List<SongProjectionWithDetails> songsProjection) {
         return songsProjection.stream()
-                .map(SongDto::toDto).toList();
+                .map(SongDtoWithDetails::toDto).toList();
     }
 
 }

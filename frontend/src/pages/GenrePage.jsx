@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MediaCard from '../components/cards/MediaCard.jsx';
 import { getSongsByGenre } from '../services/songService.js';
@@ -25,53 +25,120 @@ function GenrePage() {
     const { currentUser } = useAuth();
 
     const [activeTab, setActiveTab] = useState('wszystko');
+
     const [genreSongs, setGenreSongs] = useState([]);
     const [genreAlbums, setGenreAlbums] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showAllSongs, setShowAllSongs] = useState(false);
-    const [showAllAlbums, setShowAllAlbums] = useState(false);
 
-    const MAX_ITEMS_PER_SECTION = 7;
+    const [songPage, setSongPage] = useState(0);
+    const [albumPage, setAlbumPage] = useState(0);
+
+    const [hasMoreSongs, setHasMoreSongs] = useState(true);
+    const [hasMoreAlbums, setHasMoreAlbums] = useState(true);
+
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [loadingMoreSongs, setLoadingMoreSongs] = useState(false);
+    const [loadingMoreAlbums, setLoadingMoreAlbums] = useState(false);
+
+    const [error, setError] = useState(null);
+
+    const PAGE_SIZE = 7;
+
+    const filterVisibleItems = useCallback((items) => {
+        if (!Array.isArray(items)) return [];
+        return items.filter(item =>
+            item.publiclyVisible || (currentUser && currentUser.id === item.authorId)
+        );
+    }, [currentUser]);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
+        const fetchInitialData = async () => {
+            setInitialLoading(true);
             setError(null);
             try {
-                const [songsData, albumsData] = await Promise.all([
-                    getSongsByGenre(genreName),
-                    getAlbumsByGenre(genreName)
+                setSongPage(0);
+                setAlbumPage(0);
+                setHasMoreSongs(true);
+                setHasMoreAlbums(true);
+
+                const [songsResponse, albumsResponse] = await Promise.all([
+                    getSongsByGenre(genreName, 0, PAGE_SIZE),
+                    getAlbumsByGenre(genreName, 0, PAGE_SIZE)
                 ]);
 
-                const filteredSongs = songsData.filter(song =>
-                    song.publiclyVisible || (currentUser && currentUser.id === song.authorId)
-                );
+                const rawSongs = songsResponse.content ? songsResponse.content : songsResponse;
+                const rawAlbums = albumsResponse.content ? albumsResponse.content : albumsResponse;
 
-                const filteredAlbums = albumsData.filter(album =>
-                    album.publiclyVisible || (currentUser && currentUser.id === album.authorId)
-                );
+                const initialSongs = filterVisibleItems(rawSongs);
+                const initialAlbums = filterVisibleItems(rawAlbums);
 
-                setGenreSongs(filteredSongs);
-                setGenreAlbums(filteredAlbums);
+                setGenreSongs(initialSongs);
+                setGenreAlbums(initialAlbums);
+
+                if (rawSongs.length < PAGE_SIZE) setHasMoreSongs(false);
+                if (rawAlbums.length < PAGE_SIZE) setHasMoreAlbums(false);
 
             } catch (err) {
                 console.error("Błąd podczas pobierania muzyki:", err);
                 setError("Nie udało się pobrać danych.");
             } finally {
-                setLoading(false);
+                setInitialLoading(false);
             }
         };
 
         if (genreName) {
-            fetchData();
+            fetchInitialData();
         }
-    }, [genreName, currentUser]);
+    }, [genreName, currentUser, filterVisibleItems]);
+    const loadMoreSongs = async () => {
+        if (loadingMoreSongs || !hasMoreSongs) return;
+        setLoadingMoreSongs(true);
 
-    const formattedGenreTitle = genreName.replace('_', ' ').toUpperCase();
+        try {
+            const nextPage = songPage + 1;
+            const response = await getSongsByGenre(genreName, nextPage, PAGE_SIZE);
+            const rawNewSongs = response.content ? response.content : response;
+
+            if (rawNewSongs.length < PAGE_SIZE) {
+                setHasMoreSongs(false);
+            }
+
+            const filteredNewSongs = filterVisibleItems(rawNewSongs);
+            setGenreSongs(prev => [...prev, ...filteredNewSongs]);
+            setSongPage(nextPage);
+        } catch (err) {
+            console.error("Błąd ładowania utworów:", err);
+        } finally {
+            setLoadingMoreSongs(false);
+        }
+    };
+    const loadMoreAlbums = async () => {
+        if (loadingMoreAlbums || !hasMoreAlbums) return;
+        setLoadingMoreAlbums(true);
+
+        try {
+            const nextPage = albumPage + 1;
+            const response = await getAlbumsByGenre(genreName, nextPage, PAGE_SIZE);
+            const rawNewAlbums = response.content ? response.content : response;
+
+            if (rawNewAlbums.length < PAGE_SIZE) {
+                setHasMoreAlbums(false);
+            }
+
+            const filteredNewAlbums = filterVisibleItems(rawNewAlbums);
+
+            setGenreAlbums(prev => [...prev, ...filteredNewAlbums]);
+            setAlbumPage(nextPage);
+        } catch (err) {
+            console.error("Błąd ładowania albumów:", err);
+        } finally {
+            setLoadingMoreAlbums(false);
+        }
+    };
+
+    const formattedGenreTitle = genreName ? genreName.replace('_', ' ').toUpperCase() : '';
     const isEmpty = genreSongs.length === 0 && genreAlbums.length === 0;
 
-    if (loading) {
+    if (initialLoading) {
         return (
             <div className="genre-page loading-state">
                 <div className="loading-content">
@@ -80,22 +147,20 @@ function GenrePage() {
             </div>
         );
     }
+
     if (error) {
         return (
             <div className="genre-page" style={{ padding: '50px', textAlign: 'center', color: 'white' }}>
                 <h2>Wystąpił błąd</h2>
                 <p>{error}</p>
-                <button
-                    className="modal-button"
-                    onClick={() => window.location.reload()}
-                >
+                <button className="modal-button" onClick={() => window.location.reload()}>
                     Spróbuj ponownie
                 </button>
             </div>
         );
     }
 
-    if (!loading && isEmpty) {
+    if (!initialLoading && isEmpty) {
         return (
             <div className="genre-page empty-state">
                 <div className="empty-modal">
@@ -115,7 +180,7 @@ function GenrePage() {
                 </div>
                 <div className="genre-info">
                     <h2>Przeglądaj {formattedGenreTitle}</h2>
-                    <p>Znaleziono: {genreSongs.length + genreAlbums.length} pozycji</p>
+                    <p>Załadowano: {genreSongs.length + genreAlbums.length} pozycji</p>
                 </div>
             </header>
 
@@ -133,7 +198,7 @@ function GenrePage() {
                     <div className="content-section">
                         <h2>Utwory</h2>
                         <div className="media-grid">
-                            {(showAllSongs ? genreSongs : genreSongs.slice(0, MAX_ITEMS_PER_SECTION)).map(item => (
+                            {genreSongs.map(item => (
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
@@ -144,19 +209,22 @@ function GenrePage() {
                                 />
                             ))}
                         </div>
-                        {genreSongs.length > MAX_ITEMS_PER_SECTION && (
-                            <button className="show-more-button" onClick={() => setShowAllSongs(!showAllSongs)}>
-                                {showAllSongs ? 'Zwiń' : 'Pokaż więcej'}
+                        {hasMoreSongs && (
+                            <button
+                                className="show-more-button"
+                                onClick={loadMoreSongs}
+                                disabled={loadingMoreSongs}
+                            >
+                                {loadingMoreSongs ? 'Ładowanie...' : 'Pokaż więcej utworów'}
                             </button>
                         )}
                     </div>
                 )}
-
                 {(activeTab === 'wszystko' || activeTab === 'albumy') && genreAlbums.length > 0 && (
                     <div className="content-section">
                         <h2>Albumy</h2>
                         <div className="media-grid">
-                            {(showAllAlbums ? genreAlbums : genreAlbums.slice(0, MAX_ITEMS_PER_SECTION)).map(item => (
+                            {genreAlbums.map(item => (
                                 <MediaCard
                                     key={item.id}
                                     title={item.title}
@@ -166,9 +234,13 @@ function GenrePage() {
                                 />
                             ))}
                         </div>
-                        {genreAlbums.length > MAX_ITEMS_PER_SECTION && (
-                            <button className="show-more-button" onClick={() => setShowAllAlbums(!showAllAlbums)}>
-                                {showAllAlbums ? 'Zwiń' : 'Pokaż więcej'}
+                        {hasMoreAlbums && (
+                            <button
+                                className="show-more-button"
+                                onClick={loadMoreAlbums}
+                                disabled={loadingMoreAlbums}
+                            >
+                                {loadingMoreAlbums ? 'Ładowanie...' : 'Pokaż więcej albumów'}
                             </button>
                         )}
                     </div>

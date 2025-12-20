@@ -38,25 +38,6 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
     List<Playlist> getAllPublicByCreatorId(@Param("userId") Long userId);
 
     @Query(value = """
-            SELECT
-            p.id AS id,
-            p.title AS title,
-            u.id AS creatorId,
-            u.login AS creatorUsername,
-            p.publiclyVisible AS publiclyVisible,
-            p.createdAt AS createdAt,
-            p.updatedAt AS updatedAt,
-            sk.id AS coverStorageKeyId,
-            CAST(COUNT(pe) AS int) AS songsCount
-            FROM Playlist p
-            LEFT JOIN p.creator u
-            LEFT JOIN p.coverStorageKey sk
-            LEFT JOIN p.songs pe
-            GROUP BY p.id, u.id, sk.id
-            """)
-    List<PlaylistProjection> findAllWithDetails();
-
-    @Query(value = """
         SELECT
         p.id AS id,
         p.title AS title,
@@ -73,8 +54,15 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
         LEFT JOIN p.songs pe
         WHERE p.publiclyVisible = true OR u.id = :userId
         GROUP BY p.id, u.id, sk.id
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT p.id)
+        FROM Playlist p
+        LEFT JOIN p.creator u
+        WHERE p.publiclyVisible = true OR u.id = :userId
         """)
-    List<PlaylistProjection> findAllPublicOrOwnedByUser(@Param("userId") Long userId);
+    Page<PlaylistProjection> findAllPublicOrOwnedByUser(@Param("userId") Long userId, Pageable pageable);
+
 
     @Query(value = """
         SELECT
@@ -93,8 +81,13 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
         LEFT JOIN p.songs pe
         WHERE p.publiclyVisible = true
         GROUP BY p.id, u.id, sk.id
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT p.id)
+        FROM Playlist p
+        WHERE p.publiclyVisible = true
         """)
-    List<PlaylistProjection> findAllPublic();
+    Page<PlaylistProjection> findAllPublic(Pageable pageable);
 
     @Query(value = """
             SELECT p.id,

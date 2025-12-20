@@ -41,7 +41,35 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             """)
     List<Album> findPublicByAuthorId(@Param("authorId") Long authorId);
 
-    @Query("""
+
+    @Query(value = """
+            SELECT DISTINCT a FROM Album a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.coverStorageKey
+            WHERE a.publiclyVisible = true
+           """,
+            countQuery = """
+           SELECT COUNT(DISTINCT a) FROM Album a
+           WHERE a.publiclyVisible = true
+           """)
+    Page<Album> findAllPublic(Pageable pageable);
+
+    @Query(value = """
+           SELECT DISTINCT a FROM Album a
+           LEFT JOIN FETCH a.author
+           LEFT JOIN FETCH a.coverStorageKey
+           WHERE a.author.email = :userEmail
+           OR a.publiclyVisible = true
+           """,
+            countQuery = """
+           SELECT COUNT(DISTINCT a) FROM Album a
+           JOIN a.author au
+           WHERE au.email = :userEmail
+           OR a.publiclyVisible = true
+           """)
+    Page<Album> findAllPublicOrOwnedByUser(@Param("userEmail") String userEmail, Pageable pageable);
+
+    @Query(value = """
             SELECT DISTINCT a
             FROM Album a
             LEFT JOIN FETCH a.author
@@ -50,18 +78,17 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             JOIN a.genres g
             WHERE g = :genre
             AND a.publiclyVisible = true
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT a)
+            FROM Album a
+            JOIN a.genres g
+            WHERE g = :genre
+            AND a.publiclyVisible = true
             """)
-    List<Album> findPublicByGenre(@Param("genre") Genre genre);
+    Page<Album> findPublicByGenre(@Param("genre") Genre genre, Pageable pageable);
 
-    @Query("""
-            SELECT DISTINCT a FROM Album a
-            LEFT JOIN FETCH a.author
-            LEFT JOIN FETCH a.coverStorageKey
-            WHERE a.publiclyVisible = true
-            """)
-    List<Album> findAllPublic();
-
-    @Query("""
+    @Query(value = """
             SELECT DISTINCT a
             FROM Album a
             LEFT JOIN FETCH a.author
@@ -69,18 +96,21 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             LEFT JOIN FETCH a.songs
             JOIN a.genres g
             WHERE g = :genre
-            AND a.author.email = :userEmail
+            OR a.author.email = :userEmail
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT a)
+            FROM Album a
+            LEFT JOIN a.genres g
+            JOIN a.author au
+            WHERE g = :genre
+            OR au.email = :userEmail
             """)
-    List<Album> findPublicOrOwnedByUserByGenre(@Param("genre") Genre genre, @Param("userEmail") String userEmail);
-
-    @Query("""
-            SELECT DISTINCT a FROM Album a
-            LEFT JOIN FETCH a.author
-            LEFT JOIN FETCH a.coverStorageKey
-            WHERE a.author.email = :userEmail
-            OR a.publiclyVisible = true
-            """)
-    List<Album> findAllPublicOrOwnedByUser(@Param("userEmail") String userEmail);
+    Page<Album> findPublicOrOwnedByUserAndGenre(
+            @Param("genre") Genre genre,
+            @Param("userEmail") String userEmail,
+            Pageable pageable
+    );
 
     @Modifying
     @Query( value = """

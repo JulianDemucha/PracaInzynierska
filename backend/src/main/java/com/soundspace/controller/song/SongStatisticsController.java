@@ -1,6 +1,6 @@
 package com.soundspace.controller.song;
 
-import com.soundspace.dto.SongDto;
+import com.soundspace.dto.SongBaseDto;
 import com.soundspace.service.song.SongStatisticsService;
 import com.soundspace.service.song.ViewService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,21 +41,19 @@ public class SongStatisticsController {
     }
 
     @GetMapping("/top/trending")
-    public ResponseEntity<Page<SongDto>> getTrendingSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getTrendingSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTrendingSongs(pageable));
     }
 
     @GetMapping("/top/liked")
-    public ResponseEntity<Page<SongDto>> getTop10LikedSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getTopLikedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopLiked(pageable));
     }
 
     @GetMapping("/top/viewed")
-    public ResponseEntity<Page<SongDto>> getTop10ViewedSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongBaseDto>> getTopViewedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopViewed(pageable));
     }
-
-    //todo zrobic top10viewed i poprawic top10liked zeby zwracalo page i przyjmowalo wiadomo size i page
 
     /// helpery
 

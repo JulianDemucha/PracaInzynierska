@@ -5,6 +5,7 @@ import com.soundspace.entity.SongReaction;
 import com.soundspace.enums.ReactionType;
 import com.soundspace.repository.SongReactionRepository;
 import com.soundspace.repository.SongRepository;
+import com.soundspace.repository.SongStatisticsRepository;
 import com.soundspace.service.user.AppUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class ReactionService {
     private final SongCoreService songCoreService;
     private final AppUserService appUserService;
     private final SongRepository songRepository;
+    private final SongStatisticsRepository songStatisticsRepository;
 
     @Transactional
     public void addReaction(Long songId, ReactionType requestReactionType, UserDetails userDetails) {
@@ -45,7 +47,7 @@ public class ReactionService {
             songReaction.setUser(appUser);
             // reactedAt automatycznie sie ustawi
             songReactionRepository.save(songReaction);
-            songRepository.incrementReactionCount(songId, requestReactionType.toString());
+            songStatisticsRepository.incrementReactionCount(songId, requestReactionType.toString());
             return;
         }
 
@@ -64,8 +66,8 @@ public class ReactionService {
 
             songReactionRepository.save(songReaction);
 
-            songRepository.decrementReactionCount(songId, existingReactionType.toString());
-            songRepository.incrementReactionCount(songId, requestReactionType.toString());
+            songStatisticsRepository.decrementReactionCount(songId, existingReactionType.toString());
+            songStatisticsRepository.incrementReactionCount(songId, requestReactionType.toString());
         }
 
     }
@@ -81,7 +83,7 @@ public class ReactionService {
 
         if (reactionType != ReactionType.FAVOURITE){
         songReactionRepository.deleteLikeOrDislikeBySongIdAndUserId(songId, appUserId);
-        songRepository.decrementReactionCount(songId, reactionType.toString());
+        songStatisticsRepository.decrementReactionCount(songId, reactionType.toString());
         }
     }
 
