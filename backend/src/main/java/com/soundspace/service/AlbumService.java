@@ -24,10 +24,13 @@ import com.soundspace.service.storage.StorageService;
 import com.soundspace.service.user.AppUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -117,20 +120,16 @@ public class AlbumService {
                 .toList();
     }
 
-    public List<AlbumDto> getPublicAlbumsByGenre(String genreName, UserDetails userDetails) {
+    public Page<AlbumDto> getPublicAlbumsByGenre(String genreName, UserDetails userDetails, Pageable pageable) {
         try {
             Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
 
             if (userDetails == null)
-                return albumRepository.findPublicByGenre(genre)
-                        .stream()
-                        .map(AlbumDto::toDto)
-                        .toList();
+                return albumRepository.findPublicByGenre(genre, pageable)
+                        .map(AlbumDto::toDto);
 
-            else return albumRepository.findPublicOrOwnedByUserByGenre(genre, userDetails.getUsername())
-                    .stream()
-                    .map(AlbumDto::toDto)
-                    .toList();
+            else return albumRepository.findPublicOrOwnedByUserAndGenre(genre, userDetails.getUsername(), pageable)
+                    .map(AlbumDto::toDto);
 
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Nieprawidłowy gatunek: " + genreName);
@@ -371,18 +370,13 @@ public class AlbumService {
         }
     }
 
-    // todo switch to PAGINATION
     @Transactional(readOnly = true)
-    public List<AlbumDto> getAllAlbums(UserDetails userDetails) {
-        if (userDetails == null) return albumRepository.findAllPublic()
-                .stream()
-                .map(AlbumDto::toDto)
-                .toList();
+    public Page<AlbumDto> getAllAlbums(UserDetails userDetails, Pageable pageable) {
+        if (userDetails == null) return albumRepository.findAllPublic(pageable)
+                .map(AlbumDto::toDto);
 
-        else return albumRepository.findAllPublicOrOwnedByUser(userDetails.getUsername())
-                .stream()
-                .map(AlbumDto::toDto)
-                .toList();
+        else return albumRepository.findAllPublicOrOwnedByUser(userDetails.getUsername(), pageable)
+                .map(AlbumDto::toDto);
     }
 
     private List<SongDto> getSongsFromSongProjection(List<SongProjection> songsProjection) {

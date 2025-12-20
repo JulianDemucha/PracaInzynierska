@@ -10,6 +10,9 @@ import com.soundspace.service.user.AppUserService;
 import com.soundspace.service.song.SongUploadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -79,14 +82,16 @@ public class AlbumController {
     }
 
     @GetMapping("/genre/{genreName}")
-    public ResponseEntity<List<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName,
-                                                                 Authentication authentication) {
-        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName, extractUserDetails(authentication)));
+    public ResponseEntity<Page<AlbumDto>> getPublicAlbumsByGenre(@PathVariable String genreName,
+                                                                 Authentication authentication,
+                                                                 @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(albumService.getPublicAlbumsByGenre(genreName, extractUserDetails(authentication), pageable));
     }
 
     @GetMapping
-    public ResponseEntity<List<AlbumDto>> getAllAlbums(Authentication authentication) {
-        return ResponseEntity.ok(albumService.getAllAlbums(extractUserDetails(authentication)));
+    public ResponseEntity<Page<AlbumDto>> getAllAlbums(Authentication authentication,
+                                                       @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(albumService.getAllAlbums(extractUserDetails(authentication), pageable));
     }
 
     @PutMapping("/{albumId}")
