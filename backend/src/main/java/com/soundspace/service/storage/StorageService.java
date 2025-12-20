@@ -6,6 +6,7 @@ import com.soundspace.exception.StorageFileNotFoundException;
 import com.soundspace.repository.StorageKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -82,6 +83,7 @@ public class StorageService {
         }
     }
 
+    @Cacheable(value = "storageKey", key = "#storageKeyId")
     public StorageKey getStorageKey(Long storageKeyId) {
         return storageKeyRepository.findById(storageKeyId).orElseThrow(
                 () -> new StorageFileNotFoundException("Nie znaleziono pliku o storageKeyId: " + storageKeyId)

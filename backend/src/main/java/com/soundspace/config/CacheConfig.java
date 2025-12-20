@@ -40,6 +40,11 @@ public class CacheConfig {
                         Caffeine.newBuilder()
                                 .expireAfterWrite(24, TimeUnit.HOURS)
                                 .maximumSize(10_000)
+                                .build()),
+                new CaffeineCache("storageKey",
+                        Caffeine.newBuilder()
+                                .expireAfterWrite(24, TimeUnit.HOURS)
+                                .maximumSize(10_000)
                                 .build())
         ));
 
