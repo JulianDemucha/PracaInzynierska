@@ -48,10 +48,11 @@ export const changeSongPosition = async (playlistId, songId, newPosition) => {
     return response.data;
 };
 
-export const getAllPlaylists = async () => {
-    const response = await api.get('/playlists');
+export const getAllPlaylists = async (page = 0, size = 7) => {
+    const response = await api.get(`/playlists?page=${page}&size=${size}`);
     return response.data;
 };
+
 
 export const updatePlaylist = async (playlistId, playlistData) => {
     const response = await api.put(`/playlists/${playlistId}`, playlistData, {
