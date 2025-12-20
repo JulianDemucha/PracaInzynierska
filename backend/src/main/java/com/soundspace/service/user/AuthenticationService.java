@@ -49,7 +49,6 @@ public class AuthenticationService {
                 .authProvider(UserAuthProvider.LOCAL)
                 .emailVerified(false)
                 .bio("")
-                .comments(new ArrayList<>())
                 // defaultowy avatar
                 .avatarStorageKey(storageKeyRepository.getReferenceById(avatarConfig.defaultAvatarId()))
                 .build();
