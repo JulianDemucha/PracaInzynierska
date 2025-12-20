@@ -19,6 +19,8 @@ import com.soundspace.service.storage.StorageService;
 import com.soundspace.service.user.AppUserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,17 +47,14 @@ public class PlaylistService {
     private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
 
 
-    public List<PlaylistDto> getAllPlaylists(UserDetails userDetails) {
-        List<PlaylistDto> playlists;
+    public Page<PlaylistDto> getAllPlaylists(UserDetails userDetails, Pageable pageable) {
 
         if (userDetails != null) {
             Long loggedInUserId = appUserService.getUserByEmail(userDetails.getUsername()).getId();
-            playlists = playlistRepository.findAllPublicOrOwnedByUser(loggedInUserId).stream()
-                    .map(PlaylistDto::toDto).toList();
+            return playlistRepository.findAllPublicOrOwnedByUser(loggedInUserId, pageable)
+                    .map(PlaylistDto::toDto);
 
-        } else playlists = playlistRepository.findAllPublic().stream().map(PlaylistDto::toDto).toList();
-
-        return playlists;
+        } else return playlistRepository.findAllPublic(pageable).map(PlaylistDto::toDto);
     }
 
 

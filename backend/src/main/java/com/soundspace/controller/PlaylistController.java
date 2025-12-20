@@ -7,6 +7,9 @@ import com.soundspace.dto.request.PlaylistUpdateRequest;
 import com.soundspace.service.PlaylistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -80,8 +83,9 @@ public class PlaylistController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PlaylistDto>> getAllPlaylists(Authentication authentication) {
-        return ResponseEntity.ok(playlistService.getAllPlaylists(extractUserDetails(authentication)));
+    public ResponseEntity<Page<PlaylistDto>> getAllPlaylists(Authentication authentication,
+                                                             @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(playlistService.getAllPlaylists(extractUserDetails(authentication), pageable));
     }
 
     @PutMapping("/{playlistId}")
