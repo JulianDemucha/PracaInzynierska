@@ -9,11 +9,9 @@ import com.soundspace.repository.SongRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -59,24 +57,19 @@ public class RecommendationsService {
     private volatile double cachedLogCap;
 
     @Transactional(readOnly = true)
-    @Cacheable(
-            value = "recommendations",
-            key = "(#userDetails == null ? 'ANON' : #userDetails.username) + ':' + #pageable.pageNumber + ':' " +
-                    "+ #pageable.pageSize + ':' + (#pageable.sort == null ? '' : #pageable.sort.toString())"
-    )
-    public Page<SongDto> getRecommendations(UserDetails userDetails, Pageable pageable) {
-        if(userDetails == null) {
-            return getGlobalTopSongs(pageable);
-        }
+    public List<SongDto> getRecommendations(UserDetails userDetails) {
 
         Long userId = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow().getId();
         List<RecommendationsSongProjection> likedSongs = songRepo.findAllLikedByAppUserIdForRecommendations(userId);
         List<RecommendationsSongProjection> dislikedSongs = songRepo.findAllDislikedByAppUserIdForRecommendations(userId);
         List<RecommendationsSongProjection> favouriteSongs = songRepo.findAllFavouriteByAppUserIdForRecommendations(userId);
 
-        // COLD START - jak user nic nie polubil ani nie-polubil to po prostu te z najwieksza iloscia wyswietlen
+        /*
+            COLD START - jak user nic nie polubil ani nie nie-polubil to po prostu
+            te z najwieksza iloscia wyswietlen (obsluzone w [RecommendationFacade])
+         */
         if (likedSongs.isEmpty() && dislikedSongs.isEmpty() && favouriteSongs.isEmpty()) {
-            return getGlobalTopSongs(pageable);
+            return List.of();
         }
 
 
@@ -117,7 +110,7 @@ public class RecommendationsService {
         }
 
 
-        return toPage(
+        return
 
                 // docelowy scoring i sortowanie
                 candidates.stream()
@@ -127,10 +120,7 @@ public class RecommendationsService {
                 })
                 .sorted(Comparator.comparingDouble(ScoredSong::score).reversed())
                 .map(scoredSong -> SongDto.toDto(scoredSong.song()))
-                .toList(),
-
-                pageable
-        );
+                .toList();
     }
 
     /// helpery
@@ -146,11 +136,6 @@ public class RecommendationsService {
         this.cachedLogCap = Math.log10(1 + this.cachedViewCap);
 
         log.info("Zaktualizowano ViewCap (Cache): {}", newCap);
-
-        Cache cache = cacheManager.getCache("recommendations");
-        if (cache != null) cache.clear();
-        log.info("Zresetowano cache rekomendacji");
-
     }
 
     /// Pojedyńczy song trafia do metody, a następnie:
@@ -183,27 +168,6 @@ public class RecommendationsService {
                 pageable,
                 3
         ).map(SongDto::toDto);
-    }
-
-    // todo wrzucic to arcydzielo gdzies indziej bo przyda sie przy przerabianiu innych metod do wysylania page zamiast listy
-    // zamienia liste songdto na Page, wycinając odpowiedni fragment
-    private static <T> Page<T> toPage(List<T> list, Pageable pageable) {
-        Objects.requireNonNull(list, "obiekt list nie moze byc pusty");
-        Objects.requireNonNull(pageable, "obiekt pageable nie moze byc pusty");
-
-        int total = list.size();
-        int start = (int) pageable.getOffset();
-
-        if (start >= total) {
-            return new PageImpl<>(Collections.emptyList(), pageable, total);
-        }
-
-        int end = Math.min(start + pageable.getPageSize(), total);
-
-        // subList zwraca widok - opakowanie w arraylist zeby skopiowac
-        List<T> pageContent = new ArrayList<>(list.subList(start, end));
-
-        return new PageImpl<>(pageContent, pageable, total);
     }
 
 
