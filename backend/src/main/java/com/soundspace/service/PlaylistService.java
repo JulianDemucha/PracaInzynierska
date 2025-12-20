@@ -79,6 +79,7 @@ public class PlaylistService {
         return playlists.stream().map(PlaylistDto::toDto).toList();
     }
 
+    @Cacheable(value = "playlist", key = "#playlistId")
     public PlaylistDto getPlaylist(Long playlistId, UserDetails userDetails) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow();
         ensureUserCanView(playlist, userDetails);

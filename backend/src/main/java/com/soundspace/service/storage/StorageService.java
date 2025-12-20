@@ -83,7 +83,7 @@ public class StorageService {
         }
     }
 
-    @Cacheable(value = "storageKey", key = "#storageKeyId")
+    @Cacheable(value = "storage_key", key = "#storageKeyId")
     public StorageKey getStorageKey(Long storageKeyId) {
         return storageKeyRepository.findById(storageKeyId).orElseThrow(
                 () -> new StorageFileNotFoundException("Nie znaleziono pliku o storageKeyId: " + storageKeyId)

@@ -18,36 +18,31 @@ public class CacheConfig {
         SimpleCacheManager manager = new SimpleCacheManager();
 
         manager.setCaches(Arrays.asList(
-                new CaffeineCache("recommendations",
-                        Caffeine.newBuilder()
-                                .expireAfterWrite(1, TimeUnit.HOURS)
-                                .maximumSize(1_000)
-                                .build()),
-
-                new CaffeineCache("song",
-                        Caffeine.newBuilder()
-                                .expireAfterWrite(24, TimeUnit.HOURS)
-                                .maximumSize(10_000)
-                                .build()),
-
-                new CaffeineCache("album",
-                        Caffeine.newBuilder()
-                                .expireAfterWrite(24, TimeUnit.HOURS)
-                                .maximumSize(10_000)
-                                .build()),
-
-                new CaffeineCache("playlist",
-                        Caffeine.newBuilder()
-                                .expireAfterWrite(24, TimeUnit.HOURS)
-                                .maximumSize(10_000)
-                                .build()),
-                new CaffeineCache("storageKey",
-                        Caffeine.newBuilder()
-                                .expireAfterWrite(24, TimeUnit.HOURS)
-                                .maximumSize(10_000)
-                                .build())
+                createCache("recommendations", 1, 20_000),
+                createCacheSeconds("song-stats", 20, 20_000),
+                createCache("song", 24, 100_000),
+                createCache("album", 24, 25_000),
+                createCache("playlist", 24, 50_000),
+                createCache("allSongs", 1, 1),
+                createCache("storage_key", 168, 100_000)
         ));
 
         return manager;
+    }
+
+    private CaffeineCache createCache(String cacheName, int expireHours, int maxSize) {
+        return new CaffeineCache(cacheName,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(expireHours, TimeUnit.HOURS)
+                        .maximumSize(maxSize)
+                        .build());
+    }
+
+    private CaffeineCache createCacheSeconds(String cacheName, int expireSeconds, int maxSize) {
+        return new CaffeineCache(cacheName,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(expireSeconds, TimeUnit.HOURS)
+                        .maximumSize(maxSize)
+                        .build());
     }
 }

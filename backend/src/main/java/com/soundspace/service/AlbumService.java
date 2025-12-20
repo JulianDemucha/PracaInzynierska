@@ -65,6 +65,7 @@ public class AlbumService {
         return albumRepository.getReferenceById(id);
     }
 
+    @Cacheable(value = "album", key = "#albumId")
     public AlbumDto getAlbum(Long albumId, UserDetails userDetails) {
         Album album = findById(albumId).orElseThrow(
                 () -> new AlbumNotFoundException(albumId));
