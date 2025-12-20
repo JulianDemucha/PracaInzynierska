@@ -35,30 +35,49 @@ function SearchPage() {
     if (!hasResults) return <div className="search-page-msg">Brak wyników dla "{query}".</div>;
 
     return (
-        <div className="search-page">
+        <div className="search-page custom-scrollbar">
             <h1 className="search-header">Wyniki wyszukiwania dla "{query}"</h1>
 
             {results.songs.length > 0 && (
                 <section className="search-section">
                     <h2>Utwory</h2>
                     <div className="search-songs-list">
-                        {results.songs.map((song) => (
-                            <div key={song.id} className="search-song-row" onDoubleClick={() => playSong(song)}>
-                                <div className="search-song-img-wrapper">
-                                    <img
-                                        src={getImageUrl(song.coverStorageKeyId)}
-                                        onError={(e) => e.target.src = defaultAvatar}
-                                        alt={song.title}
-                                    />
+                        {results.songs.map((song) => {
+                            const songForPlayer = {
+                                ...song,
+                                coverUrl: getImageUrl(song.coverStorageKeyId) || defaultAvatar,
+                                author: song.authorUsername || song.author
+                            };
+
+                            return (
+                                <div
+                                    key={song.id}
+                                    className="search-song-row"
+                                    // 2. Tutaj przekazujemy ten "naprawiony" obiekt
+                                    onDoubleClick={() => playSong(songForPlayer)}
+                                >
+                                    <div className="search-song-img-wrapper">
+                                        <Link to={song.albumId ? `/album/${song.albumId}` : `/song/${song.id}`}>
+                                            <img
+                                                src={getImageUrl(song.coverStorageKeyId)}
+                                                onError={(e) => e.target.src = defaultAvatar}
+                                                alt={song.title}
+                                            />
+                                        </Link>
+                                    </div>
+
+                                    <div className="search-song-info">
+                                        <Link to={`/song/${song.id}`} className="search-song-title">
+                                            {song.title}
+                                        </Link>
+
+                                        <Link to={`/artist/${song.authorId}`} className="search-song-artist">
+                                            {song.authorUsername}
+                                        </Link>
+                                    </div>
                                 </div>
-                                <div className="search-song-info">
-                                    <span className="search-song-title">{song.title}</span>
-                                    <Link to={`/artist/${song.authorId}`} className="search-song-artist">
-                                        {song.authorUsername}
-                                    </Link>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
             )}
