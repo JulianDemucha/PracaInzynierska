@@ -79,17 +79,21 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<SongProjection> findSongsByAlbumNative(@Param("albumId") Long albumId);
 
 
-    @Query("""
+    @Query(value = """
             SELECT DISTINCT s FROM Song s
             LEFT JOIN FETCH s.author
             LEFT JOIN FETCH s.coverStorageKey
             LEFT JOIN FETCH s.audioStorageKey
             LEFT JOIN FETCH s.album
             WHERE s.publiclyVisible = true
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT s) FROM Song s
+            WHERE s.publiclyVisible = true
             """)
-    List<Song> findAllPublic();
+    Page<Song> findAllPublic(Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             SELECT DISTINCT s FROM Song s
             LEFT JOIN FETCH s.author
             LEFT JOIN FETCH s.coverStorageKey
@@ -97,8 +101,13 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             LEFT JOIN FETCH s.album
             WHERE s.author.id = :userId
             OR s.publiclyVisible = true
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT s) FROM Song s
+            WHERE s.author.id = :userId
+            OR s.publiclyVisible = true
             """)
-    List<Song> findAllPublicOrOwnedByUser(@Param("userId") Long userId);
+    Page<Song> findAllPublicOrOwnedByUser(@Param("userId") Long userId, Pageable pageable);
 
     @Query(value = """
             SELECT DISTINCT s

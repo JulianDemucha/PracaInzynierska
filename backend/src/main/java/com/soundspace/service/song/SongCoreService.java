@@ -107,17 +107,16 @@ public class SongCoreService {
     }
 
     @Transactional
-    public List<SongDto> getAllSongs(UserDetails userDetails) {
+    public Page<SongDto> getAllSongs(UserDetails userDetails, Pageable pageable) {
         if (userDetails == null)
-            return songRepository.findAllPublic()
-                    .stream()
-                    .map(SongDto::toDto)
-                    .toList();
+            return songRepository.findAllPublic(pageable)
+                    .map(SongDto::toDto);
 
         else return songRepository.findAllPublicOrOwnedByUser(
-                        appUserService.getUserByEmail(userDetails.getUsername()).getId()).stream()
-                .map(SongDto::toDto)
-                .toList();
+                appUserService.getUserByEmail(
+                        userDetails.getUsername()).getId(),
+                        pageable
+                ).map(SongDto::toDto);
     }
 
     @Transactional

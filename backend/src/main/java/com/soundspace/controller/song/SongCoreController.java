@@ -51,8 +51,8 @@ public class SongCoreController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SongDto>> getAllSongs(Authentication authentication) {
-        return ResponseEntity.ok(songCoreService.getAllSongs(extractUserDetails(authentication)));
+    public ResponseEntity<Page<SongDto>> getAllSongs(Authentication authentication, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(songCoreService.getAllSongs(extractUserDetails(authentication), pageable));
     }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
