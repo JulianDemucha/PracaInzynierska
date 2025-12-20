@@ -46,16 +46,14 @@ public class SongStatisticsController {
     }
 
     @GetMapping("/top/liked")
-    public ResponseEntity<Page<SongDto>> getTop10LikedSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongDto>> getTopLikedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopLiked(pageable));
     }
 
     @GetMapping("/top/viewed")
-    public ResponseEntity<Page<SongDto>> getTop10ViewedSongs(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<SongDto>> getTopViewedSongs(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(songStatisticsService.getTopViewed(pageable));
     }
-
-    //todo zrobic top10viewed i poprawic top10liked zeby zwracalo page i przyjmowalo wiadomo size i page
 
     /// helpery
 
