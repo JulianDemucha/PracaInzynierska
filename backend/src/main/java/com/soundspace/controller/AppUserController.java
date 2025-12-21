@@ -2,6 +2,7 @@ package com.soundspace.controller;
 
 import com.soundspace.dto.AppUserDto;
 import com.soundspace.dto.request.AppUserUpdateRequest;
+import com.soundspace.service.user.AppUserDeletionService;
 import com.soundspace.service.user.AppUserService;
 import com.soundspace.service.CookieService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AppUserController {
     private final AppUserService appUserService;
     private final CookieService cookieService;
+    private final AppUserDeletionService appUserDeletionService;
 
     @GetMapping("/{userId}")
     public ResponseEntity<AppUserDto> getAppUser(@PathVariable Long userId) {
@@ -44,7 +46,7 @@ public class AppUserController {
     public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails,
                                         HttpServletResponse response) {
         String email = (userDetails != null) ? userDetails.getUsername() : null;
-        appUserService.deleteUser(email);
+        appUserDeletionService.deleteUser(email);
 
         cookieService.setJwtAndRefreshCookie("", "", response);
         return ResponseEntity.noContent().build();
@@ -53,7 +55,7 @@ public class AppUserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUserByAdmin(@AuthenticationPrincipal UserDetails userDetails,
                                         @PathVariable Long userId) {
-        appUserService.deleteUserByAdmin(userId, userDetails.getUsername());
+        appUserDeletionService.deleteUserByAdmin(userId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

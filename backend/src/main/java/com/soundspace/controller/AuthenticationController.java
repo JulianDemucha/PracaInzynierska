@@ -38,8 +38,11 @@ public class AuthenticationController {
         String jwt = authenticationService.register(registerRequest);
         String email = registerRequest.getEmail();
 
-        cookieService.setJwtAndRefreshCookie(jwt,
-                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
+        cookieService.setJwtAndRefreshCookie(
+                jwt,
+                refreshTokenService.createRefreshToken(email).getRefreshToken(),
+                response
+        );
 
         AppUserDto appUserDto = AppUserDto.toDto(appUserService.getUserByEmail(email));
         URI location = URI.create("/api/users/" + appUserDto.id());
