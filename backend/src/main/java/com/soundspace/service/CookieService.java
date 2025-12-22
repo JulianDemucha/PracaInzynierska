@@ -27,24 +27,39 @@ public class CookieService {
         response.addHeader(HttpHeaders.SET_COOKIE, createCookie("refreshToken", "", 0).toString());
     }
 
-    public void setJwtAndRefreshCookie(String jwt, String refreshToken, HttpServletResponse response) {
+    public void setJwtAndRefreshCookie(
+            String jwt,
+            String refreshToken,
+            HttpServletResponse response
+    ) {
 
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                createJwtCookie(jwt).toString());
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                createJwtCookie(jwt).toString()
+        );
 
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                createRefreshCookie(refreshToken).toString());
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                createRefreshCookie(refreshToken).toString()
+        );
 
     }
 
     // UZYWAC TYLKO W RAZIE REFRESHU REFRESHCOOKIE, NIE TWORZENIU NOWEGO, INACZEJ JWT == NULL
-    public void setJwtAndRefreshCookie(RefreshTokenCookieDto refreshTokenCookieDto, HttpServletResponse response) {
-        response.addHeader(HttpHeaders.SET_COOKIE,
+    public void setJwtAndRefreshCookie(
+            RefreshTokenCookieDto refreshTokenCookieDto,
+            HttpServletResponse response
+    ) {
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
                 createJwtCookie(refreshTokenCookieDto.getJwt())
-                        .toString());
-        response.addHeader(HttpHeaders.SET_COOKIE,
+                        .toString()
+        );
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
                 createRefreshCookie(refreshTokenCookieDto.getRefreshToken())
-                        .toString());
+                        .toString()
+        );
     }
 
 

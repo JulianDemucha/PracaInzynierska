@@ -57,8 +57,11 @@ public class AuthenticationController {
     ) {
         String jwt = authenticationService.authenticate(authenticationRequest);
         String email = authenticationRequest.getEmail();
-        cookieService.setJwtAndRefreshCookie(jwt,
-                refreshTokenService.createRefreshToken(email).getRefreshToken(), response);
+        cookieService.setJwtAndRefreshCookie(
+                jwt,
+                refreshTokenService.createRefreshToken(email).getRefreshToken(),
+                response
+        );
 
         // revoke old if present
         if(refreshToken != null) {
@@ -77,8 +80,7 @@ public class AuthenticationController {
         }
 
         RefreshTokenCookieDto refreshTokenCookieDto =
-                refreshTokenService.createNewRefreshToken(refreshToken);
-        refreshTokenService.revokeRefreshToken(refreshToken);
+                refreshTokenService.createRefreshTokenAndRevokeOld(refreshToken);
 
 
         cookieService.setJwtAndRefreshCookie(refreshTokenCookieDto, response);
