@@ -426,5 +426,9 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             Pageable pageable
     );
 
+    boolean existsByAuthorId(Long authorId);
+
+    List<Song> findByAuthorId(Long authorId);
+
 }
 

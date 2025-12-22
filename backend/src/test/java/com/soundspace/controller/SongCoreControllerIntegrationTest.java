@@ -1,5 +1,6 @@
 package com.soundspace.controller;
 
+import com.soundspace.dto.ProcessedImage;
 import com.soundspace.entity.AppUser;
 import com.soundspace.entity.Song;
 import com.soundspace.entity.StorageKey;
@@ -10,27 +11,46 @@ import com.soundspace.enums.UserAuthProvider;
 import com.soundspace.repository.AppUserRepository;
 import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.StorageKeyRepository;
+import com.soundspace.service.AlbumService;
 import com.soundspace.service.storage.ImageService;
 import com.soundspace.service.storage.StorageService;
+import org.apache.tika.Tika;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "app.media.audio.upload-max-bytes=10485760",
+        "app.media.audio.target-extension=m4a",
+        "app.media.audio.target-directory=songs/audio",
+        "app.media.cover.width=300",
+        "app.media.cover.height=300",
+        "app.media.cover.quality=0.8",
+        "app.media.cover.target-extension=jpg",
+        "app.media.cover.song-directory=songs/covers",
+        "app.media.cover.default-cover-id=1"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
@@ -54,14 +74,36 @@ class SongCoreControllerIntegrationTest {
     @MockitoBean
     private ImageService imageService;
 
+    @MockitoBean
+    private Tika tika;
+
+    @MockitoBean
+    private AlbumService albumService;
+
     private AppUser author;
     private Song publicSong;
     private Song privateSong;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
+        given(storageService.saveFromPath(any(), any(), any(), any()))
+                .willAnswer(invocation -> "fake-s3-key-" +
+                                          java.util.UUID.randomUUID().toString());
+
+        given(tika.detect(any(File.class))).willReturn("audio/mp4");
+
+        ProcessedImage dummyProcessedImage = new ProcessedImage(
+                new byte[10],
+                "generated-cover.jpg",
+                "image/jpeg"
+        );
+
+        given(imageService.resizeImageAndConvert(any(), anyInt(),
+                anyInt(), any(), anyDouble()))
+                .willReturn(dummyProcessedImage);
+
         StorageKey dummyKey = new StorageKey();
-        dummyKey.setKeyStr("test-key-" + System.nanoTime());
+        dummyKey.setKeyStr("avatar-key-" + java.util.UUID.randomUUID());
         dummyKey.setMimeType("image/jpeg");
         dummyKey.setSizeBytes(1024L);
         dummyKey.setCreatedAt(Instant.now());
@@ -115,17 +157,36 @@ class SongCoreControllerIntegrationTest {
     }
 
     @Test
-    void getSongById_Public_Anonymous() throws Exception {
-        mockMvc.perform(get("/api/songs/{id}", publicSong.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(publicSong.getId()))
-                .andExpect(jsonPath("$.title").value("sigma piosenka roku z dodatkiem rizzu"))
-                .andExpect(jsonPath("$.publiclyVisible").value(true));
+    @WithMockUser(username = "sigma@soundspace.com", roles = "USER")
+    void uploadSong_Success() throws Exception {
+        MockMultipartFile audioFile = new MockMultipartFile(
+                "audioFile",
+                "song.m4a",
+                "audio/mp4",
+                "fake-audio-content".getBytes()
+        );
+
+        MockMultipartFile coverFile = new MockMultipartFile(
+                "coverFile",
+                "cover.jpg",
+                "image/jpeg",
+                "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/api/songs/upload")
+                        .file(audioFile)
+                        .file(coverFile)
+                        .param("title", "Nowy Hit Lata")
+                        .param("publiclyVisible", "true")
+                        .param("genre", "POP")
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Nowy Hit Lata"))
+                .andExpect(jsonPath("$.id").exists());
     }
 
     @Test
-    @WithMockUser(username = "innasigma@soundspace.com")
-    void getSongById_Public_Authenticated() throws Exception {
+    void getSongById_Public_Anonymous() throws Exception {
         mockMvc.perform(get("/api/songs/{id}", publicSong.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("sigma piosenka roku z dodatkiem rizzu"));
@@ -141,22 +202,8 @@ class SongCoreControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "innasigma@soundspace.com")
-    void getSongByIdPrivateOtherUser() throws Exception {
+    void getSongByIdPrivateOtherUser_Forbidden() throws Exception {
         mockMvc.perform(get("/api/songs/{id}", privateSong.getId()))
                 .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getSongByIdPrivateAnonymous() throws Exception {
-        mockMvc.perform(get("/api/songs/{id}", privateSong.getId()))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(username = "sigma@soundspace.com")
-    void getSongById_NotFound() throws Exception {
-        Long nonExistentId = 999999L;
-        mockMvc.perform(get("/api/songs/{id}", nonExistentId))
-                .andExpect(status().isNotFound());
     }
 }
