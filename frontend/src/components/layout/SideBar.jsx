@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from "../../context/useAuth.js";
-import './Sidebar.css';
+import './SideBar.css';
 import { getUserAlbums } from '../../services/albumService.js';
 import { getUserPlaylists } from '../../services/playlistService.js';
 import AddSongModal from '../song/AddSongModal.jsx';
