@@ -33,7 +33,10 @@ public class SecurityConfig {
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/api/users/{userId}/delete")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/me")
+                        .authenticated()
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/{userId}")
                         .hasAuthority("ROLE_ADMIN")
 
                         .requestMatchers("/api/songs/favourites/**")

@@ -36,4 +36,8 @@ public interface SongStatisticsRepository extends JpaRepository<SongStatistics, 
 
     @Query(value = "SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY view_count) FROM song_statistics", nativeQuery = true)
     Optional<Long> findViewCountPercentile90();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM SongStatistics s WHERE s.id IN (SELECT song.id FROM Song song WHERE song.author.id = :userId)")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }
