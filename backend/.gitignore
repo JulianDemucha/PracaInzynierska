@@ -8,7 +8,7 @@ target/
 data/*
 !data/placeholders/
 !data/docker/placeholders/
-
+test-data
 
 ### STS ###
 .apt_generated

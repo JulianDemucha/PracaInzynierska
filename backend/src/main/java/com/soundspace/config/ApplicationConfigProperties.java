@@ -63,6 +63,6 @@ public record ApplicationConfigProperties(
             boolean secure,
             boolean httpOnly,
             String sameSite,
-            String domain // Opcjonalnie, przydatne na prod
+            String domain
     ) {}
 }

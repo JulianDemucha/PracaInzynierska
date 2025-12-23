@@ -4,11 +4,11 @@ import com.soundspace.entity.AppUser;
 import com.soundspace.entity.SongReaction;
 import com.soundspace.enums.ReactionType;
 import com.soundspace.repository.SongReactionRepository;
-import com.soundspace.repository.SongRepository;
 import com.soundspace.repository.SongStatisticsRepository;
 import com.soundspace.service.user.AppUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +23,10 @@ public class ReactionService {
     private final SongReactionRepository songReactionRepository;
     private final SongCoreService songCoreService;
     private final AppUserService appUserService;
-    private final SongRepository songRepository;
     private final SongStatisticsRepository songStatisticsRepository;
 
     @Transactional
+    @CacheEvict(value = "recommendations", key ="#userDetails.username")
     public void addReaction(Long songId, ReactionType requestReactionType, UserDetails userDetails) {
         AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
         Long appUserId = appUser.getId();
@@ -73,6 +73,7 @@ public class ReactionService {
     }
 
     @Transactional
+    @CacheEvict(value = "recommendations", key ="#userDetails.username")
     public void deleteLikeOrDislike(Long songId, UserDetails userDetails) {
         AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
         Long appUserId = appUser.getId();
@@ -88,6 +89,7 @@ public class ReactionService {
     }
 
     @Transactional
+    @CacheEvict(value = "recommendations", key ="#userDetails.username")
     public void deleteFavourite(Long songId, UserDetails userDetails) {
         AppUser appUser = appUserService.getUserByEmail(userDetails.getUsername());
         Long appUserId = appUser.getId();

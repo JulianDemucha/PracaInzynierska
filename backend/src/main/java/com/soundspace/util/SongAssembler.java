@@ -5,6 +5,7 @@ import com.soundspace.dto.SongStatslessDto;
 import com.soundspace.entity.SongStatistics;
 import com.soundspace.repository.SongStatisticsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +53,7 @@ public class SongAssembler {
      * Wersja dla pojedynczej piosenki
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "song-stats", key = "#cachedDto.id()")
     public SongDtoWithDetails addStatistics(SongStatslessDto cachedDto) {
         if (cachedDto == null) return null;
 

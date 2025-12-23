@@ -124,6 +124,10 @@ public class AlbumService {
                 .toList();
     }
 
+    @Cacheable(
+            value = "genre-albums",
+            key = "(#userDetails != null ? #userDetails.username : 'anonymous') + '_' + #pageable"
+    )
     public Page<AlbumDto> getPublicAlbumsByGenre(String genreName, UserDetails userDetails, Pageable pageable) {
         try {
             Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
@@ -375,6 +379,10 @@ public class AlbumService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = "all-albums",
+            key = "(#userDetails != null ? #userDetails.username : 'anonymous') + '_' + #pageable"
+    )
     public Page<AlbumDto> getAllAlbums(UserDetails userDetails, Pageable pageable) {
         if (userDetails == null) return albumRepository.findAllPublic(pageable)
                 .map(AlbumDto::toDto);

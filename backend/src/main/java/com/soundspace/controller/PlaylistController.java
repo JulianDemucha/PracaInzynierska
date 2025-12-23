@@ -94,7 +94,9 @@ public class PlaylistController {
                                                   @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(playlistService.update(playlistId, request, userDetails));
     }
-    // helpers
+
+
+    // helpery
 
     private UserDetails extractUserDetails(Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {

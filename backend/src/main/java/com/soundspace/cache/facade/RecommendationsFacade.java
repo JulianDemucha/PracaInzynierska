@@ -18,7 +18,7 @@ import java.util.List;
 public class RecommendationsFacade {
 
     private final CachedRecommendationsProvider cachedProvider;
-    private final SongRepository songRepo; // Do fallbacku na global top
+    private final SongRepository songRepo;
 
     public Page<SongBaseDto> getRecommendations(UserDetails userDetails, Pageable pageable) {
         if (userDetails == null) {

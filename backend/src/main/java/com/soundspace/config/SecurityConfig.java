@@ -60,11 +60,8 @@ public class SecurityConfig {
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authenticationProvider(authenticationProvider)
-                // w przyszlosci po wprowadzeniu oauth2, bedzie do niego oddzielny filterchain
-//                .oauth2Login(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
 
 }

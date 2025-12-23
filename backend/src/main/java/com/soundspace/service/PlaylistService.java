@@ -47,7 +47,10 @@ public class PlaylistService {
     private final PlaylistEntryRepository playlistEntryRepository;
     private final ApplicationConfigProperties.MediaConfig.CoverConfig coverConfig;
 
-
+    @Cacheable(
+            value = "all-playlists",
+            key = "(#userDetails != null ? #userDetails.username : 'anonymous') + '_' + #pageable"
+    )
     public Page<PlaylistDto> getAllPlaylists(UserDetails userDetails, Pageable pageable) {
 
         if (userDetails != null) {

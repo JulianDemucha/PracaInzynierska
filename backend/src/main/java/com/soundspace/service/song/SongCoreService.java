@@ -21,6 +21,7 @@ import com.soundspace.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -88,6 +89,10 @@ public class SongCoreService {
                 .toList();
     }
 
+    @Cacheable(
+            value = "genre-songs",
+            key = "(#userDetails != null ? #userDetails.username : 'anonymous') + '_' + #pageable"
+    )
     public Page<SongBaseDto> getSongsByGenre(String genreName, UserDetails userDetails, Pageable pageable) {
         try {
             Genre genre = Genre.valueOf(genreName.toUpperCase().trim());
@@ -110,6 +115,10 @@ public class SongCoreService {
     }
 
     @Transactional
+    @Cacheable(
+            value = "all-songs",
+            key = "(#userDetails != null ? #userDetails.username : 'anonymous') + '_' + #pageable"
+    )
     public Page<SongBaseDto> getAllSongs(UserDetails userDetails, Pageable pageable) {
         if (userDetails == null)
             return songRepository.findAllPublic(pageable)
