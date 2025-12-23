@@ -14,9 +14,9 @@ services:
     networks:
       - soundspace-network
 
-  app:
+  backend:
     build:
-      context: ./backend      # Wskazujemy folder backendu
+      context: ./backend
       dockerfile: Dockerfile
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/soundspace
@@ -41,7 +41,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - app
+      - backend
     networks:
       - soundspace-network
 
