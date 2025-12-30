@@ -62,7 +62,7 @@ Aplikacja jest w pełni skonteneryzowana. Aby uruchomić środowisko dewelopersk
 ## 🛠️ Tech Stack
 
 * **Backend:** Java 21, Spring Boot 3, Hibernate, PostgreSQL, Apache Tika.
-* **Frontend:** React 18, TailwindCSS, Vite, Nginx.
+* **Frontend:** React 18, Axios, HTML/CSS, Vite, Nginx.
 * **DevOps:** Docker, Docker Compose, JUnit 5, Mockito.
 
 ---
